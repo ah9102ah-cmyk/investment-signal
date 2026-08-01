@@ -95,17 +95,31 @@ var ASSETS = [
   { name:"中证500", symbol:"sh000905", digits:2 },
   { name:"科创50", symbol:"sh000688", digits:2 },
   { name:"中证白酒", symbol:"sz399997", digits:2 },
-  { name:"中证医疗", symbol:"sz399989", digits:2 }
+  { name:"中证医疗", symbol:"sz399989", digits:2 },
+  { name:"贵州茅台", symbol:"sh600519", digits:2 },
+  { name:"腾讯控股", symbol:"hk00700", digits:2, hk:true }
 ];
 var UP = "#dc2626", DOWN = "#16a34a";
 var DATA = {};   // name -> {close:[], days:[], digits}
 var loaded = 0;
 
-function loadK(symbol, varname, cb) {
+function loadK(a, varname, cb) {
+  if (a.hk) {
+    // 港股: 腾讯行情接口(CORS 开放, 前复权)
+    fetch('https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + a.symbol + ',day,,,800,qfq')
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var k = j.data[a.symbol].day;
+        if (!k) { cb(null); return; }
+        cb(k.map(function(d){ return { day: d[0], close: parseFloat(d[2]) }; }));
+      })
+      .catch(function(){ cb(null); });
+    return;
+  }
   window[varname] = null;
   var s = document.createElement('script');
   s.src = 'https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20' + varname +
-          '=/CN_MarketDataService.getKLineData?symbol=' + symbol +
+          '=/CN_MarketDataService.getKLineData?symbol=' + a.symbol +
           '&scale=240&ma=no&datalen=800';
   s.onload = function(){ cb(window[varname]); };
   s.onerror = function(){ cb(null); };
@@ -242,7 +256,7 @@ function onAll() {
 
 ASSETS.forEach(function(a, i){
   var vn = 'k' + i;
-  loadK(a.symbol, vn, function(data){
+  loadK(a, vn, function(data){
     loaded++;
     if (data && data.length > 60) {
       DATA[a.name] = {
