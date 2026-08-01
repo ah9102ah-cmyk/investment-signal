@@ -14,6 +14,9 @@
   .picker input, .picker button { font-size:14px; padding:6px 10px; border-radius:8px; border:1px solid #cbd5e1; }
   .picker button { background:#0f766e; color:#fff; border:none; margin-left:6px; cursor:pointer; }
   .picker .btn2 { background:#64748b; }
+  .tabs { display:flex; gap:8px; justify-content:center; margin-bottom:12px; }
+  .tabbtn { font-size:14px; padding:7px 20px; border-radius:20px; border:1px solid #cbd5e1; background:#fff; color:#475569; cursor:pointer; }
+  .tabbtn.active { background:#0f766e; color:#fff; border-color:#0f766e; font-weight:600; }
   .card { background:#fff; border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
   .card h2 { font-size:15px; margin-bottom:8px; }
   table { width:100%; border-collapse:collapse; font-size:14px; }
@@ -44,6 +47,11 @@
     <input type="date" id="datePicker">
     <button onclick="showPicked()">查看</button>
     <button class="btn2" onclick="showLatest()">最新</button>
+  </div>
+
+  <div class="tabs">
+    <button id="tabFund" class="tabbtn active" onclick="switchTab('fund')">指数基金</button>
+    <button id="tabStock" class="tabbtn" onclick="switchTab('stock')">股票</button>
   </div>
 
   <div class="card">
@@ -84,21 +92,24 @@
     </div>
   </div>
 
+  <div style="text-align:center;margin:6px 0;">
+    <a href="strategy.html" style="font-size:13px;color:#0f766e;text-decoration:none;">📖 策略说明</a>
+  </div>
   <div class="note" id="foot">数据来源: 新浪财经 · 仅参考,不构成投资建议</div>
 </div>
 
 <script>
 var ASSETS = [
-  { name:"红利低波", symbol:"sh512890", digits:3 },
-  { name:"沪深300", symbol:"sh000300", digits:2 },
-  { name:"黄金", symbol:"sh518880", digits:3 },
-  { name:"中证500", symbol:"sh000905", digits:2 },
-  { name:"科创50", symbol:"sh000688", digits:2 },
-  { name:"中证白酒", symbol:"sz399997", digits:2 },
-  { name:"中证医疗", symbol:"sz399989", digits:2 },
-  { name:"贵州茅台", symbol:"sh600519", digits:2 },
-  { name:"腾讯控股", symbol:"hk00700", digits:2, hk:true },
-  { name:"恒生科技", symbol:"hkHSTECH", digits:2, hk:true }
+  { name:"红利低波", symbol:"sh512890", digits:3, g:"fund" },
+  { name:"沪深300", symbol:"sh000300", digits:2, g:"fund" },
+  { name:"黄金", symbol:"sh518880", digits:3, g:"fund" },
+  { name:"中证500", symbol:"sh000905", digits:2, g:"fund" },
+  { name:"科创50", symbol:"sh000688", digits:2, g:"fund" },
+  { name:"中证白酒", symbol:"sz399997", digits:2, g:"fund" },
+  { name:"中证医疗", symbol:"sz399989", digits:2, g:"fund" },
+  { name:"恒生科技", symbol:"hkHSTECH", digits:2, hk:true, g:"fund" },
+  { name:"贵州茅台", symbol:"sh600519", digits:2, g:"stock" },
+  { name:"腾讯控股", symbol:"hk00700", digits:2, hk:true, g:"stock" }
 ];
 var UP = "#dc2626", DOWN = "#16a34a";
 var DATA = {};   // name -> {close:[], days:[], digits}
@@ -178,9 +189,23 @@ function calcAt(name, i) {
   return { mom:mom, chg:chg, rsi:rs, trend:tr, close:last, v:vScore, t:tScore, m:mScore, s:sScore };
 }
 
+var CUR = "fund";
+
+function curAssets() {
+  return ASSETS.filter(function(a){ return a.g === CUR; });
+}
+
+function switchTab(g) {
+  CUR = g;
+  document.getElementById('tabFund').className = g === 'fund' ? 'tabbtn active' : 'tabbtn';
+  document.getElementById('tabStock').className = g === 'stock' ? 'tabbtn active' : 'tabbtn';
+  showLatest();
+}
+
 function render(i) {
-  var day = DATA[ASSETS[0].name].days[i];
-  var rows = ASSETS.map(function(a){
+  var assets = curAssets();
+  var day = DATA[assets[0].name].days[i];
+  var rows = assets.map(function(a){
     var r = calcAt(a.name, i);
     return { name:a.name, r:r };
   });
@@ -197,8 +222,8 @@ function render(i) {
   document.getElementById('momBody').innerHTML = h;
 
   var sh = "";
-  ASSETS.forEach(function(a){
-    var r = rows[ASSETS.indexOf(a)].r;
+  assets.forEach(function(a){
+    var r = rows[assets.indexOf(a)].r;
     var vTxt = r.v === null ? "—" : (r.v > 0 ? "+" + r.v : r.v);
     var vCls = r.v > 0 ? "up" : r.v < 0 ? "down" : "";
     var tTxt = r.t > 0 ? "+" + r.t : r.t;
@@ -215,8 +240,8 @@ function render(i) {
   document.getElementById('sigNote').textContent = 'V 估值分(黄金按年线乖离,其他指数见每日邮件) · T 趋势分 · M 动能分 · S 总分';
 
   var ah = "";
-  ASSETS.forEach(function(a){
-    var r = rows[ASSETS.indexOf(a)].r;
+  assets.forEach(function(a){
+    var r = rows[assets.indexOf(a)].r;
     var chgCls = r.chg >= 0 ? "up" : "down";
     var tag = '<span class="tag ' + r.trend.cls + '">' + r.trend.t + '</span>';
     ah += '<div class="asset">' +
