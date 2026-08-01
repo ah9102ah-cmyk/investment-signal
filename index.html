@@ -50,7 +50,7 @@
   </div>
 
   <div class="tabs">
-    <button id="tabFund" class="tabbtn active" onclick="switchTab('fund')">指数基金</button>
+    <button id="tabFund" class="tabbtn active" onclick="switchTab('fund')">基金</button>
     <button id="tabStock" class="tabbtn" onclick="switchTab('stock')">股票</button>
   </div>
 
@@ -81,6 +81,15 @@
     <div class="note" id="sigNote">V 估值 / T 趋势 / M 动能 / S 总分</div>
   </div>
 
+  <div class="card" id="fundCard" style="display:none;">
+    <h2>■ 基本面 & 目标价</h2>
+    <table>
+      <tr><th>股票</th><th style="text-align:center">评分</th><th style="text-align:right">目标价</th><th style="text-align:right">空间</th><th style="text-align:right">ROE</th><th style="text-align:right">营收增速</th><th style="text-align:right">负债率</th><th style="text-align:right">PE</th></tr>
+      <tbody id="fundBody"><tr><td colspan="8" class="loading">加载中...</td></tr></tbody>
+    </table>
+    <div class="note" id="fundNote">目标价 = 合理PE(增速+ROE推导) × 预期EPS,仅供估值参考</div>
+  </div>
+
   <div class="card" id="assetCard">
     <h2>■ 资产明细</h2>
     <div id="assetBody" class="loading">加载中...</div>
@@ -96,6 +105,7 @@
       T 趋势分: +2 = 上涨趋势,-2 = 下跌趋势<br>
       M 动能分: +2 = 短期强势,-2 = 弱势,涨太猛会扣分<br>
       S 总分: V+T+M,正数偏强,负数偏弱<br>
+      基本面: 五维评分(ROE/成长/负债/估值/毛利)+ 目标价,数据每日云端更新,港股暂缺<br>
       选择日期可查看该日收盘后的信号(最早约3年前)<br>
       估值(PE/PB/股息率)和详细理由见每日邮件
     </div>
@@ -210,7 +220,9 @@ function switchTab(g) {
   document.getElementById('tabFund').className = g === 'fund' ? 'tabbtn active' : 'tabbtn';
   document.getElementById('tabStock').className = g === 'stock' ? 'tabbtn active' : 'tabbtn';
   document.getElementById('customCard').style.display = g === 'stock' ? '' : 'none';
+  document.getElementById('fundCard').style.display = g === 'stock' ? '' : 'none';
   showLatest();
+  if (g === 'stock') renderFundamentals();
 }
 
 function render(i) {
@@ -367,6 +379,44 @@ function loadCustomStocks() {
   });
 }
 
+var FUND = {};
+
+function loadFundamentals() {
+  fetch('data/fundamentals.json')
+    .then(function(r){ return r.json(); })
+    .then(function(j){ FUND = j || {}; renderFundamentals(); })
+    .catch(function(){
+      document.getElementById('fundBody').innerHTML =
+        '<tr><td colspan="8" class="err">基本面数据加载失败(网页线上版可用,数据每日云端更新)</td></tr>';
+    });
+}
+
+function renderFundamentals() {
+  var assets = curAssets().filter(function(a){ return a.g === 'stock'; });
+  var rows = "";
+  assets.forEach(function(a){
+    var code = a.symbol.replace(/^(sh|sz|hk)/, '');
+    var f = FUND[code];
+    if (!f || f.error) {
+      rows += '<tr><td>' + a.name + '</td><td colspan="7" style="color:#94a3b8;">基本面暂缺(未收录/港股)</td></tr>';
+      return;
+    }
+    var vc = f.verdict === '好' ? 'up' : f.verdict === '差' ? 'down' : '';
+    var sc = (f.space !== null && f.space !== undefined) ? (f.space >= 0 ? 'up' : 'down') : '';
+    var spaceTxt = (f.space === null || f.space === undefined) ? '—' : (f.space >= 0 ? '+' : '') + f.space + '%';
+    var tgt = f.target ? f.target.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : '—';
+    rows += '<tr><td>' + a.name + '</td>' +
+      '<td style="text-align:center"><b class="' + vc + '">' + f.score + '(' + f.verdict + ')</b></td>' +
+      '<td style="text-align:right">' + tgt + '</td>' +
+      '<td style="text-align:right" class="' + sc + '">' + spaceTxt + '</td>' +
+      '<td style="text-align:right">' + (f.roe !== null ? f.roe + '%' : '—') + '</td>' +
+      '<td style="text-align:right">' + (f.rev_g !== null ? f.rev_g + '%' : '—') + '</td>' +
+      '<td style="text-align:right">' + (f.debt !== null ? f.debt + '%' : '—') + '</td>' +
+      '<td style="text-align:right">' + (f.pe !== null ? f.pe : '—') + '</td></tr>';
+  });
+  document.getElementById('fundBody').innerHTML = rows;
+}
+
 function onAll() {
   if (loaded < INITIAL_COUNT) return;
   var days = DATA[ASSETS[0].name].days;
@@ -395,6 +445,7 @@ ASSETS.forEach(function(a, i){
   });
 });
 loadCustomStocks();
+loadFundamentals();
 </script>
 </body>
 </html>
