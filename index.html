@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>投资参考</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; background:#f1f5f9; color:#1f2937; padding:12px; }
+  .wrap { max-width:640px; margin:0 auto; }
+  h1 { text-align:center; font-size:20px; margin:8px 0 2px; }
+  .date { text-align:center; color:#64748b; font-size:12px; margin-bottom:12px; }
+  .card { background:#fff; border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .card h2 { font-size:15px; margin-bottom:8px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th { text-align:left; color:#64748b; font-size:12px; font-weight:600; padding:4px 6px; }
+  td { padding:6px; border-top:1px solid #f1f5f9; }
+  .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .up { color:#dc2626; font-weight:600; }
+  .down { color:#16a34a; font-weight:600; }
+  .asset { display:flex; justify-content:space-between; align-items:center; padding:8px 4px; border-bottom:1px solid #f1f5f9; }
+  .asset:last-child { border-bottom:none; }
+  .asset .name { font-weight:600; font-size:15px; }
+  .asset .price { font-size:15px; font-variant-numeric:tabular-nums; }
+  .asset .meta { font-size:12px; color:#64748b; margin-top:2px; }
+  .tag { display:inline-block; font-size:11px; padding:1px 6px; border-radius:4px; margin-left:6px; }
+  .tag.up { background:#fee2e2; color:#b91c1c; }
+  .tag.down { background:#dcfce7; color:#15803d; }
+  .tag.mid { background:#fef9c3; color:#a16207; }
+  .note { font-size:11px; color:#94a3b8; text-align:center; margin-top:8px; line-height:1.6; }
+  .loading { text-align:center; color:#64748b; padding:30px 0; }
+  .err { text-align:center; color:#dc2626; padding:20px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📈 投资参考</h1>
+  <div class="date" id="date">加载中...</div>
+
+  <div class="card">
+    <h2>■ 动量数据(40日涨幅)</h2>
+    <table>
+      <tr><th>排名</th><th>资产</th><th class="num">40日动量</th></tr>
+      <tbody id="momBody"><tr><td colspan="3" class="loading">加载中...</td></tr></tbody>
+    </table>
+    <div class="note">40日动量 = 最近40个交易日涨幅,数字越大说明近期涨得越好。口径: 红利低波/黄金用ETF价格(512890/518880),沪深300用指数点位,与邮件指数口径略有差异。</div>
+  </div>
+
+  <div class="card" id="assetCard">
+    <h2>■ 资产明细</h2>
+    <div id="assetBody" class="loading">加载中...</div>
+  </div>
+
+  <div class="card">
+    <h2>💡 怎么看</h2>
+    <div class="note" style="text-align:left;font-size:12px;color:#475569;line-height:1.9;">
+      红色 = 涨 / 强,绿色 = 跌 / 弱<br>
+      上涨中 = 现价 &gt; 1月线 &gt; 3月线 / 下跌中 = 现价 &lt; 1月线 &lt; 3月线<br>
+      反弹中 = 短期回升、中期未确认 / 回调中 = 中期仍涨、短期回落<br>
+      估值(PE/PB/股息率)和详细理由见每日邮件
+    </div>
+  </div>
+
+  <div class="note" id="foot">数据来源: 新浪财经 · 仅参考,不构成投资建议</div>
+</div>
+
+<script>
+var ASSETS = [
+  { name:"红利低波", symbol:"sh512890", digits:3 },
+  { name:"沪深300", symbol:"sh000300", digits:2 },
+  { name:"黄金", symbol:"sh518880", digits:3 }
+];
+var UP = "#dc2626", DOWN = "#16a34a";
+
+function loadK(symbol, varname, cb) {
+  window[varname] = null;
+  var s = document.createElement('script');
+  s.src = 'https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20' + varname +
+          '=/CN_MarketDataService.getKLineData?symbol=' + symbol +
+          '&scale=240&ma=no&datalen=70';
+  s.onload = function(){ cb(window[varname]); };
+  s.onerror = function(){ cb(null); };
+  document.head.appendChild(s);
+}
+
+function rsi14(closes) {
+  var gains = 0, losses = 0, ag = 0, al = 0;
+  for (var i = 1; i < closes.length; i++) {
+    var d = closes[i] - closes[i-1];
+    if (i <= 14) {
+      gains += Math.max(d, 0); losses += Math.max(-d, 0);
+      if (i === 14) { ag = gains/14; al = losses/14; }
+    } else {
+      ag = (ag*13 + Math.max(d,0))/14; al = (al*13 + Math.max(-d,0))/14;
+    }
+  }
+  if (al === 0) return 100;
+  return 100 - 100/(1 + ag/al);
+}
+
+function trendText(close) {
+  var n = close.length, c = close[n-1];
+  var ma20 = close.slice(n-20).reduce(function(a,b){return a+b;},0)/20;
+  var ma60 = close.slice(n-60).reduce(function(a,b){return a+b;},0)/60;
+  if (c > ma20 && ma20 > ma60) return { t:"上涨中", cls:"up" };
+  if (c > ma20) return { t:"反弹中", cls:"mid" };
+  if (ma20 < ma60) return { t:"下跌中", cls:"down" };
+  return { t:"回调中", cls:"mid" };
+}
+
+var results = {};
+var loaded = 0;
+
+function onAll() {
+  if (loaded < ASSETS.length) return;
+  // 动量排名
+  var momRows = ASSETS.map(function(a){
+    var c = results[a.name].close;
+    return { name:a.name, mom: c[c.length-1]/c[c.length-41] - 1 };
+  });
+  momRows.sort(function(x,y){ return y.mom - x.mom; });
+  var h = "";
+  momRows.forEach(function(r, i){
+    var cls = r.mom >= 0 ? "up" : "down";
+    h += '<tr><td>' + (i+1) + '</td><td>' + r.name + '</td>' +
+         '<td class="num ' + cls + '">' + (r.mom*100).toFixed(1) + '%</td></tr>';
+  });
+  document.getElementById('momBody').innerHTML = h;
+
+  // 资产明细
+  var ah = "";
+  ASSETS.forEach(function(a){
+    var r = results[a.name], c = r.close;
+    var last = c[c.length-1], prev = c[c.length-2];
+    var chg = last/prev - 1;
+    var mom = last/c[c.length-41] - 1;
+    var tr = trendText(c);
+    var rs = rsi14(c);
+    var chgCls = chg >= 0 ? "up" : "down";
+    var momCls = mom >= 0 ? "up" : "down";
+    var tag = '<span class="tag ' + tr.cls + '">' + tr.t + '</span>';
+    ah += '<div class="asset">' +
+      '<div><span class="name">' + a.name + '</span>' + tag + '</div>' +
+      '<div style="text-align:right"><span class="price ' + chgCls + '">' +
+      last.toFixed(a.digits) + '</span>' +
+      '<div class="meta">今日 ' + (chg*100 >= 0 ? '+' : '') + (chg*100).toFixed(2) + '% · 40日 ' +
+      (mom*100 >= 0 ? '+' : '') + (mom*100).toFixed(1) + '% · RSI ' + rs.toFixed(0) + '</div></div>' +
+      '</div>';
+  });
+  document.getElementById('assetBody').innerHTML = ah;
+  document.getElementById('date').textContent = '数据日期 ' + results[ASSETS[0].name].day;
+  document.getElementById('foot').textContent = '数据来源: 新浪财经 · 更新于' + new Date().toLocaleString('zh-CN') + ' · 仅参考,不构成投资建议';
+}
+
+ASSETS.forEach(function(a, i){
+  var vn = 'k' + i;
+  loadK(a.symbol, vn, function(data){
+    loaded++;
+    if (data && data.length > 60) {
+      results[a.name] = {
+        close: data.map(function(d){ return parseFloat(d.close); }),
+        day: data[data.length-1].day
+      };
+    } else {
+      document.getElementById('momBody').innerHTML =
+        '<tr><td colspan="3" class="err">数据加载失败(symbol=' + a.symbol + '),请刷新重试</td></tr>';
+    }
+    onAll();
+  });
+});
+</script>
+</body>
+</html>
