@@ -98,7 +98,7 @@
       红色 = 涨 / 强,绿色 = 跌 / 弱<br>
       上涨中 = 现价 &gt; 1月线 &gt; 3月线 / 下跌中 = 现价 &lt; 1月线 &lt; 3月线<br>
       反弹中 = 短期回升、中期未确认 / 回调中 = 中期仍涨、短期回落<br>
-      V 估值分: +2 = 便宜,-2 = 贵(黄金按年线乖离;其他指数见每日邮件)<br>
+      V 估值分: +2 = 便宜,-2 = 贵(指数按PE/股息率,股票按目标价空间,黄金按年线乖离,每日更新)<br>
       T 趋势分: +2 = 上涨趋势,-2 = 下跌趋势<br>
       M 动能分: +2 = 短期强势,-2 = 弱势,涨太猛会扣分<br>
       S 总分: V+T+M,正数偏强,负数偏弱<br>
@@ -232,6 +232,13 @@ function switchTab(g) {
   if (g === 'stock') renderFundamentals();
 }
 
+function fundVScore(a, r) {
+  if (r.v !== null) return r.v;   // 黄金用乖离(实时算)
+  var f = FUND[a.symbol] || FUND[a.symbol.replace(/^(sh|sz|hk)/, '')];
+  if (f && f.v_score !== undefined && f.v_score !== null) return f.v_score;
+  return null;
+}
+
 function render(i) {
   var assets = curAssets();
   var day = DATA[assets[0].name].days[i];
@@ -254,8 +261,9 @@ function render(i) {
   var sh = "";
   assets.forEach(function(a){
     var r = rows[assets.indexOf(a)].r;
-    var vTxt = r.v === null ? "—" : (r.v > 0 ? "+" + r.v : r.v);
-    var vCls = r.v > 0 ? "up" : r.v < 0 ? "down" : "";
+    var v = fundVScore(a, r);
+    var vTxt = v === null ? "—" : (v > 0 ? "+" + v : v);
+    var vCls = v > 0 ? "up" : v < 0 ? "down" : "";
     var tTxt = r.t > 0 ? "+" + r.t : r.t;
     var mTxt = r.m > 0 ? "+" + r.m : r.m;
     var sTxt = r.s > 0 ? "+" + r.s : r.s;
@@ -267,7 +275,7 @@ function render(i) {
           '<td style="text-align:center" class="' + sCls + '">' + sTxt + '</td></tr>';
   });
   document.getElementById('sigBody').innerHTML = sh;
-  document.getElementById('sigNote').textContent = 'V 估值分(黄金按年线乖离,其他指数见每日邮件) · T 趋势分 · M 动能分 · S 总分';
+  document.getElementById('sigNote').textContent = 'V 估值分(每日更新: 指数按PE/股息率, 股票按目标价空间, 黄金按年线乖离) · T 趋势分 · M 动能分 · S 总分';
 
   var ah = "";
   assets.forEach(function(a){
