@@ -83,10 +83,7 @@
 
   <div class="card" id="fundCard" style="display:none;">
     <h2>■ 基本面 & 目标价</h2>
-    <table>
-      <tr><th>股票</th><th style="text-align:center">评分</th><th style="text-align:right">目标价</th><th style="text-align:right">空间</th><th style="text-align:right">ROE</th><th style="text-align:right">营收增速</th><th style="text-align:right">负债率</th><th style="text-align:right">PE</th></tr>
-      <tbody id="fundBody"><tr><td colspan="8" class="loading">加载中...</td></tr></tbody>
-    </table>
+    <div id="fundBody" class="loading">加载中...</div>
     <div class="note" id="fundNote">目标价 = 合理PE(增速+ROE推导) × 预期EPS,仅供估值参考</div>
   </div>
 
@@ -307,16 +304,28 @@ function showLatest() {
 function parseStock(input) {
   input = input.trim();
   if (!input) return null;
-  var name = input, code = input.toLowerCase();
+  var name = input, code = input.toLowerCase(), userNamed = false;
   var m = input.match(/^(.+?)\s+([0-9]{5,6})$/);
-  if (m) { name = m[1]; code = m[2]; }
+  if (m) { name = m[1]; code = m[2]; userNamed = true; }
   var symbol = code, hk = false;
   if (/^sh\d{6}$/.test(code) || /^sz\d{6}$/.test(code)) symbol = code;
   else if (/^hk\d{5}$/.test(code)) { symbol = code; hk = true; }
   else if (/^\d{6}$/.test(code)) symbol = (code[0] === '6' ? 'sh' : 'sz') + code;
   else if (/^\d{5}$/.test(code)) { symbol = 'hk' + code; hk = true; }
   else return null;
-  return { name: name, symbol: symbol, digits: 2, hk: hk, g: 'stock', custom: true };
+  return { name: name, symbol: symbol, digits: 2, hk: hk, g: 'stock', custom: true, userNamed: userNamed };
+}
+
+function getStockName(symbol, cb) {
+  // 腾讯行情接口返回股票中文名(qt[1])
+  fetch('https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + symbol + ',day,,,1,qfq')
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var k = j.data && j.data[symbol];
+      var q = k && k.qt && k.qt[symbol];
+      cb(q ? q[1] : null);
+    })
+    .catch(function(){ cb(null); });
 }
 
 function getCustoms() {
@@ -334,22 +343,25 @@ function addStock() {
   if (!a) { alert('代码格式不对,示例: 600519(沪) / 000001(深) / 00700(港股)'); return; }
   var exists = ASSETS.some(function(x){ return x.symbol === a.symbol; });
   if (exists) { alert('这个已经在列表里了'); return; }
-  ASSETS.push(a);
-  var list = getCustoms(); list.push({ name: a.name, symbol: a.symbol, hk: a.hk }); saveCustoms(list);
-  inp.value = '';
-  var vn = 'k' + ASSETS.length;
-  loaded++;
-  loadK(a, vn, function(data){
-    if (data && data.length > 60) {
-      DATA[a.name] = { close: data.map(function(d){ return parseFloat(d.close); }),
-                       days: data.map(function(d){ return d.day; }), digits: a.digits };
-    } else {
-      alert('加载失败,可能代码不对或暂不支持');
-      removeStock(a.symbol);
-      return;
-    }
-    drawCustomList();
-    showLatest();
+  getStockName(a.symbol, function(cn){
+    if (!a.userNamed && cn) a.name = cn;
+    ASSETS.push(a);
+    var list = getCustoms(); list.push({ name: a.name, symbol: a.symbol, hk: a.hk }); saveCustoms(list);
+    inp.value = '';
+    var vn = 'k' + ASSETS.length;
+    loaded++;
+    loadK(a, vn, function(data){
+      if (data && data.length > 60) {
+        DATA[a.name] = { close: data.map(function(d){ return parseFloat(d.close); }),
+                         days: data.map(function(d){ return d.day; }), digits: a.digits };
+      } else {
+        alert('加载失败,可能代码不对或暂不支持');
+        removeStock(a.symbol);
+        return;
+      }
+      drawCustomList();
+      showLatest();
+    });
   });
 }
 
@@ -375,16 +387,20 @@ function loadCustomStocks() {
     if (ASSETS.some(function(x){ return x.symbol === c.symbol; })) return;
     var a = { name: c.name, symbol: c.symbol, digits: 2, hk: c.hk, g: 'stock', custom: true };
     ASSETS.push(a);
+    var isCodeName = /^\d{5,6}$/.test(c.name);
     var vn = 'k' + ASSETS.length;
-    loadK(a, vn, function(data){
-      if (data && data.length > 60) {
-        DATA[a.name] = { close: data.map(function(d){ return parseFloat(d.close); }),
-                         days: data.map(function(d){ return d.day; }), digits: a.digits };
-        drawCustomList();
-        showLatest();
-      } else {
-        removeStock(a.symbol);
-      }
+    getStockName(c.symbol, function(cn){
+      if (isCodeName && cn) { a.name = cn; }
+      loadK(a, vn, function(data){
+        if (data && data.length > 60) {
+          DATA[a.name] = { close: data.map(function(d){ return parseFloat(d.close); }),
+                           days: data.map(function(d){ return d.day; }), digits: a.digits };
+          drawCustomList();
+          showLatest();
+        } else {
+          removeStock(a.symbol);
+        }
+      });
     });
   });
 }
@@ -403,28 +419,28 @@ function loadFundamentals() {
 
 function renderFundamentals() {
   var assets = curAssets().filter(function(a){ return a.g === 'stock'; });
-  var rows = "";
+  var html = "";
   assets.forEach(function(a){
     var code = a.symbol.replace(/^(sh|sz|hk)/, '');
     var f = FUND[code];
     if (!f || f.error) {
-      rows += '<tr><td>' + a.name + '</td><td colspan="7" style="color:#94a3b8;">基本面暂缺(未收录/港股)</td></tr>';
+      html += '<div class="asset"><div><span class="name">' + a.name + '</span></div>' +
+              '<div style="text-align:right"><span style="color:#94a3b8;font-size:12px;">基本面暂缺(未收录/港股)</span></div></div>';
       return;
     }
     var vc = f.verdict === '好' ? 'up' : f.verdict === '差' ? 'down' : '';
     var sc = (f.space !== null && f.space !== undefined) ? (f.space >= 0 ? 'up' : 'down') : '';
     var spaceTxt = (f.space === null || f.space === undefined) ? '—' : (f.space >= 0 ? '+' : '') + f.space + '%';
     var tgt = f.target ? f.target.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : '—';
-    rows += '<tr><td>' + a.name + '</td>' +
-      '<td style="text-align:center"><b class="' + vc + '">' + f.score + '(' + f.verdict + ')</b></td>' +
-      '<td style="text-align:right">' + tgt + '</td>' +
-      '<td style="text-align:right" class="' + sc + '">' + spaceTxt + '</td>' +
-      '<td style="text-align:right">' + (f.roe !== null ? f.roe + '%' : '—') + '</td>' +
-      '<td style="text-align:right">' + (f.rev_g !== null ? f.rev_g + '%' : '—') + '</td>' +
-      '<td style="text-align:right">' + (f.debt !== null ? f.debt + '%' : '—') + '</td>' +
-      '<td style="text-align:right">' + (f.pe !== null ? f.pe : '—') + '</td></tr>';
+    var tag = '<span class="tag ' + vc + '">' + f.verdict + '</span>';
+    html += '<div class="asset">' +
+      '<div><span class="name">' + a.name + '</span> ' + tag +
+      ' <span style="font-size:12px;color:#64748b;">评分' + f.score + '</span></div>' +
+      '<div style="text-align:right"><span class="' + sc + '" style="font-weight:600;">目标 ' + tgt + ' (' + spaceTxt + ')</span>' +
+      '<div class="meta">ROE ' + (f.roe !== null ? f.roe + '%' : '—') + ' · 营收 ' + (f.rev_g !== null ? f.rev_g + '%' : '—') +
+      ' · 负债 ' + (f.debt !== null ? f.debt + '%' : '—') + ' · PE ' + (f.pe !== null ? f.pe : '—') + '</div></div></div>';
   });
-  document.getElementById('fundBody').innerHTML = rows;
+  document.getElementById('fundBody').innerHTML = html;
 }
 
 function onAll() {
