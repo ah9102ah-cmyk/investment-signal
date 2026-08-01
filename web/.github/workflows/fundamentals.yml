@@ -1,0 +1,33 @@
+name: update-fundamentals
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # 每天 09:00 北京时间(UTC+8)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install akshare
+
+      - name: 抓取基本面数据
+        run: python fetch_fundamentals.py
+
+      - name: 提交更新
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/data/fund.json
+          git commit -m "每日基本面数据更新" || echo "无变化"
+          git push
