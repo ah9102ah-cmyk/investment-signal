@@ -133,6 +133,7 @@ def compute(latest, annual, prev_year, price):
         space=round(space, 1) if space is not None else None,
         score=s, verdict=verdict,
         fair_pe=round(fair_pe, 1) if fair_pe is not None else None,
+        v_score=(2 if space >= 20 else 1 if space >= 0 else 0 if space > -20 else -2) if space is not None else None,
     )
     return out
 
@@ -154,6 +155,11 @@ def main():
         result[code] = compute(latest, annual, prev_year, price)
         result[code]["name"] = name
         time.sleep(1)
+    # 指数估值 V 分(akshare, 失败不影响股票数据)
+    try:
+        result.update(fetch_index_vals())
+    except Exception as e:
+        print("指数估值跳过(akshare 不可用):", e)
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
     print(f"\n已写入 {OUT_FILE}")
@@ -161,7 +167,48 @@ def main():
         if "error" in r:
             print(f"  {code} {r['name']}: {r['error']}")
         else:
-            print(f"  {code} {r['name']}: 评分{r['score']}({r['verdict']}) 目标价≈{r['target']} 空间{r['space']}%")
+            v = r.get("v_score")
+            vtxt = "—" if v is None else ("+" + str(v) if v > 0 else str(v))
+            if "target" in r and r.get("target"):
+                print(f"  {code} {r['name']}: V{vtxt} 评分{r['score']}({r['verdict']}) 目标价≈{r['target']} 空间{r['space']}%")
+            else:
+                print(f"  {code} {r['name']}: V{vtxt} PE={r.get('pe')} 股息率={r.get('div_yield')}")
+
+# 指数估值(akshare 中证官网): 网页 symbol -> (中证代码, 名称)
+INDEXES = {
+    "sh512890": ("H30269", "红利低波"),
+    "sh000300": ("000300", "沪深300"),
+    "sh000905": ("000905", "中证500"),
+    "sh000688": ("000688", "科创50"),
+    "sz399997": ("399997", "中证白酒"),
+    "sz399989": ("399989", "中证医疗"),
+}
+
+def index_v_score(pe, div_yield, sym):
+    """简化 V 分: 红利低波看股息率, 其他看 PE(绝对值口径, 非历史分位)"""
+    if sym == "sh512890":
+        if div_yield is None:
+            return None
+        return 2 if div_yield >= 5 else 1 if div_yield >= 4 else 0 if div_yield >= 3 else -1
+    if pe is None:
+        return None
+    return 2 if pe <= 12 else 1 if pe <= 15 else 0 if pe <= 20 else -1
+
+def fetch_index_vals():
+    import akshare as ak
+    out = {}
+    for sym, (icode, name) in INDEXES.items():
+        try:
+            df = ak.stock_zh_index_value_csindex(symbol=icode)
+            row = df.iloc[-1]
+            pe = float(row.get("市盈率1") or 0) or None
+            dy = float(row.get("股息率1") or 0) or None
+            out[sym] = {"name": name, "pe": pe, "div_yield": dy,
+                        "v_score": index_v_score(pe, dy, sym)}
+        except Exception as e:
+            print(f"  指数估值失败 {name}: {e}")
+        time.sleep(1)
+    return out
 
 def get_price(code):
     """A股最新收盘价: 新浪K线(JSONP) -> 腾讯K线(fetch) 降级"""
