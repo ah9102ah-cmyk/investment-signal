@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>投资参考</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; background:#f1f5f9; color:#1f2937; padding:12px; }
+  .wrap { max-width:640px; margin:0 auto; }
+  h1 { text-align:center; font-size:20px; margin:8px 0 2px; }
+  .date { text-align:center; color:#64748b; font-size:12px; margin-bottom:8px; }
+  .picker { text-align:center; margin-bottom:12px; }
+  .picker input, .picker button { font-size:14px; padding:6px 10px; border-radius:8px; border:1px solid #cbd5e1; }
+  .picker button { background:#0f766e; color:#fff; border:none; margin-left:6px; cursor:pointer; }
+  .picker .btn2 { background:#64748b; }
+  .tabs { display:flex; gap:8px; justify-content:center; margin-bottom:12px; }
+  .tabbtn { font-size:14px; padding:7px 20px; border-radius:20px; border:1px solid #cbd5e1; background:#fff; color:#475569; cursor:pointer; }
+  .tabbtn.active { background:#0f766e; color:#fff; border-color:#0f766e; font-weight:600; }
+  .card { background:#fff; border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .card h2 { font-size:15px; margin-bottom:8px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th { text-align:left; color:#64748b; font-size:12px; font-weight:600; padding:4px 6px; }
+  td { padding:6px; border-top:1px solid #f1f5f9; }
+  .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .up { color:#dc2626; font-weight:600; }
+  .down { color:#16a34a; font-weight:600; }
+  .asset { display:flex; justify-content:space-between; align-items:center; padding:8px 4px; border-bottom:1px solid #f1f5f9; }
+  .asset:last-child { border-bottom:none; }
+  .asset .name { font-weight:600; font-size:15px; }
+  .asset .price { font-size:15px; font-variant-numeric:tabular-nums; }
+  .asset .meta { font-size:12px; color:#64748b; margin-top:2px; }
+  .tag { display:inline-block; font-size:11px; padding:1px 6px; border-radius:4px; margin-left:6px; }
+  .tag.up { background:#fee2e2; color:#b91c1c; }
+  .tag.down { background:#dcfce7; color:#15803d; }
+  .tag.mid { background:#fef9c3; color:#a16207; }
+  .note { font-size:11px; color:#94a3b8; text-align:center; margin-top:8px; line-height:1.6; }
+  .loading { text-align:center; color:#64748b; padding:30px 0; }
+  .err { text-align:center; color:#dc2626; padding:20px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📈 投资参考</h1>
+  <div class="date" id="date">加载中...</div>
+  <div class="picker">
+    <input type="date" id="datePicker">
+    <button onclick="showPicked()">查看</button>
+    <button class="btn2" onclick="showLatest()">最新</button>
+  </div>
+
+  <div class="tabs">
+    <button id="tabFund" class="tabbtn active" onclick="switchTab('fund')">基金</button>
+    <button id="tabStock" class="tabbtn" onclick="switchTab('stock')">股票</button>
+  </div>
+
+  <div class="card" id="customCard" style="display:none;">
+    <h2>＋ 自选股票</h2>
+    <div class="picker" style="margin-bottom:8px;">
+      <input type="text" id="stockCode" placeholder="输入代码,如 600519 / 00700">
+      <button onclick="addStock()">添加</button>
+    </div>
+    <div id="customList" style="font-size:12px;color:#64748b;">没有自选,在下方输入代码添加</div>
+  </div>
+
+  <div class="card">
+    <h2>■ 动量数据(40日涨幅)</h2>
+    <table>
+      <tr><th>排名</th><th>资产</th><th class="num">40日动量</th></tr>
+      <tbody id="momBody"><tr><td colspan="3" class="loading">加载中...</td></tr></tbody>
+    </table>
+    <div class="note">40日动量 = 最近40个交易日涨幅,数字越大说明近期涨得越好。口径: 红利低波/黄金用ETF价格(512890/518880),沪深300用指数点位,与邮件指数口径略有差异。</div>
+  </div>
+
+  <div class="card">
+    <h2>■ 三维度信号(参考)</h2>
+    <table>
+      <tr><th>资产</th><th style="text-align:center">V</th><th style="text-align:center">T</th><th style="text-align:center">M</th><th style="text-align:center">S</th></tr>
+      <tbody id="sigBody"><tr><td colspan="5" class="loading">加载中...</td></tr></tbody>
+    </table>
+    <div class="note" id="sigNote">V 估值 / T 趋势 / M 动能 / S 总分</div>
+  </div>
+
+  <div class="card" id="fundCard" style="display:none;">
+    <h2>■ 基本面 & 目标价</h2>
+    <div id="fundBody" class="loading">加载中...</div>
+    <div class="note" id="fundNote">目标价 = 合理PE(增速+ROE推导) × 预期EPS,仅供估值参考</div>
+  </div>
+
+  <div class="card" id="assetCard">
+    <h2>■ 资产明细</h2>
+    <div id="assetBody" class="loading">加载中...</div>
+  </div>
+
+  <div class="card">
+    <h2>💡 怎么看</h2>
+    <div class="note" style="text-align:left;font-size:12px;color:#475569;line-height:1.9;">
+      红色 = 涨 / 强,绿色 = 跌 / 弱<br>
+      上涨中 = 现价 &gt; 1月线 &gt; 3月线 / 下跌中 = 现价 &lt; 1月线 &lt; 3月线<br>
+      反弹中 = 短期回升、中期未确认 / 回调中 = 中期仍涨、短期回落<br>
+      V 估值分: +2 = 便宜,-2 = 贵(指数按PE/股息率,股票按目标价空间,黄金按年线乖离,每日更新)<br>
+      T 趋势分: +2 = 上涨趋势,-2 = 下跌趋势<br>
+      M 动能分: +2 = 短期强势,-2 = 弱势,涨太猛会扣分<br>
+      S 总分: V+T+M,正数偏强,负数偏弱<br>
+      基本面: 五维评分(ROE/成长/负债/估值/毛利)+ 目标价,数据每日云端更新,港股暂缺<br>
+      选择日期可查看该日收盘后的信号(最早约3年前)<br>
+      估值(PE/PB/股息率)和详细理由见每日邮件
+    </div>
+  </div>
+
+  <div style="text-align:center;margin:6px 0;">
+    <a href="strategy.html" style="font-size:13px;color:#0f766e;text-decoration:none;">📖 策略说明</a>
+  </div>
+  <div class="note" id="foot">数据来源: 新浪财经 · 仅参考,不构成投资建议</div>
+</div>
+
+<script>
+var ASSETS = [
+  { name:"红利低波", symbol:"sh512890", digits:3, g:"fund" },
+  { name:"沪深300", symbol:"sh000300", digits:2, g:"fund" },
+  { name:"黄金", symbol:"sh518880", digits:3, g:"fund" },
+  { name:"中证500", symbol:"sh000905", digits:2, g:"fund" },
+  { name:"科创50", symbol:"sh000688", digits:2, g:"fund" },
+  { name:"中证白酒", symbol:"sz399997", digits:2, g:"fund" },
+  { name:"中证医疗", symbol:"sz399989", digits:2, g:"fund" },
+  { name:"恒生科技", symbol:"hkHSTECH", digits:2, hk:true, g:"fund" },
+  { name:"贵州茅台", symbol:"sh600519", digits:2, g:"stock" },
+  { name:"腾讯控股", symbol:"hk00700", digits:2, hk:true, g:"stock" }
+];
+var INITIAL_COUNT = ASSETS.length;
+var UP = "#dc2626", DOWN = "#16a34a";
+var DATA = {};   // name -> {close:[], days:[], digits}
+var loaded = 0;
+
+function loadK(a, varname, cb) {
+  // 降级链: A股 新浪(JSONP) -> 腾讯(fetch); 港股 只走腾讯
+  if (a.hk) { loadTx(a, cb); return; }
+  loadSina(a, varname, function(data){
+    if (data && data.length > 60) cb(data);
+    else loadTx(a, cb);
+  });
+}
+
+function loadSina(a, varname, cb) {
+  window[varname] = null;
+  var s = document.createElement('script');
+  s.src = 'https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20' + varname +
+          '=/CN_MarketDataService.getKLineData?symbol=' + a.symbol +
+          '&scale=240&ma=no&datalen=800';
+  s.onload = function(){ cb(window[varname]); };
+  s.onerror = function(){ cb(null); };
+  document.head.appendChild(s);
+}
+
+function loadTx(a, cb) {
+  // 腾讯行情接口(CORS 开放, 前复权): A股 qfqday / 港股 day
+  fetch('https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + a.symbol + ',day,,,800,qfq')
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var k = j.data[a.symbol];
+      var arr = (k && (k.qfqday || k.day)) || [];
+      if (!arr.length) { cb(null); return; }
+      cb(arr.map(function(d){ return { day: d[0], close: parseFloat(d[2]) }; }));
+    })
+    .catch(function(){ cb(null); });
+}
+
+function rsi14(arr) {
+  var ag = 0, al = 0;
+  for (var i = 1; i < arr.length; i++) {
+    var d = arr[i] - arr[i-1];
+    if (i <= 14) {
+      ag += Math.max(d, 0); al += Math.max(-d, 0);
+      if (i === 14) { ag /= 14; al /= 14; }
+    } else {
+      ag = (ag*13 + Math.max(d,0))/14; al = (al*13 + Math.max(-d,0))/14;
+    }
+  }
+  if (al === 0) return 100;
+  return 100 - 100/(1 + ag/al);
+}
+
+function calcAt(name, i) {
+  var c = DATA[name].close;
+  if (i < 60 || i >= c.length) return null;
+  var last = c[i], prev = c[i-1];
+  var ma20 = 0, ma60 = 0;
+  for (var j = i-19; j <= i; j++) ma20 += c[j];
+  for (var j = i-59; j <= i; j++) ma60 += c[j];
+  ma20 /= 20; ma60 /= 60;
+  var mom = last/c[i-40] - 1;
+  var chg = last/prev - 1;
+  var rs = rsi14(c.slice(i-14, i+1));
+  var tr;
+  if (last > ma20 && ma20 > ma60) tr = { t:"上涨中", cls:"up" };
+  else if (last > ma20) tr = { t:"反弹中", cls:"mid" };
+  else if (ma20 < ma60) tr = { t:"下跌中", cls:"down" };
+  else tr = { t:"回调中", cls:"mid" };
+  var tScore = tr.t === "上涨中" ? 2 : tr.t === "反弹中" ? 1 : tr.t === "回调中" ? -1 : -2;
+  var chg5 = last/c[i-5] - 1;
+  var mScore = 0;
+  if (rs < 30) mScore += 1; else if (rs > 80) mScore -= 2; else if (rs > 70) mScore -= 1;
+  if (rs > 55 && chg5 > 0.04) mScore -= 1;
+  if (rs < 45 && chg5 < -0.04) mScore += 1;
+  var vScore = null;
+  if (name === "黄金" && i >= 249) {
+    var ma250 = 0;
+    for (var j = i-249; j <= i; j++) ma250 += c[j];
+    ma250 /= 250;
+    var bias = last/ma250 - 1;
+    if (bias > 0.15) vScore = -2; else if (bias > 0.08) vScore = -1;
+    else if (bias < -0.15) vScore = 2; else if (bias < -0.08) vScore = 1;
+    else vScore = 0;
+  }
+  var sScore = (vScore === null ? 0 : vScore) + tScore + mScore;
+  return { mom:mom, chg:chg, rsi:rs, trend:tr, close:last, v:vScore, t:tScore, m:mScore, s:sScore };
+}
+
+var CUR = "fund";
+
+function curAssets() {
+  return ASSETS.filter(function(a){ return a.g === CUR; });
+}
+
+function switchTab(g) {
+  CUR = g;
+  document.getElementById('tabFund').className = g === 'fund' ? 'tabbtn active' : 'tabbtn';
+  document.getElementById('tabStock').className = g === 'stock' ? 'tabbtn active' : 'tabbtn';
+  document.getElementById('customCard').style.display = g === 'stock' ? '' : 'none';
+  document.getElementById('fundCard').style.display = g === 'stock' ? '' : 'none';
+  showLatest();
+  if (g === 'stock') renderFundamentals();
+}
+
+function fundVScore(a, r) {
+  if (r.v !== null) return r.v;   // 黄金用乖离(实时算)
+  var f = FUND[a.symbol] || FUND[a.symbol.replace(/^(sh|sz|hk)/, '')];
+  if (f && f.v_score !== undefined && f.v_score !== null) return f.v_score;
+  return null;
+}
+
+function render(i) {
+  var assets = curAssets();
+  var day = DATA[assets[0].name].days[i];
+  var rows = assets.map(function(a){
+    var r = calcAt(a.name, i);
+    return { name:a.name, r:r };
+  });
+  var bad = rows.some(function(x){ return !x.r; });
+  if (bad) { document.getElementById('momBody').innerHTML = '<tr><td colspan="3" class="err">该日期数据不足</td></tr>'; return; }
+
+  var momRows = rows.slice().sort(function(a,b){ return b.r.mom - a.r.mom; });
+  var h = "";
+  momRows.forEach(function(x, k){
+    var cls = x.r.mom >= 0 ? "up" : "down";
+    h += '<tr><td>' + (k+1) + '</td><td>' + x.name + '</td>' +
+         '<td class="num ' + cls + '">' + (x.r.mom*100).toFixed(1) + '%</td></tr>';
+  });
+  document.getElementById('momBody').innerHTML = h;
+
+  var sh = "";
+  assets.forEach(function(a){
+    var r = rows[assets.indexOf(a)].r;
+    var v = fundVScore(a, r);
+    var vTxt = v === null ? "—" : (v > 0 ? "+" + v : v);
+    var vCls = v > 0 ? "up" : v < 0 ? "down" : "";
+    var tTxt = r.t > 0 ? "+" + r.t : r.t;
+    var mTxt = r.m > 0 ? "+" + r.m : r.m;
+    var sTxt = r.s > 0 ? "+" + r.s : r.s;
+    var sCls = r.s > 0 ? "up" : r.s < 0 ? "down" : "";
+    sh += '<tr><td>' + a.name + '</td>' +
+          '<td style="text-align:center" class="' + vCls + '">' + vTxt + '</td>' +
+          '<td style="text-align:center">' + tTxt + '</td>' +
+          '<td style="text-align:center">' + mTxt + '</td>' +
+          '<td style="text-align:center" class="' + sCls + '">' + sTxt + '</td></tr>';
+  });
+  document.getElementById('sigBody').innerHTML = sh;
+  document.getElementById('sigNote').textContent = 'V 估值分(每日更新: 指数按PE/股息率, 股票按目标价空间, 黄金按年线乖离) · T 趋势分 · M 动能分 · S 总分';
+
+  var ah = "";
+  assets.forEach(function(a){
+    var r = rows[assets.indexOf(a)].r;
+    var chgCls = r.chg >= 0 ? "up" : "down";
+    var tag = '<span class="tag ' + r.trend.cls + '">' + r.trend.t + '</span>';
+    ah += '<div class="asset">' +
+      '<div><span class="name">' + a.name + '</span>' + tag + '</div>' +
+      '<div style="text-align:right"><span class="price ' + chgCls + '">' +
+      r.close.toFixed(a.digits) + '</span>' +
+      '<div class="meta">当日 ' + (r.chg*100 >= 0 ? '+' : '') + (r.chg*100).toFixed(2) + '% · 40日 ' +
+      (r.mom*100 >= 0 ? '+' : '') + (r.mom*100).toFixed(1) + '% · RSI ' + r.rsi.toFixed(0) + '</div></div>' +
+      '</div>';
+  });
+  document.getElementById('assetBody').innerHTML = ah;
+  document.getElementById('date').textContent = '数据日期 ' + day + (i === DATA[ASSETS[0].name].close.length - 1 ? '' : ' (历史回看)');
+}
+
+function showPicked() {
+  var d = document.getElementById('datePicker').value;
+  if (!d) return;
+  var i = DATA[ASSETS[0].name].days.indexOf(d);
+  if (i < 0) { alert('该日期无数据(可能是非交易日或超出范围)'); return; }
+  render(i);
+}
+
+function showLatest() {
+  var i = DATA[ASSETS[0].name].close.length - 1;
+  document.getElementById('datePicker').value = DATA[ASSETS[0].name].days[i];
+  render(i);
+}
+
+// ---------- 自选股票 ----------
+function parseStock(input) {
+  input = input.trim();
+  if (!input) return null;
+  var name = input, code = input.toLowerCase(), userNamed = false;
+  var m = input.match(/^(.+?)\s+([0-9]{5,6})$/);
+  if (m) { name = m[1]; code = m[2]; userNamed = true; }
+  var symbol = code, hk = false;
+  if (/^sh\d{6}$/.test(code) || /^sz\d{6}$/.test(code)) symbol = code;
+  else if (/^hk\d{5}$/.test(code)) { symbol = code; hk = true; }
+  else if (/^\d{6}$/.test(code)) symbol = (code[0] === '6' ? 'sh' : 'sz') + code;
+  else if (/^\d{5}$/.test(code)) { symbol = 'hk' + code; hk = true; }
+  else return null;
+  return { name: name, symbol: symbol, digits: 2, hk: hk, g: 'stock', custom: true, userNamed: userNamed };
+}
+
+function getStockName(symbol, cb) {
+  // 腾讯行情接口返回股票中文名(qt[1])
+  fetch('https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + symbol + ',day,,,1,qfq')
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var k = j.data && j.data[symbol];
+      var q = k && k.qt && k.qt[symbol];
+      cb(q ? q[1] : null);
+    })
+    .catch(function(){ cb(null); });
+}
+
+function getCustoms() {
+  try { return JSON.parse(localStorage.getItem('customStocks') || '[]'); }
+  catch (e) { return []; }
+}
+
+function saveCustoms(list) {
+  localStorage.setItem('customStocks', JSON.stringify(list));
+}
+
+function addStock() {
+  var inp = document.getElementById('stockCode');
+  var a = parseStock(inp.value);
+  if (!a) { alert('代码格式不对,示例: 600519(沪) / 000001(深) / 00700(港股)'); return; }
+  var exists = ASSETS.some(function(x){ return x.symbol === a.symbol; });
+  if (exists) { alert('这个已经在列表里了'); return; }
+  getStockName(a.symbol, function(cn){
+    if (!a.userNamed && cn) a.name = cn;
+    ASSETS.push(a);
+    var list = getCustoms(); list.push({ name: a.name, symbol: a.symbol, hk: a.hk }); saveCustoms(list);
+    inp.value = '';
+    var vn = 'k' + ASSETS.length;
+    loaded++;
+    loadK(a, vn, function(data){
+      if (data && data.length > 60) {
+        DATA[a.name] = { close: data.map(function(d){ return parseFloat(d.close); }),
+                         days: data.map(function(d){ return d.day; }), digits: a.digits };
+      } else {
+        alert('加载失败,可能代码不对或暂不支持');
+        removeStock(a.symbol);
+        return;
+      }
+      drawCustomList();
+      showLatest();
+    });
+  });
+}
+
+function removeStock(symbol) {
+  ASSETS = ASSETS.filter(function(x){ return x.symbol !== symbol; });
+  saveCustoms(getCustoms().filter(function(x){ return x.symbol !== symbol; }));
+  drawCustomList();
+  showLatest();
+}
+
+function drawCustomList() {
+  var customs = ASSETS.filter(function(x){ return x.custom; });
+  var el = document.getElementById('customList');
+  if (!customs.length) { el.innerHTML = '没有自选,在下方输入代码添加'; return; }
+  el.innerHTML = customs.map(function(x){
+    return '<span style="margin-right:10px;">' + x.name + ' <a href="javascript:void(0)" onclick="removeStock(\'' + x.symbol + '\')" style="color:#dc2626;text-decoration:none;">✕</a></span>';
+  }).join('');
+}
+
+function loadCustomStocks() {
+  var list = getCustoms();
+  list.forEach(function(c){
+    if (ASSETS.some(function(x){ return x.symbol === c.symbol; })) return;
+    var a = { name: c.name, symbol: c.symbol, digits: 2, hk: c.hk, g: 'stock', custom: true };
+    ASSETS.push(a);
+    var isCodeName = /^\d{5,6}$/.test(c.name);
+    var vn = 'k' + ASSETS.length;
+    getStockName(c.symbol, function(cn){
+      if (isCodeName && cn) { a.name = cn; }
+      loadK(a, vn, function(data){
+        if (data && data.length > 60) {
+          DATA[a.name] = { close: data.map(function(d){ return parseFloat(d.close); }),
+                           days: data.map(function(d){ return d.day; }), digits: a.digits };
+          drawCustomList();
+          showLatest();
+        } else {
+          removeStock(a.symbol);
+        }
+      });
+    });
+  });
+}
+
+var FUND = {};
+
+function loadFundamentals() {
+  fetch('data/fund.json?t=' + Date.now())   // 时间戳绕缓存
+    .then(function(r){ return r.json(); })
+    .then(function(j){ FUND = j || {}; renderFundamentals(); })
+    .catch(function(){
+      document.getElementById('fundBody').innerHTML =
+        '<tr><td colspan="8" class="err">基本面数据加载失败(网页线上版可用,数据每日云端更新)</td></tr>';
+    });
+}
+
+function renderFundamentals() {
+  var assets = curAssets().filter(function(a){ return a.g === 'stock'; });
+  var html = "";
+  assets.forEach(function(a){
+    var code = a.symbol.replace(/^(sh|sz|hk)/, '');
+    var f = FUND[code];
+    if (!f || f.error) {
+      html += '<div class="asset"><div><span class="name">' + a.name + '</span></div>' +
+              '<div style="text-align:right"><span style="color:#94a3b8;font-size:12px;">基本面暂缺(未收录/港股)</span></div></div>';
+      return;
+    }
+    var vc = f.verdict === '好' ? 'up' : f.verdict === '差' ? 'down' : '';
+    var sc = (f.space !== null && f.space !== undefined) ? (f.space >= 0 ? 'up' : 'down') : '';
+    var spaceTxt = (f.space === null || f.space === undefined) ? '—' : (f.space >= 0 ? '+' : '') + f.space + '%';
+    var tgt = f.target ? f.target.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : '—';
+    var tag = '<span class="tag ' + vc + '">' + f.verdict + '</span>';
+    html += '<div class="asset">' +
+      '<div><span class="name">' + a.name + '</span> ' + tag +
+      ' <span style="font-size:12px;color:#64748b;">评分' + f.score + '</span></div>' +
+      '<div style="text-align:right"><span class="' + sc + '" style="font-weight:600;">目标 ' + tgt + ' (' + spaceTxt + ')</span>' +
+      '<div class="meta">ROE ' + (f.roe !== null ? f.roe + '%' : '—') + ' · 营收 ' + (f.rev_g !== null ? f.rev_g + '%' : '—') +
+      ' · 负债 ' + (f.debt !== null ? f.debt + '%' : '—') + ' · PE ' + (f.pe !== null ? f.pe : '—') + '</div></div></div>';
+  });
+  document.getElementById('fundBody').innerHTML = html;
+}
+
+function onAll() {
+  if (loaded < INITIAL_COUNT) return;
+  var days = DATA[ASSETS[0].name].days;
+  var picker = document.getElementById('datePicker');
+  picker.min = days[60];
+  picker.max = days[days.length - 1];
+  showLatest();
+  document.getElementById('foot').textContent = '数据来源: 新浪财经 · 更新于' + new Date().toLocaleString('zh-CN') + ' · 仅参考,不构成投资建议';
+}
+
+ASSETS.forEach(function(a, i){
+  var vn = 'k' + i;
+  loadK(a, vn, function(data){
+    loaded++;
+    if (data && data.length > 60) {
+      DATA[a.name] = {
+        close: data.map(function(d){ return parseFloat(d.close); }),
+        days: data.map(function(d){ return d.day; }),
+        digits: a.digits
+      };
+    } else {
+      document.getElementById('momBody').innerHTML =
+        '<tr><td colspan="3" class="err">数据加载失败(symbol=' + a.symbol + '),请刷新重试</td></tr>';
+    }
+    onAll();
+  });
+});
+loadCustomStocks();
+loadFundamentals();
+</script>
+</body>
+</html>
