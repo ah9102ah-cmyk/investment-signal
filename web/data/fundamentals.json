@@ -15,6 +15,43 @@
     "space": 29.1,
     "score": 7,
     "verdict": "好",
-    "fair_pe": 26.0
+    "fair_pe": 26.0,
+    "v_score": 2
+  },
+  "sh512890": {
+    "name": "红利低波",
+    "pe": 7.25,
+    "div_yield": 5.23,
+    "v_score": 2
+  },
+  "sh000300": {
+    "name": "沪深300",
+    "pe": 14.91,
+    "div_yield": 2.63,
+    "v_score": 1
+  },
+  "sh000905": {
+    "name": "中证500",
+    "pe": 31.93,
+    "div_yield": 1.2,
+    "v_score": -1
+  },
+  "sh000688": {
+    "name": "科创50",
+    "pe": 113.81,
+    "div_yield": 0.21,
+    "v_score": -1
+  },
+  "sz399997": {
+    "name": "中证白酒",
+    "pe": 17.94,
+    "div_yield": 4.73,
+    "v_score": 0
+  },
+  "sz399989": {
+    "name": "中证医疗",
+    "pe": 26.38,
+    "div_yield": 1.39,
+    "v_score": -1
   }
 }
