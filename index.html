@@ -75,7 +75,7 @@
       红色 = 涨 / 强,绿色 = 跌 / 弱<br>
       上涨中 = 现价 &gt; 1月线 &gt; 3月线 / 下跌中 = 现价 &lt; 1月线 &lt; 3月线<br>
       反弹中 = 短期回升、中期未确认 / 回调中 = 中期仍涨、短期回落<br>
-      V 估值分: +2 = 便宜,-2 = 贵(黄金按年线乖离;沪深300/红利低波见每日邮件)<br>
+      V 估值分: +2 = 便宜,-2 = 贵(黄金按年线乖离;其他指数见每日邮件)<br>
       T 趋势分: +2 = 上涨趋势,-2 = 下跌趋势<br>
       M 动能分: +2 = 短期强势,-2 = 弱势,涨太猛会扣分<br>
       S 总分: V+T+M,正数偏强,负数偏弱<br>
@@ -91,7 +91,11 @@
 var ASSETS = [
   { name:"红利低波", symbol:"sh512890", digits:3 },
   { name:"沪深300", symbol:"sh000300", digits:2 },
-  { name:"黄金", symbol:"sh518880", digits:3 }
+  { name:"黄金", symbol:"sh518880", digits:3 },
+  { name:"中证500", symbol:"sh000905", digits:2 },
+  { name:"科创50", symbol:"sh000688", digits:2 },
+  { name:"中证白酒", symbol:"sz399997", digits:2 },
+  { name:"中证医疗", symbol:"sz399989", digits:2 }
 ];
 var UP = "#dc2626", DOWN = "#16a34a";
 var DATA = {};   // name -> {close:[], days:[], digits}
@@ -193,7 +197,7 @@ function render(i) {
           '<td style="text-align:center" class="' + sCls + '">' + sTxt + '</td></tr>';
   });
   document.getElementById('sigBody').innerHTML = sh;
-  document.getElementById('sigNote').textContent = 'V 估值分(黄金按年线乖离,沪深300/红利低波见邮件) · T 趋势分 · M 动能分 · S 总分';
+  document.getElementById('sigNote').textContent = 'V 估值分(黄金按年线乖离,其他指数见每日邮件) · T 趋势分 · M 动能分 · S 总分';
 
   var ah = "";
   ASSETS.forEach(function(a){
