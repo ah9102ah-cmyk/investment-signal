@@ -18,6 +18,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: 安装依赖
+        run: pip install akshare
+
       - name: 抓取基本面数据
         run: python fetch_fundamentals.py
 
