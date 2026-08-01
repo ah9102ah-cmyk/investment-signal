@@ -416,13 +416,23 @@ function loadCustomStocks() {
 var FUND = {};
 
 function loadFundamentals() {
-  fetch('data/fund.json?t=' + Date.now())   // 时间戳绕缓存
-    .then(function(r){ return r.json(); })
+  var urls = [
+    'data/fund.json?t=' + Date.now(),
+    'https://raw.githubusercontent.com/ah9102ah-cmyk/investment-signal/main/web/data/fund.json?t=' + Date.now()
+  ];
+  tryFetchFund(urls, 0);
+}
+
+function tryFetchFund(urls, i) {
+  if (i >= urls.length) {
+    document.getElementById('fundBody').innerHTML =
+      '<div class="err">基本面数据加载失败</div>';
+    return;
+  }
+  fetch(urls[i])
+    .then(function(r){ if (!r.ok) throw new Error('bad'); return r.json(); })
     .then(function(j){ FUND = j || {}; renderFundamentals(); })
-    .catch(function(){
-      document.getElementById('fundBody').innerHTML =
-        '<tr><td colspan="8" class="err">基本面数据加载失败(网页线上版可用,数据每日云端更新)</td></tr>';
-    });
+    .catch(function(){ tryFetchFund(urls, i + 1); });
 }
 
 function renderFundamentals() {
