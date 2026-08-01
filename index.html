@@ -416,7 +416,7 @@ function loadCustomStocks() {
 var FUND = {};
 
 function loadFundamentals() {
-  fetch('data/fundamentals.json?t=' + Date.now())   // 时间戳绕缓存
+  fetch('data/fund.json?t=' + Date.now())   // 时间戳绕缓存
     .then(function(r){ return r.json(); })
     .then(function(j){ FUND = j || {}; renderFundamentals(); })
     .catch(function(){
