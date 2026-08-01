@@ -16,13 +16,18 @@ F10_URL = ("https://emweb.securities.eastmoney.com/PC_HSF10/NewFinanceAnalysis/"
            "ZYZBAjaxNew?type=0&code={code}")
 
 def http_get(url, tries=3):
+    import gzip
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-                "Referer": "https://emweb.securities.eastmoney.com/"})
+                "Referer": "https://emweb.securities.eastmoney.com/",
+                "Accept-Encoding": "identity"})
             with urllib.request.urlopen(req, timeout=20) as r:
-                return json.loads(r.read().decode("utf-8"))
+                raw = r.read()
+            if raw[:2] == b"\x1f\x8b":      # gzip 兜底
+                raw = gzip.decompress(raw)
+            return json.loads(raw.decode("utf-8"))
         except Exception as e:
             if i == tries - 1:
                 print(f"  抓取失败 {url}: {e}")
@@ -159,7 +164,7 @@ def main():
             print(f"  {code} {r['name']}: 评分{r['score']}({r['verdict']}) 目标价≈{r['target']} 空间{r['space']}%")
 
 def get_price(code):
-    """A股最新收盘价(新浪K线, JSONP)"""
+    """A股最新收盘价: 新浪K线(JSONP) -> 腾讯K线(fetch) 降级"""
     _, sym = code_sym(code)
     url = ("https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20x=/CN_MarketDataService."
            f"getKLineData?symbol={sym}&scale=240&ma=no&datalen=2")
@@ -169,17 +174,29 @@ def get_price(code):
         with urllib.request.urlopen(req, timeout=20) as r:
             raw = r.read().decode("utf-8", errors="replace")
     except Exception:
-        return None
-    import re
-    m = re.search(r"\[.*\]", raw, re.S)
-    if not m:
-        return None
+        pass
+    if raw:
+        import re
+        m = re.search(r"\[.*\]", raw, re.S)
+        if m:
+            try:
+                arr = json.loads(m.group(0))
+                if arr:
+                    return float(arr[-1]["close"])
+            except Exception:
+                pass
+    # 备用: 腾讯
     try:
-        arr = json.loads(m.group(0))
+        url2 = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={sym},day,,,2,qfq"
+        req = urllib.request.Request(url2, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            j = json.loads(r.read().decode("utf-8", errors="replace"))
+        k = j["data"][sym]
+        arr = (k.get("qfqday") or k.get("day") or [])
         if arr:
-            return float(arr[-1]["close"])
+            return float(arr[-1][2])
     except Exception:
-        return None
+        pass
     return None
 
 if __name__ == "__main__":
