@@ -418,7 +418,7 @@ var FUND = {};
 function loadFundamentals() {
   var urls = [
     'data/fund.json?t=' + Date.now(),
-    'https://raw.githubusercontent.com/ah9102ah-cmyk/investment-signal/main/web/data/fund.json?t=' + Date.now()
+    'https://raw.githubusercontent.com/ah9102ah-cmyk/investment-signal/main/data/fund.json?t=' + Date.now()
   ];
   tryFetchFund(urls, 0);
 }
@@ -450,13 +450,16 @@ function renderFundamentals() {
     var sc = (f.space !== null && f.space !== undefined) ? (f.space >= 0 ? 'up' : 'down') : '';
     var spaceTxt = (f.space === null || f.space === undefined) ? '—' : (f.space >= 0 ? '+' : '') + f.space + '%';
     var tgt = f.target ? f.target.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : '—';
-    var tag = '<span class="tag ' + vc + '">' + f.verdict + '</span>';
+    var vtxt = (f.verdict !== undefined && f.verdict !== null) ? f.verdict : '—';
+    var stxt = (f.score !== undefined && f.score !== null) ? f.score : '—';
+    var tag = '<span class="tag ' + vc + '">' + vtxt + '</span>';
+    var fnum = function(x){ return (x !== null && x !== undefined) ? x : '—'; };
     html += '<div class="asset">' +
       '<div><span class="name">' + a.name + '</span> ' + tag +
-      ' <span style="font-size:12px;color:#64748b;">评分' + f.score + '</span></div>' +
+      ' <span style="font-size:12px;color:#64748b;">评分' + stxt + '</span></div>' +
       '<div style="text-align:right"><span class="' + sc + '" style="font-weight:600;">目标 ' + tgt + ' (' + spaceTxt + ')</span>' +
-      '<div class="meta">ROE ' + (f.roe !== null ? f.roe + '%' : '—') + ' · 营收 ' + (f.rev_g !== null ? f.rev_g + '%' : '—') +
-      ' · 负债 ' + (f.debt !== null ? f.debt + '%' : '—') + ' · PE ' + (f.pe !== null ? f.pe : '—') + '</div></div></div>';
+      '<div class="meta">ROE ' + fnum(f.roe) + '% · 营收 ' + fnum(f.rev_g) + '%' +
+      ' · 负债 ' + fnum(f.debt) + '% · PE ' + fnum(f.pe) + '</div></div></div>';
   });
   document.getElementById('fundBody').innerHTML = html;
 }
