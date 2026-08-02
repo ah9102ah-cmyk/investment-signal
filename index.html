@@ -274,8 +274,9 @@ function render(i) {
     var vCls = v > 0 ? "up" : v < 0 ? "down" : "";
     var tTxt = r.t > 0 ? "+" + r.t : r.t;
     var mTxt = r.m > 0 ? "+" + r.m : r.m;
-    var sTxt = r.s > 0 ? "+" + r.s : r.s;
-    var sCls = r.s > 0 ? "up" : r.s < 0 ? "down" : "";
+    var s = (v === null ? 0 : v) + r.t + r.m;   // S = 显示的V + T + M (修复: 之前漏算V)
+    var sTxt = s > 0 ? "+" + s : s;
+    var sCls = s > 0 ? "up" : s < 0 ? "down" : "";
     sh += '<tr><td>' + a.name + '</td>' +
           '<td style="text-align:center" class="' + vCls + '">' + vTxt + '</td>' +
           '<td style="text-align:center">' + tTxt + '</td>' +
