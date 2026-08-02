@@ -160,8 +160,16 @@ def fetch_hk_vals():
             pe = float(f[39]) if f[39] else None
             pb = float(f[43]) if f[43] else None
             mcap = float(f[44]) if f[44] else None
-            if not pe or pe <= 0:
-                print(f"  港股无PE {name}({sym}): 指数或数据缺失, 跳过")
+            if pe is None or pe <= 0:
+                # PE 无效(亏损 TTM 或数据缺失): 保留条目, PE 显示为 None(页面显示 —), V 分改用 PB
+                if pb is None:
+                    print(f"  港股无PE/PB {name}({sym}): 跳过")
+                    continue
+                out[sym.replace("hk", "")] = dict(
+                    name=name, price=price, pe=None, pb=round(pb, 2) if pb else None,
+                    mcap=round(mcap, 0) if mcap else None,
+                    v_score=2 if pb <= 3 else 1 if pb <= 5 else 0 if pb <= 8 else -1)
+                print(f"  港股PE为负 {name}({sym}): PE={pe}, 用PB={pb} 打分")
                 continue
             out[sym.replace("hk", "")] = dict(
                 name=name, price=price, pe=round(pe, 1), pb=round(pb, 2) if pb else None,
@@ -176,6 +184,8 @@ def fetch_hk_vals():
 # 港股估值覆盖: 网页 symbol -> 名称 (只加有 PE/PB 数据的个股; 指数无)
 HK_SYMS = {
     "hk00700": "腾讯控股",
+    "hk09992": "泡泡玛特",
+    "hk03690": "美团",
 }
 
 def main():
@@ -208,7 +218,12 @@ def main():
         print("港股估值跳过:", e)
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
-    print(f"\n已写入 {OUT_FILE}")
+    # 同时写 web/data/fund.json(仓库 web/ 降级副本, 本地推送用)
+    web_out = os.path.join(BASE, "web", "data", "fund.json")
+    os.makedirs(os.path.dirname(web_out), exist_ok=True)
+    with open(web_out, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    print(f"\n已写入 {OUT_FILE} 与 {web_out}")
     for code, r in result.items():
         if "error" in r:
             print(f"  {code} {r['name']}: {r['error']}")
