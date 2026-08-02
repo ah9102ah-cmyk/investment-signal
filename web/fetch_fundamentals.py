@@ -10,7 +10,7 @@ import json, os, time, urllib.request
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 STOCKS_FILE = os.path.join(BASE, "stocks.json")          # 待抓股票列表
-OUT_FILE = os.path.join(BASE, "web", "data", "fundamentals.json")
+OUT_FILE = os.path.join(BASE, "data", "fund.json")       # 页面 fetch 的实际文件(绕CDN缓存用新名)
 
 F10_URL = ("https://emweb.securities.eastmoney.com/PC_HSF10/NewFinanceAnalysis/"
            "ZYZBAjaxNew?type=0&code={code}")
@@ -137,6 +137,47 @@ def compute(latest, annual, prev_year, price):
     )
     return out
 
+def fetch_hk_vals():
+    """港股估值: 腾讯 qt.gtimg.cn 实时行情(免费, 无需key)
+    字段(按 ~ 分割, 0基): [1]=名称 [3]=现价 [4]=昨收 [39]=PE [43]=PB [44]=总市值(亿)
+    只返回有 PE/PB 的港股; 恒生科技等指数该接口无 PE/PB -> 跳过
+    """
+    out = {}
+    for sym, name in HK_SYMS.items():
+        try:
+            url = "https://qt.gtimg.cn/q=" + sym
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+                "Referer": "https://gu.qq.com/"})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                raw = r.read().decode("gbk", errors="replace")
+            m = raw.split('="')[1].split('"')[0] if '="' in raw else ""
+            f = m.split("~")
+            if len(f) < 45:
+                print(f"  港股字段不足 {name}({sym}): {len(f)} 段")
+                continue
+            price = float(f[3]) if f[3] else None
+            pe = float(f[39]) if f[39] else None
+            pb = float(f[43]) if f[43] else None
+            mcap = float(f[44]) if f[44] else None
+            if not pe or pe <= 0:
+                print(f"  港股无PE {name}({sym}): 指数或数据缺失, 跳过")
+                continue
+            out[sym.replace("hk", "")] = dict(
+                name=name, price=price, pe=round(pe, 1), pb=round(pb, 2) if pb else None,
+                mcap=round(mcap, 0) if mcap else None,
+                v_score=index_v_score(pe, None, None))
+        except Exception as e:
+            print(f"  港股估值失败 {name}({sym}): {e}")
+        time.sleep(1)
+    return out
+
+
+# 港股估值覆盖: 网页 symbol -> 名称 (只加有 PE/PB 数据的个股; 指数无)
+HK_SYMS = {
+    "hk00700": "腾讯控股",
+}
+
 def main():
     os.makedirs(os.path.dirname(OUT_FILE), exist_ok=True)
     if not os.path.exists(STOCKS_FILE):
@@ -160,6 +201,11 @@ def main():
         result.update(fetch_index_vals())
     except Exception as e:
         print("指数估值跳过(akshare 不可用):", e)
+    # 港股估值 V 分(腾讯 qt.gtimg.cn, 免费)
+    try:
+        result.update(fetch_hk_vals())
+    except Exception as e:
+        print("港股估值跳过:", e)
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
     print(f"\n已写入 {OUT_FILE}")
