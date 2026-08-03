@@ -30,6 +30,9 @@
   .asset .name { font-weight:600; font-size:15px; }
   .asset .price { font-size:15px; font-variant-numeric:tabular-nums; }
   .asset .meta { font-size:12px; color:#64748b; margin-top:2px; }
+  .arrow { display:inline-block; width:16px; font-size:12px; color:#94a3b8; }
+  .eval { display:none; padding:8px 12px; margin:0 4px 8px; background:#f8fafc; border-left:3px solid #cbd5e1; border-radius:0 6px 6px 0; font-size:12px; color:#334155; line-height:1.9; text-align:left; }
+  .eval .row b { color:#0f172a; }
   .tag { display:inline-block; font-size:11px; padding:1px 6px; border-radius:4px; margin-left:6px; }
   .tag.up { background:#fee2e2; color:#b91c1c; }
   .tag.down { background:#dcfce7; color:#15803d; }
@@ -84,7 +87,7 @@
   <div class="card" id="fundCard" style="display:none;">
     <h2>■ 基本面 & 目标价</h2>
     <div id="fundBody" class="loading">加载中...</div>
-    <div class="note" id="fundNote">目标价 = 合理PE(增速+ROE推导) × 预期EPS,仅供估值参考</div>
+    <div class="note" id="fundNote">目标价 = 该股自身历史PE中位数 × 预期每股收益(最近12个月盈利 × 平滑增速),仅供估值参考</div>
   </div>
 
   <div class="card" id="assetCard">
@@ -243,8 +246,51 @@ function switchTab(g) {
 function fundVScore(a, r) {
   if (r.v !== null) return r.v;   // 黄金用乖离(实时算)
   var f = FUND[a.symbol] || FUND[a.symbol.replace(/^(sh|sz|hk)/, '')];
-  if (f && f.v_score !== undefined && f.v_score !== null) return f.v_score;
+  if (!f) return null;
+  if (f.target && r && r.close) {          // A股: 目标价不变, 用实时价重算空间 -> V
+    var sp = (f.target / r.close - 1) * 100;
+    if (sp >= 20) return 2;
+    if (sp >= 0) return 1;
+    if (sp > -20) return 0;
+    return -2;
+  }
+  if (a.hk && f.pe && f.pe > 0) {          // 港股: 实时 PE -> V
+    if (f.pe <= 12) return 2;
+    if (f.pe <= 15) return 1;
+    if (f.pe <= 20) return 0;
+    return -1;
+  }
+  if (a.hk && f.pb) {                      // 港股亏损(美团类): 实时 PB -> V
+    if (f.pb <= 3) return 2;
+    if (f.pb <= 5) return 1;
+    if (f.pb <= 8) return 0;
+    return -1;
+  }
+  if (f.v_score !== undefined && f.v_score !== null) return f.v_score;
   return null;
+}
+
+function loadHKQuotes() {
+  var syms = ASSETS.filter(function(a){ return a.hk; }).map(function(a){ return a.symbol; });
+  if (!syms.length) return;
+  fetch('https://qt.gtimg.cn/q=' + syms.join(','))
+    .then(function(r){ return r.text(); })
+    .then(function(txt){
+      txt.split(';').forEach(function(line){
+        var m = line.match(/v_(hk\d+)="([^"]*)"/);
+        if (!m) return;
+        var f = m[2].split('~');
+        if (f.length < 45) return;
+        var code = m[1].replace(/^hk/, '');
+        if (!FUND[code]) FUND[code] = {};
+        var pe = parseFloat(f[39]), pb = parseFloat(f[43]);
+        FUND[code].pe = (pe && pe > 0) ? Math.round(pe * 10) / 10 : null;
+        if (pb) FUND[code].pb = Math.round(pb * 100) / 100;
+        FUND[code].price = parseFloat(f[3]) || FUND[code].price || null;
+      });
+      renderFundamentals();
+      if (loaded >= INITIAL_COUNT) showLatest();
+    }).catch(function(){});
 }
 
 function render(i) {
@@ -440,8 +486,91 @@ function tryFetchFund(urls, i) {
   }
   fetch(urls[i])
     .then(function(r){ if (!r.ok) throw new Error('bad'); return r.json(); })
-    .then(function(j){ FUND = j || {}; renderFundamentals(); if (loaded >= INITIAL_COUNT) showLatest(); })
+    .then(function(j){ FUND = j || {}; loadHKQuotes(); renderFundamentals(); if (loaded >= INITIAL_COUNT) showLatest(); })
     .catch(function(){ tryFetchFund(urls, i + 1); });
+}
+
+function toggleEval(code) {
+  var el = document.getElementById('eval_' + code);
+  var ar = document.getElementById('arr_' + code);
+  if (!el) return;
+  var open = getComputedStyle(el).display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (ar) ar.textContent = open ? '▸' : '▾';
+}
+
+function stockEval(a, f, livePrice) {
+  var i = DATA[a.name].close.length - 1;
+  var r = calcAt(a.name, i);
+  if (!r) return '<div class="row">数据不足</div>';
+  var rows = [];
+  var t = r.trend.t;
+  // 趋势(大白话)
+  var tTxt;
+  if (t === '上涨中') tTxt = '最近在上涨 —— 现价比近1个月均价高,近1个月均价又比近3个月均价高,上升走势比较稳。';
+  else if (t === '反弹中') tTxt = '最近在反弹 —— 短期价格回升了,但中期(近3个月)还没完全走稳,先当反弹看。';
+  else if (t === '回调中') tTxt = '最近在回调 —— 中期还是涨的,但短期价格在回落,像涨多了歇口气。';
+  else tTxt = '最近在下跌 —— 现价比近1个月均价低,近1个月均价也比近3个月均价低,走势偏弱。';
+  rows.push('📈 涨跌趋势:' + tTxt);
+  // 动能(大白话)
+  var rs = Math.round(r.rsi);
+  var momPct = r.mom * 100;
+  var mTxt;
+  if (rs >= 70) mTxt = '短期有点过热 —— 短线强弱指标到了 ' + rs + '(超过70算过热,涨太猛容易回调)';
+  else if (rs >= 55) mTxt = '短期挺有劲 —— 短线强弱指标 ' + rs + '(55~70 属于偏强)';
+  else if (rs >= 45) mTxt = '短期不温不火 —— 短线强弱指标 ' + rs + '(45~55 属于中性)';
+  else if (rs >= 30) mTxt = '短期偏弱 —— 短线强弱指标 ' + rs + '(30~45 属于偏弱)';
+  else mTxt = '短期跌过头了 —— 短线强弱指标 ' + rs + '(30以下算超卖,可能反弹)';
+  rows.push('⚡ 上涨劲头:' + mTxt + ';近40个交易日累计' + (momPct >= 0 ? '涨了' : '跌了') + ' ' + Math.abs(momPct).toFixed(1) + '%。');
+  // 估值(大白话)
+  var v = fundVScore(a, r);
+  var vTxt = v === null ? '暂无' : v >= 2 ? '偏便宜' : v === 1 ? '略便宜' : v === 0 ? '合理' : v === -1 ? '略贵' : '偏贵';
+  var sp = (f.target && livePrice) ? (f.target / livePrice - 1) * 100 : f.space;
+  var estTxt = '';
+  if (f.target && livePrice) {
+    var tgt0 = f.target.toLocaleString('zh-CN', { maximumFractionDigits: 1 });
+    var spR = Math.round(sp * 10) / 10;
+    var head = f.analyst ? '券商一致预期目标价是 ' : '系统按盈利增速和赚钱能力(ROE)推导的目标价是 ';
+    if (sp >= 0) estTxt = head + tgt0 + ',现在价格离它还有 +' + spR + '% 的空间。';
+    else estTxt = head + tgt0 + ',现价已经比它高出 ' + Math.abs(spR) + '%。';
+  }
+  var peTxt = '';
+  if (f.eps_ttm && f.eps_ttm > 0 && livePrice) {
+    var peL = Math.round(livePrice / f.eps_ttm * 10) / 10;
+    peTxt = '按现在的赚钱速度,约 ' + peL + ' 年回本(PE ' + peL + ' 倍)';
+  } else if (f.pe) {
+    peTxt = '按现在的赚钱速度,约 ' + f.pe + ' 年回本(PE ' + f.pe + ' 倍)';
+  } else if (f.pb) {
+    peTxt = '股价约为净资产的 ' + f.pb + ' 倍(PB);公司近期整体亏损,看盈利倍数没意义,按净资产看';
+  }
+  var estLead = vTxt === '暂无' ? '' : '估值' + vTxt + ' —— ';
+  rows.push('💰 贵还是便宜:' + estLead + estTxt + (peTxt ? peTxt + '。' : ''));
+  // 一句话
+  rows.push('📝 一句话:' + stockOneLiner(f, t, v));
+  return rows.map(function(x){ return '<div class="row">' + x + '</div>'; }).join('');
+}
+
+function stockOneLiner(f, trend, v) {
+  if (f.verdict === '好') {
+    if (trend === '上涨中') return '公司质地好(评分' + f.score + ')、趋势向上、估值不贵 —— 安心拿着就行。';
+    if (trend === '反弹中') return '公司质地好(评分' + f.score + ')、短期在反弹 —— 先拿着,看这波能不能站稳。';
+    if (trend === '回调中') return '公司质地好(评分' + f.score + ')、中期仍涨,短期回调反而可以留意。';
+    return '公司质地好(评分' + f.score + ')但最近在下跌 —— 别急着接,等走势企稳再说。';
+  }
+  if (f.verdict === '中') {
+    if (trend === '上涨中') return '公司质地一般(评分' + f.score + ')、趋势向上 —— 可以拿着观察。';
+    if (trend === '下跌中') return '公司质地一般(评分' + f.score + ')、趋势向下 —— 先观望。';
+    return '公司质地一般(评分' + f.score + '),中性看待,跟着趋势走。';
+  }
+  if (f.verdict === '差') {
+    if (trend === '上涨中') return '公司质地偏弱(评分' + f.score + ')、短期只是反弹 —— 别当趋势追。';
+    return '公司质地偏弱(评分' + f.score + ')、走势偏空 —— 谨慎对待。';
+  }
+  var tTxt = trend === '上涨中' ? '向上' : trend === '下跌中' ? '向下' : '不明朗';
+  if (v === null) return '港股数据较少(暂无五维评分),走势' + tTxt + ',参考即可。';
+  if (v >= 2) return '港股数据较少(暂无五维评分),走势' + tTxt + '、估值偏便宜,参考即可。';
+  if (v === 0) return '港股数据较少(暂无五维评分),走势' + tTxt + '、估值合理,参考即可。';
+  return '港股数据较少(暂无五维评分),走势' + tTxt + '、估值偏贵,留意风险。';
 }
 
 function renderFundamentals() {
@@ -456,19 +585,23 @@ function renderFundamentals() {
       return;
     }
     var vc = f.verdict === '好' ? 'up' : f.verdict === '差' ? 'down' : '';
-    var sc = (f.space !== null && f.space !== undefined) ? (f.space >= 0 ? 'up' : 'down') : '';
-    var spaceTxt = (f.space === null || f.space === undefined) ? '—' : (f.space >= 0 ? '+' : '') + f.space + '%';
+    var livePrice = (DATA[a.name] && DATA[a.name].close.length) ? DATA[a.name].close[DATA[a.name].close.length - 1] : null;
+    var sp = (f.target && livePrice) ? (f.target / livePrice - 1) * 100 : f.space;
+    var sc = (sp !== null && sp !== undefined) ? (sp >= 0 ? 'up' : 'down') : '';
+    var spaceTxt = (sp === null || sp === undefined) ? '—' : (sp >= 0 ? '+' : '') + (Math.round(sp * 10) / 10) + '%';
     var tgt = f.target ? f.target.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : '—';
     var vtxt = (f.verdict !== undefined && f.verdict !== null) ? f.verdict : '—';
     var stxt = (f.score !== undefined && f.score !== null) ? f.score : '—';
     var tag = '<span class="tag ' + vc + '">' + vtxt + '</span>';
     var fnum = function(x){ return (x !== null && x !== undefined) ? x : '—'; };
-    html += '<div class="asset">' +
-      '<div><span class="name">' + a.name + '</span> ' + tag +
+    var peShow = (f.eps_ttm && f.eps_ttm > 0 && livePrice) ? (Math.round(livePrice / f.eps_ttm * 10) / 10) : f.pe;
+    html += '<div class="asset" style="cursor:pointer" onclick="toggleEval(\'' + code + '\')">' +
+      '<div><span class="arrow" id="arr_' + code + '">▸</span><span class="name">' + a.name + '</span> ' + tag +
       ' <span style="font-size:12px;color:#64748b;">评分' + stxt + '</span></div>' +
       '<div style="text-align:right"><span class="' + sc + '" style="font-weight:600;">目标 ' + tgt + ' (' + spaceTxt + ')</span>' +
       '<div class="meta">ROE ' + fnum(f.roe) + '% · 营收 ' + fnum(f.rev_g) + '%' +
-      ' · 负债 ' + fnum(f.debt) + '% · PE ' + fnum(f.pe) + '</div></div></div>';
+      ' · 负债 ' + fnum(f.debt) + '% · PE ' + fnum(peShow) + '</div></div></div>' +
+      '<div class="eval" id="eval_' + code + '">' + stockEval(a, f, livePrice) + '</div>';
   });
   document.getElementById('fundBody').innerHTML = html;
 }

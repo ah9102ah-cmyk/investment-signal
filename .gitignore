@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+cache/
+*.log
+holdings_dry.html
+holdings_body.html
