@@ -440,7 +440,7 @@ function tryFetchFund(urls, i) {
   }
   fetch(urls[i])
     .then(function(r){ if (!r.ok) throw new Error('bad'); return r.json(); })
-    .then(function(j){ FUND = j || {}; renderFundamentals(); })
+    .then(function(j){ FUND = j || {}; renderFundamentals(); if (loaded >= INITIAL_COUNT) showLatest(); })
     .catch(function(){ tryFetchFund(urls, i + 1); });
 }
 
