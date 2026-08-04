@@ -2,7 +2,9 @@
 import unittest
 
 import daily_signal as ds
+import email_signal
 import fetch_fundamentals as ff
+import signal_rules as rules
 
 
 class SignalTests(unittest.TestCase):
@@ -22,6 +24,86 @@ class SignalTests(unittest.TestCase):
         self.assertEqual(ds.make_signal(1, 1, 1), "偏强")
         self.assertEqual(ds.make_signal(-2, -2, 0), "偏弱")
         self.assertEqual(ds.make_signal(0, 0, 0), "中性")
+
+    def test_value_scores_use_each_assets_own_history(self):
+        history = list(range(1, 101))
+        self.assertEqual(rules.valuation_percentile_score(history, 10), 2)
+        self.assertEqual(
+            rules.valuation_percentile_score(history, 90, higher_is_cheaper=True), 2
+        )
+
+    def test_composite_value_score_is_always_normalized(self):
+        score, quality = rules.combine_scores({"pe": 2, "pb": 2, "erp": 2}, min_components=2)
+        self.assertEqual(score, 2)
+        self.assertEqual(quality, "完整")
+        score, quality = rules.combine_scores({"pe": -2, "pb": None, "erp": 2}, min_components=2)
+        self.assertEqual(score, 0)
+        self.assertEqual(quality, "降级(2/3)")
+
+    def test_gold_value_and_positive_momentum_rules(self):
+        self.assertEqual(rules.gold_bias_score(-16), 2)
+        self.assertEqual(rules.gold_bias_score(-10), 1)
+        self.assertEqual(rules.gold_bias_score(10), -1)
+        self.assertEqual(rules.gold_bias_score(16), -2)
+        self.assertEqual(
+            rules.select_positive_momentum({"A": 0.10, "B": -0.01, "C": 0.03}),
+            ["A", "C"],
+        )
+        self.assertEqual(rules.select_positive_momentum({"A": 0.10, "B": -0.01}), ["A"])
+
+    def test_multi_horizon_trend_requires_majority_and_positive_average(self):
+        rising = [100 + i * 0.1 for i in range(240)]
+        signal = rules.multi_horizon_trend(rising, 130)
+        self.assertEqual(signal["positive_votes"], 3)
+        self.assertTrue(signal["eligible"])
+
+        mixed = [100.0] * 240
+        mixed[-240] = 80.0
+        mixed[-200] = 120.0
+        mixed[-160] = 125.0
+        signal = rules.multi_horizon_trend(mixed, 100.0)
+        self.assertEqual(signal["positive_votes"], 1)
+        self.assertFalse(signal["eligible"])
+
+    def test_multi_horizon_selection_and_volatility(self):
+        signals = {
+            "A": {"eligible": True, "average": 0.12},
+            "B": {"eligible": False, "average": 0.20},
+            "C": {"eligible": True, "average": 0.08},
+        }
+        self.assertEqual(rules.select_multi_horizon_trend(signals), ["A", "C"])
+        steady = [100 * (1.001 ** i) for i in range(60)]
+        vol = rules.annualized_volatility(steady, steady[-1] * 1.001)
+        self.assertIsNotNone(vol)
+        self.assertLess(vol, 1e-10)
+
+    def test_email_parser_accepts_multi_horizon_table(self):
+        sample = """中长期趋势共识(160/200/240日；至少2个周期向上)
+--------------------------------------------------------------------------
+排名  资产      平均趋势      周期共识      60日波动
+1    黄金       +18.0%      3/3向上       15.0%
+--------------------------------------------------------------------------
+红利低波 1.200 +0.20 +1 +2 +1 +4 偏强 买入
+"""
+        momentum, _, signals, _, _ = email_signal.parse_output(sample)
+        self.assertEqual(momentum, [("1", "黄金", "+18.0%", "3/3向上", "15.0%")])
+        self.assertEqual(signals[0][-2:], ("偏强", "买入"))
+        html = email_signal.format_body(sample)
+        self.assertIn("中长期趋势共识", html)
+        self.assertIn("60日波动", html)
+
+    def test_final_action_uses_dual_confirmation_and_slow_exit(self):
+        self.assertEqual(rules.final_action(0, 2, 1, 0.12, 3)[0], "买入")
+        self.assertEqual(
+            rules.final_action(-2, 2, 1, 0.12, 3)[0], "持有",
+            "趋势向上但估值过贵时不应新增买入结论",
+        )
+        self.assertEqual(rules.final_action(0, -1, 0, -0.08, 1)[0], "卖出")
+        self.assertEqual(
+            rules.final_action(0, 1, 0, -0.02, 1)[0], "持有",
+            "长趋势刚转弱但短期仍稳时不应立刻卖出",
+        )
+        self.assertEqual(rules.final_action(None, 1, 1, 0.1, 3)[0], "数据不足")
 
 
 class ValuationTests(unittest.TestCase):

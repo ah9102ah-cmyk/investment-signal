@@ -73,27 +73,33 @@ def format_body(out):
     # 中国习惯: 红涨绿跌
     UP, DOWN = "#dc2626", "#16a34a"
     sig_color = {"偏强": "#dc2626", "偏弱": "#16a34a", "中性": "#d97706", "反复": "#9ca3af"}
+    action_color = {"买入": "#dc2626", "卖出": "#16a34a", "持有": "#d97706", "数据不足": "#9ca3af"}
 
     h = []
     h.append(f'<div style="max-width:620px;margin:0 auto;font-family:-apple-system,Segoe UI,Microsoft YaHei,sans-serif;color:#1f2937;background:#f8fafc;padding:16px;border-radius:12px;">')
     h.append(f'<div style="text-align:center;padding:14px 0 6px;"><span style="font-size:22px;font-weight:700;">📈 投资参考</span><br>'
              f'<span style="font-size:13px;color:#64748b;">{today}</span></div>')
 
-    # 动量数据
+    # 中长期趋势共识
     h.append(f'<div style="background:#fff;border-radius:10px;padding:14px 16px;margin-top:12px;border:1px solid #e2e8f0;">')
-    h.append(f'<div style="font-size:15px;font-weight:700;color:#0f766e;margin-bottom:8px;">■ 动量数据(40日涨幅)</div>')
+    h.append(f'<div style="font-size:15px;font-weight:700;color:#0f766e;margin-bottom:8px;">■ 中长期趋势共识(研究观察)</div>')
     if mom:
         h.append('<table style="width:100%;border-collapse:collapse;font-size:14px;">')
         h.append('<tr style="color:#64748b;font-size:12px;"><th style="text-align:left;padding:4px 6px;">排名</th>'
-                 '<th style="text-align:left;padding:4px 6px;">资产</th><th style="text-align:right;padding:4px 6px;">40日动量</th></tr>')
-        for rank, name, mp, _sg in mom:
-            mcol = UP if not mp.startswith("-") else DOWN
+                 '<th style="text-align:left;padding:4px 6px;">资产</th>'
+                 '<th style="text-align:right;padding:4px 6px;">平均趋势</th>'
+                 '<th style="text-align:right;padding:4px 6px;">周期共识</th>'
+                 '<th style="text-align:right;padding:4px 6px;">60日波动</th></tr>')
+        for rank, name, mp, consensus, vol in mom:
+            mcol = UP if not mp.startswith("-") and "不足" not in consensus else DOWN
             h.append(f'<tr><td style="padding:5px 6px;color:#64748b;">{rank}</td>'
                      f'<td style="padding:5px 6px;font-weight:600;">{name}</td>'
-                     f'<td style="padding:5px 6px;text-align:right;font-weight:600;color:{mcol};">{mp}</td></tr>')
+                     f'<td style="padding:5px 6px;text-align:right;font-weight:600;color:{mcol};">{mp}</td>'
+                     f'<td style="padding:5px 6px;text-align:right;color:{mcol};">{consensus}</td>'
+                     f'<td style="padding:5px 6px;text-align:right;">{vol}</td></tr>')
         h.append('</table>')
     # 数据说明
-    h.append('<div style="margin-top:8px;font-size:11.5px;color:#94a3b8;">40日动量 = 最近40个交易日涨幅,数字越大说明近期涨得越好。</div>')
+    h.append('<div style="margin-top:8px;font-size:11.5px;color:#94a3b8;">平均趋势 = 160/200/240日涨幅的平均；至少2个周期向上才形成共识。波动只作风险提示。</div>')
     h.append('</div>')
 
     # 三维度信号
@@ -105,10 +111,13 @@ def format_body(out):
                  '<th style="text-align:right;padding:4px;">现价</th><th style="text-align:right;padding:4px;">今日%</th>'
                  '<th style="text-align:center;padding:4px;">V</th><th style="text-align:center;padding:4px;">T</th>'
                  '<th style="text-align:center;padding:4px;">M</th><th style="text-align:center;padding:4px;">S</th>'
-                 '<th style="text-align:center;padding:4px;">判断</th></tr>')
-        for name, spot, chg, v, t, m, s, sg in sigs:
+                 '<th style="text-align:center;padding:4px;">判断</th>'
+                 '<th style="text-align:center;padding:4px;">结果</th></tr>')
+        for name, spot, chg, v, t, m, s, sg, action in sigs:
             scol = sig_color.get(sg, "#1f2937")
             sval = f'<span style="font-weight:700;color:{scol};">{sg}</span>'
+            acol = action_color.get(action, "#1f2937")
+            aval = f'<span style="font-weight:700;color:{acol};">{action}</span>'
             vc = UP if (v.startswith("+")) else (DOWN if v.startswith("-") else "#64748b")
             h.append(f'<tr><td style="padding:4px;font-weight:600;">{name}</td>'
                      f'<td style="padding:4px;text-align:right;">{spot}</td>'
@@ -117,7 +126,8 @@ def format_body(out):
                      f'<td style="padding:4px;text-align:center;">{t}</td>'
                      f'<td style="padding:4px;text-align:center;">{m}</td>'
                      f'<td style="padding:4px;text-align:center;font-weight:700;">{s}</td>'
-                     f'<td style="padding:4px;text-align:center;">{sval}</td></tr>')
+                     f'<td style="padding:4px;text-align:center;">{sval}</td>'
+                     f'<td style="padding:4px;text-align:center;">{aval}</td></tr>')
         h.append('</table>')
         h.append('</div>')
         # 指标说明
@@ -128,7 +138,8 @@ def format_body(out):
                  'T 趋势分: +2 = 上涨趋势,-2 = 下跌趋势(看20/60日均线)<br>'
                  'M 动能分: +2 = 短期上涨有延续,-2 = 下跌动能较强(看RSI和近5日涨跌)<br>'
                  '过热/超跌只作风险提示,不反向计入M分<br>'
-                 'S 总分: V+T+M,正数偏强,负数偏弱；仅供观察,不构成买卖指令</div>')
+                 'S 总分: V+T+M,正数偏强,负数偏弱<br>'
+                 '最终结果: 中长期趋势与V/T/M共同确认；“持有”在未持有时理解为继续观望,不会自动交易</div>')
 
     # 理由
     if notes:
@@ -158,7 +169,7 @@ def parse_output(out):
     in_mom, seen_sep = False, False
     for raw in out.splitlines():
         l = raw.strip()
-        if "动量数据(" in l or "动量轮动(" in l:
+        if "中长期趋势共识(" in l or "动量数据(" in l or "动量轮动(" in l:
             in_mom = True
             continue
         if in_mom:
@@ -177,12 +188,14 @@ def parse_output(out):
             parts = l.split()
             if len(parts) >= 3 and parts[0].isdigit():
                 mom.append((parts[0], parts[1], parts[2],
-                            parts[3] if len(parts) >= 4 else ""))
+                            parts[3] if len(parts) >= 4 else "",
+                            parts[4] if len(parts) >= 5 else ""))
             continue
         if l.startswith(("红利低波", "沪深300", "黄金")) and any(x in l for x in ("偏强", "偏弱", "中性", "反复")) and "≈" not in l:
             parts = l.split()
-            if len(parts) >= 8:
-                sigs.append((parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7]))
+            if len(parts) >= 9:
+                sigs.append((parts[0], parts[1], parts[2], parts[3], parts[4], parts[5],
+                             parts[6], parts[7], parts[8]))
             continue
         if "股息率" in l or "PE≈" in l or "乖离" in l:
             notes.append(l)

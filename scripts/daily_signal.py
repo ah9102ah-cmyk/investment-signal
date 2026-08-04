@@ -14,6 +14,7 @@ import sys, os, json, time, datetime as dt
 import pandas as pd
 import numpy as np
 import datahub
+import signal_rules as rules
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -21,7 +22,7 @@ except Exception:
     pass
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-STATE_FILE = os.path.join(BASE, "state.json")
+STATE_FILE = os.environ.get("SIGNAL_STATE_FILE", os.path.join(BASE, "state.json"))
 TODAY = dt.date.today().isoformat()
 
 # ---------------------------------------------------------------- 指标
@@ -142,18 +143,19 @@ def _trend_text(close, spot):
         return f"下跌中(现价{spot:.0f} < 1月线{ma20:.0f} < 3月线{ma60:.0f})"
     return f"回调中(现价{spot:.0f} < 1月线{ma20:.0f},仍 > 3月线{ma60:.0f})"
 
-def _note_300(hist_300, pe_now, erp_pct, pb_df, spot_300, close_300, cn10y):
+def _note_300(hist_300, pe_now, erp_pct, pb_df, spot_300, close_300, cn10y, value_meta):
     """沪深300 详细理由: PE/PB 历史分位 + 股债性价比 + 盈利收益率息差 + 趋势"""
     pe_s = hist_300["滚动市盈率"].dropna().tail(1250)
     pe_pct_v = (pe_s < pe_now).mean() * 100 if len(pe_s) > 60 else float("nan")
     txt = f"PE≈{pe_now:.1f}(5年分位{pe_pct_v:.0f}%)"
     if pb_df is not None and len(pb_df) > 60:
-        pb_now_v = float(pb_df["市净率"].iloc[-1]) * (spot_300 / close_300.iloc[-1])
+        pb_now_v = float(pb_df["市净率"].iloc[-1])
         pb_pct_v = (pb_df["市净率"].dropna().tail(1250) < pb_now_v).mean() * 100
         txt += f"; PB≈{pb_now_v:.2f}(分位{pb_pct_v:.0f}%)"
     ep = 100 / pe_now
     txt += f"; 盈利收益率≈{ep:.1f}% vs 国债{cn10y:.2f}%(息差+{ep - cn10y:.1f}pp)"
     txt += f"; 股债性价比利差百分位≈{erp_pct:.0f}%(越高越便宜)"
+    txt += f"; 估值数据{value_meta['quality']}"
     txt += f"; 趋势:{_trend_text(close_300, spot_300)}"
     return txt
 
@@ -178,11 +180,11 @@ def main():
     print("=" * 74)
 
     hm = now.strftime("%H:%M")
-    if hm >= "14:50":
+    if "14:50" <= hm < "15:00":
         cp = "14:50"
-    elif hm >= "14:30":
+    elif "14:30" <= hm < "14:50":
         cp = "14:30"
-    elif hm >= "14:00":
+    elif "14:00" <= hm < "14:30":
         cp = "14:00"
     else:
         cp = None
@@ -193,7 +195,7 @@ def main():
 
     # ---------- 实时行情 ----------
     try:
-        hq = datahub.hq(["sh512890", "sh000300", "nf_AU0"])
+        hq = datahub.hq(["sh512890", "sh000300", "sh518880"])
         def f(code, idx):
             parts = hq.get(code, (None, []))[1]
             try:
@@ -201,13 +203,8 @@ def main():
             except (TypeError, ValueError, IndexError):
                 return None
         etf_hl = f("sh512890", 3)      # 512890 现价
-        prev_etf_hl = f("sh512890", 2) # 512890 昨收
         spot_300 = f("sh000300", 3)
-        prev_300 = f("sh000300", 2)
-        spot_au = f("nf_AU0", 8)
-        prev_au = f("nf_AU0", 10)
-        vol_300 = f("sh000300", 8)
-        vol_au = f("nf_AU0", 13)
+        spot_au = f("sh518880", 3)      # 黄金ETF现价,与基金页同口径
         hq_date = (hq.get("sh000300", (None, []))[1][30] if len(hq.get("sh000300", (None, []))[1]) > 30 else "") or today
         if hq_date != today:
             print(f"注意: 实时数据日期 {hq_date}(非今日交易数据)")
@@ -217,9 +214,10 @@ def main():
 
     # ---------- 历史/估值 ----------
     try:
-        hist_hl = datahub.hist_hl()
+        hist_hl = datahub.hist_etf("512890")
         hist_300 = datahub.hist_300()
-        hist_au = datahub.hist_au()
+        hist_au = datahub.hist_etf("518880")
+        value_hl = datahub.hist_hl()
         div_yield, pe_hl_latest = datahub.div_yield_hl()
         cn10y_df = datahub.bond_cn()
         us10y_df = datahub.bond_us()
@@ -236,32 +234,38 @@ def main():
 
     results = {}
 
-    # ========== 1. 红利低波(512890现价 折算为 H30269 指数点位, 同标尺) ==========
+    # ========== 1. 红利低波(价格与基金页统一使用 ETF 512890) ==========
     close_hl = hist_hl["收盘"]
-    spot_hl = etf_hl * (close_hl.iloc[-1] / prev_etf_hl) if prev_etf_hl else etf_hl
+    spot_hl = etf_hl
     chg_hl = (spot_hl / close_hl.iloc[-1] - 1)
     chg5_hl = spot_hl / close_hl.iloc[-6] - 1 if len(close_hl) > 6 else None
-    pe_hl_now = pe_hl_latest * (spot_hl / close_hl.iloc[-1])
-    v_hl = -percentile_score(hist_hl["滚动市盈率"], pe_hl_now)
-    div_now = div_yield * close_hl.iloc[-1] / spot_hl
+    # V 使用每日官方估值，不用盘中价格近似改写；网页、邮件和回测保持同一口径。
+    pe_hl_now = pe_hl_latest
+    div_now = div_yield
+    v_hl, v_hl_meta = rules.redli_value_score(
+        value_hl["滚动市盈率"], pe_hl_now
+    )
     t_hl = score_trend(close_hl, spot_hl)
     m_hl = score_momentum(close_hl, spot_hl, chg5_hl)
     sig_hl = make_signal(v_hl, t_hl, m_hl)
-    pe_pct_hl = (hist_hl["滚动市盈率"].dropna().tail(1250) < pe_hl_now).mean() * 100
+    pe_pct_hl = (value_hl["滚动市盈率"].dropna().tail(1250) < pe_hl_now).mean() * 100
     results["红利低波"] = dict(spot=spot_hl, chg=chg_hl, v=v_hl, t=t_hl, m=m_hl,
                                 s=v_hl + t_hl + m_hl, sig=sig_hl,
-                                note=f"股息率≈{div_now:.2f}%(10年国债{cn10y:.2f}%,息差+{div_now - cn10y:.2f}pp); "
-                                     f"PE≈{pe_hl_now:.1f}(5年分位{pe_pct_hl:.0f}%); 趋势:{_trend_text(close_hl, spot_hl)}")
+                                note=f"股息率≈{div_now:.2f}%(较10年国债高{div_now - cn10y:+.2f}个百分点,仅作背景); "
+                                     f"PE≈{pe_hl_now:.1f}(5年分位{pe_pct_hl:.0f}%,分{v_hl_meta['pe']:+d}); "
+                                     f"估值数据{v_hl_meta['quality']}; 趋势:{_trend_text(close_hl, spot_hl)}")
 
     # ========== 2. 沪深300 ==========
     close_300 = hist_300["收盘"]
     chg_300 = spot_300 / close_300.iloc[-1] - 1
     chg5_300 = spot_300 / close_300.iloc[-6] - 1 if len(close_300) > 6 else None
-    pe_now = float(hist_300["滚动市盈率"].iloc[-1]) * (spot_300 / close_300.iloc[-1])
+    # 估值按每日官方收盘口径，技术面继续使用盘中现价。
+    pe_now = float(hist_300["滚动市盈率"].iloc[-1])
     ep_now = 100 / pe_now
     erp_now = ep_now - cn10y
     # 历史利差百分位(中债覆盖期约2022起)
-    erp_pct = 50
+    erp_pct = float("nan")
+    erp_hist = pd.Series(dtype=float)
     try:
         p = hist_300[["日期", "滚动市盈率"]].merge(cn10y_df, on="日期", how="inner")
         p = p[p["日期"] >= (dt.datetime.now() - dt.timedelta(days=1825)).strftime("%Y-%m-%d")]
@@ -270,16 +274,18 @@ def main():
             erp_pct = (erp_hist < erp_now).mean() * 100
     except Exception:
         pass
-    v_pe = -percentile_score(hist_300["滚动市盈率"], pe_now)
-    v_pb = -percentile_score(pb_df["市净率"], float(pb_df["市净率"].iloc[-1]) * (spot_300 / close_300.iloc[-1])) if pb_df is not None else 0
-    v_erp = 2 if erp_pct >= 70 else 1 if erp_pct >= 50 else 0 if erp_pct >= 30 else -1 if erp_pct >= 15 else -2
-    v_300 = round((v_pe + v_pb + v_erp) / 3)
+    pb_history = pb_df["市净率"] if pb_df is not None else []
+    pb_now = float(pb_df["市净率"].iloc[-1]) if pb_df is not None else float("nan")
+    v_300, v_300_meta = rules.hs300_value_score(
+        hist_300["滚动市盈率"], pe_now, pb_history, pb_now, erp_hist, erp_now
+    )
     m_300 = score_momentum(close_300, spot_300, chg5_300)
     t_300 = score_trend(close_300, spot_300)
     sig_300 = make_signal(v_300, t_300, m_300)
     results["沪深300"] = dict(spot=spot_300, chg=chg_300, v=v_300, t=t_300, m=m_300,
                                s=v_300 + t_300 + m_300, sig=sig_300,
-                               note=_note_300(hist_300, pe_now, erp_pct, pb_df, spot_300, close_300, cn10y))
+                               note=_note_300(hist_300, pe_now, erp_pct, pb_df, spot_300, close_300,
+                                              cn10y, v_300_meta))
 
     # ========== 3. 黄金 ==========
     close_au = hist_au["收盘"]
@@ -287,46 +293,60 @@ def main():
     chg5_au = spot_au / close_au.iloc[-6] - 1 if len(close_au) > 6 else None
     ma250 = ma(close_au, 250).iloc[-1]
     bias = (spot_au / ma250 - 1) * 100 if not pd.isna(ma250) else 0
-    v_au = 2 if bias < -15 else 1 if bias < -5 else 0 if bias < 5 else -1 if bias < 15 else -2
+    v_au = rules.gold_bias_score(bias)
     us_dir = 0
     if len(us10y_df) > 30:
         us_now = float(us10y_df["收益率"].iloc[-1])
         us_prev = float(us10y_df["收益率"].iloc[-20])
         us_dir = 1 if us_now < us_prev - 0.05 else -1 if us_now > us_prev + 0.05 else 0
-    v_au = clamp(v_au + us_dir, -2, 2)
     t_au = score_trend(close_au, spot_au)
     m_au = score_momentum(close_au, spot_au, chg5_au)
     sig_au = make_signal(v_au, t_au, m_au)
     high250 = close_au.tail(250).max()
     dd250 = (spot_au / high250 - 1) * 100 if not pd.isna(high250) else 0
     rsi_au = rsi(pd.concat([close_au, pd.Series([spot_au])])).iloc[-1]
-    us_txt = {1: "上升(利空黄金)", 0: "持平", -1: "下降(利好黄金)"}.get(us_dir, "持平")
+    us_txt = {1: "下降(对黄金相对有利)", 0: "持平", -1: "上升(对黄金相对不利)"}.get(us_dir, "持平")
     results["黄金"] = dict(spot=spot_au, chg=chg_au, v=v_au, t=t_au, m=m_au,
                            s=v_au + t_au + m_au, sig=sig_au,
                            note=f"乖离250日≈{bias:+.1f}%(现价{spot_au:.0f} vs 年线{ma250:.0f}, 距250日高点{dd250:.1f}%); "
-                                f"美债10Y {us10y:.2f}% 较30日前{us_txt}; RSI≈{rsi_au:.0f}; 趋势:{_trend_text(close_au, spot_au)}")
+                                f"美债10Y {us10y:.2f}% 较20个交易日前{us_txt}(只作背景,不重复计入V); "
+                                f"RSI≈{rsi_au:.0f}; 趋势:{_trend_text(close_au, spot_au)}")
 
-    # ========== 动量数据(40日涨幅排名) ==========
+    # ========== 中长期趋势共识(160/200/240日) ==========
     print()
     print("-" * 74)
-    print("动量数据(40日涨幅, 越高说明近期越强)")
+    print("中长期趋势共识(160/200/240日；至少2个周期向上)")
     print("-" * 74)
-    mom_data = {}
+    trend_data = {}
+    vol_data = {}
     for name, (spot, close) in [("红利低波", (spot_hl, close_hl)),
                                 ("沪深300", (spot_300, close_300)),
                                 ("黄金", (spot_au, close_au))]:
-        if len(close) >= 40:
-            mom_data[name] = spot / close.iloc[-40] - 1
+        trend_data[name] = rules.multi_horizon_trend(close.tolist(), spot)
+        vol_data[name] = rules.annualized_volatility(close.tolist(), spot)
     today_pos = []
-    if mom_data:
-        mom_sorted = sorted(mom_data.items(), key=lambda x: -x[1])
-        all_neg = all(m <= 0 for _, m in mom_data.items())
-        today_pos = [] if all_neg else [n for n, _ in mom_sorted[:2]]
-        print(f"{'排名':<5}{'资产':<8}{'40日动量':>10}")
-        for rank, (name, m) in enumerate(mom_sorted, 1):
-            print(f"{rank:<5}{name:<8}{m*100:>+9.1f}%")
+    available = {name: signal for name, signal in trend_data.items() if signal is not None}
+    if available:
+        trend_sorted = sorted(available.items(), key=lambda x: -x[1]["average"])
+        today_pos = rules.select_multi_horizon_trend(available, top_k=2)
+        print(f"{'排名':<5}{'资产':<8}{'平均趋势':>10}{'周期共识':>12}{'60日波动':>10}")
+        for rank, (name, signal) in enumerate(trend_sorted, 1):
+            consensus = f"{signal['positive_votes']}/3向上" + ("" if signal["eligible"] else "(不足)")
+            vol = vol_data.get(name)
+            vol_text = f"{vol*100:.1f}%" if vol is not None else "--"
+            print(f"{rank:<5}{name:<8}{signal['average']*100:>+9.1f}%{consensus:>12}{vol_text:>10}")
     else:
-        print(">> 历史数据不足(需40个交易日)")
+        print(">> 历史数据不足(需240个交易日)")
+
+    for name, result in results.items():
+        long_signal = trend_data.get(name)
+        action, action_reason = rules.final_action(
+            result.get("v"), result.get("t"), result.get("m"),
+            long_signal.get("average") if long_signal else None,
+            long_signal.get("positive_votes") if long_signal else None,
+        )
+        result["action"] = action
+        result["action_reason"] = action_reason
 
     # ---------- 状态与翻转 ----------
     flips = update_state(results, cp, today_pos)
@@ -336,11 +356,12 @@ def main():
 
     # ---------- 输出 ----------
     print("-" * 74)
-    print(f"{'资产':<8}{'现价':>10}{'今日%':>8}{'V':>4}{'T':>4}{'M':>4}{'S':>5}  判断")
+    print(f"{'资产':<8}{'现价':>10}{'今日%':>8}{'V':>4}{'T':>4}{'M':>4}{'S':>5}  {'判断':<4}{'结果':>6}")
     print("-" * 74)
     for name, r in results.items():
         chg = f"{r['chg'] * 100:+.2f}" if r["chg"] is not None else "--"
-        print(f"{name:<8}{r['spot']:>10.3f}{chg:>8}{r['v']:>+4d}{r['t']:>+4d}{r['m']:>+4d}{r['s']:>+5d}  {r['sig']}")
+        action = "持有" if (cp and flips.get(name, 0) >= 2) else r["action"]
+        print(f"{name:<8}{r['spot']:>10.3f}{chg:>8}{r['v']:>+4d}{r['t']:>+4d}{r['m']:>+4d}{r['s']:>+5d}  {r['sig']:<4}{action:>6}")
     print("-" * 74)
     for name, r in results.items():
         print(f"  {name}: {r['note']}")
@@ -351,7 +372,7 @@ def main():
             if final_sig[name] == "反复":
                 print(f"  {name}: 盘中判断反复,暂不下结论")
             else:
-                print(f"  {name}: {final_sig[name]} —— 结合估值与趋势自行判断")
+                print(f"  {name}: {final_sig[name]}；策略结果 {r['action']} —— {r['action_reason']}")
     else:
         print("非观察窗口: 当前仅为数据快照。")
 

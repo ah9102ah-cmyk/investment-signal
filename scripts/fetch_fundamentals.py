@@ -8,6 +8,8 @@
 """
 import datetime as dt
 import json, math, os, statistics, time, urllib.request
+import datahub
+import signal_rules as rules
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(BASE)
@@ -43,7 +45,8 @@ def num(v):
     if v is None or v == "--" or v == "":
         return None
     try:
-        return float(v)
+        value = float(v)
+        return value if math.isfinite(value) else None
     except Exception:
         return None
 
@@ -559,27 +562,73 @@ INDEXES = {
     "sz399989": ("399989", "中证医疗"),
 }
 
-def index_v_score(pe, div_yield, sym):
-    """简化 V 分: 红利低波看股息率, 其他看 PE(绝对值口径, 非历史分位)"""
+def index_v_score(history, current_row, sym, pb_df=None, cn10y_df=None):
+    """按指数自身历史区间计算 V，返回 (分数, 元数据)。"""
+    import pandas as pd
+
+    history = history.copy()
+    history["日期"] = pd.to_datetime(history["日期"])
+    history = history.sort_values("日期")
+    pe = num(current_row.get("市盈率1"))
+    valuation_date = str(pd.to_datetime(current_row.get("日期")).date())
+    pe_history = history["滚动市盈率"]
+
     if sym == "sh512890":
-        if div_yield is None:
-            return None
-        return 2 if div_yield >= 5 else 1 if div_yield >= 4 else 0 if div_yield >= 3 else -1
-    if pe is None:
-        return None
-    return 2 if pe <= 12 else 1 if pe <= 15 else 0 if pe <= 20 else -1
+        score, details = rules.redli_value_score(pe_history, pe)
+        method = "自身5年PE分位(股息率仅作背景)"
+    elif sym == "sh000300":
+        pb_history = pb_df["市净率"] if pb_df is not None else []
+        pb_now = float(pb_df["市净率"].iloc[-1]) if pb_df is not None else float("nan")
+        erp_history = []
+        erp_now = float("nan")
+        if cn10y_df is not None and pe:
+            cn = cn10y_df[["日期", "收益率"]].copy()
+            cn["日期"] = pd.to_datetime(cn["日期"])
+            pe_hist = history[["日期", "滚动市盈率"]].rename(columns={"滚动市盈率": "PE"})
+            merged = pe_hist.merge(cn, on="日期", how="inner").dropna()
+            erp_history = 100 / merged["PE"] - merged["收益率"]
+            erp_now = 100 / pe - float(cn["收益率"].iloc[-1])
+        score, details = rules.hs300_value_score(
+            pe_history, pe, pb_history, pb_now, erp_history, erp_now
+        )
+        method = "自身5年PE/PB/股债利差分位"
+    else:
+        score = rules.valuation_percentile_score(pe_history, pe)
+        details = {"pe": score, "quality": "完整" if score is not None else "数据不足"}
+        method = "自身5年PE分位"
+
+    return score, {
+        "v_method": method,
+        "v_quality": details.pop("quality"),
+        "v_components": details,
+        "valuation_date": valuation_date,
+    }
 
 def fetch_index_vals():
     import akshare as ak
     out = {}
+    try:
+        pb_df = datahub.pb_lg()
+    except Exception as e:
+        print(f"  沪深300 PB 历史不可用,估值将降级: {e}")
+        pb_df = None
+    try:
+        cn10y_df = datahub.bond_cn()
+    except Exception as e:
+        print(f"  中债历史不可用,股债利差将降级: {e}")
+        cn10y_df = None
     for sym, (icode, name) in INDEXES.items():
         try:
-            df = ak.stock_zh_index_value_csindex(symbol=icode)
+            df = ak.stock_zh_index_value_csindex(symbol=icode).sort_values("日期")
             row = df.iloc[-1]
-            pe = float(row.get("市盈率1") or 0) or None
-            dy = float(row.get("股息率1") or 0) or None
+            pe = num(row.get("市盈率1"))
+            dy = num(row.get("股息率1"))
+            history = datahub.index_history(icode)
+            score, meta = index_v_score(
+                history, row, sym, pb_df=pb_df, cn10y_df=cn10y_df
+            )
             out[sym] = {"name": name, "pe": pe, "div_yield": dy,
-                        "v_score": index_v_score(pe, dy, sym)}
+                        "v_score": score, **meta}
         except Exception as e:
             print(f"  指数估值失败 {name}: {e}")
         time.sleep(1)
