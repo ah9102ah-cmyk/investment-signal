@@ -81,14 +81,19 @@ def _csindex(symbol):
     return out.sort_values("日期").reset_index(drop=True)
 
 
+def index_history(symbol, cache_name=None):
+    """中证指数历史行情与滚动PE。"""
+    return cached(cache_name or f"hist_index_{symbol.lower()}", lambda: _csindex(symbol))
+
+
 def hist_hl():
     """红利低波 H30269 日线(收盘/成交金额/滚动市盈率)"""
-    return cached("hist_hl", lambda: _csindex("H30269"))
+    return index_history("H30269", "hist_hl")
 
 
 def hist_300():
     """沪深300 000300 日线(收盘/成交金额/滚动市盈率)"""
-    return cached("hist_300", lambda: _csindex("000300"))
+    return index_history("000300", "hist_300")
 
 
 def hist_au():
@@ -100,6 +105,83 @@ def hist_au():
         df = df.rename(columns={"收盘价": "收盘"})
         return df.sort_values("日期").reset_index(drop=True)
     return cached("hist_au", loader)
+
+
+def hist_etf(symbol):
+    """场内基金前复权日线；避免把分红除权误判成真实下跌。"""
+    def loader():
+        try:
+            import akshare as ak
+            df = ak.fund_etf_hist_em(
+                symbol=symbol,
+                period="daily",
+                start_date="20130101",
+                end_date=dt.date.today().strftime("%Y%m%d"),
+                adjust="qfq",
+            )
+            df["日期"] = pd.to_datetime(df["日期"])
+            return df[["日期", "收盘"]].sort_values("日期").reset_index(drop=True)
+        except Exception as primary_error:
+            # 东财偶发代理/限流时，降级到与网页相同的腾讯前复权800日K线。
+            market = "sh" if symbol.startswith(("5", "6")) else "sz"
+            code = market + symbol
+            url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},day,,,800,qfq"
+            response = requests.get(url, headers=HDR, timeout=20)
+            response.raise_for_status()
+            payload = response.json().get("data", {}).get(code, {})
+            rows = payload.get("qfqday") or payload.get("day") or []
+            if len(rows) < 100:
+                raise RuntimeError(f"东财失败({primary_error}); 腾讯数据不足")
+            return pd.DataFrame({
+                "日期": pd.to_datetime([row[0] for row in rows]),
+                "收盘": [float(row[2]) for row in rows],
+            })
+
+    return cached(f"hist_etf_{symbol}_qfq", loader)
+
+
+def hist_etf_unadjusted(symbol):
+    """ETF 完整原始日线，供研究回测在前复权长历史不可用时降级。"""
+    def loader():
+        import akshare as ak
+        df = ak.fund_etf_hist_em(
+            symbol=symbol,
+            period="daily",
+            start_date="20130101",
+            end_date=dt.date.today().strftime("%Y%m%d"),
+            adjust="",
+        )
+        df["日期"] = pd.to_datetime(df["日期"])
+        return df[["日期", "收盘"]].sort_values("日期").reset_index(drop=True)
+
+    return cached(f"hist_etf_{symbol}", loader)
+
+
+def repair_etf_unit_changes(df, threshold=0.30):
+    """修复ETF份额折算造成的非市场价格断点，仅用于研究回测。
+
+    普通非杠杆ETF单日超过30%的跳变视为份额折算；把折算日前价格按断点比例衔接。
+    返回 (修复后数据, 修复日期列表)，不改写原始缓存。
+    """
+    out = df[["日期", "收盘"]].copy().sort_values("日期").reset_index(drop=True)
+    out["收盘"] = pd.to_numeric(out["收盘"], errors="coerce")
+    repaired = []
+    raw_return = out["收盘"].pct_change()
+    for i in raw_return[raw_return.abs() > threshold].index:
+        factor = out.loc[i, "收盘"] / out.loc[i - 1, "收盘"]
+        out.loc[:i - 1, "收盘"] *= factor
+        repaired.append(str(pd.to_datetime(out.loc[i, "日期"]).date()))
+    return out, repaired
+
+
+def hist_etf_research(symbol, preferred_min_rows=1200):
+    """研究用长历史：优先完整前复权，短历史时降级为断点修复后的原始日线。"""
+    qfq = hist_etf(symbol)
+    if len(qfq) >= preferred_min_rows:
+        return qfq, {"source": "完整前复权", "repaired": []}
+    raw = hist_etf_unadjusted(symbol)
+    repaired_df, repaired = repair_etf_unit_changes(raw)
+    return repaired_df, {"source": "原始日线+份额折算修复", "repaired": repaired}
 
 
 def div_yield_hl():

@@ -7,13 +7,13 @@
 ```
 investment-signal/
 ├── web/
-│   ├── index.html              # 主页面(基金/股票 tab、三维度信号、基本面&12个月估值区间、资产明细)
+│   ├── index.html              # 主页面(基金/股票 tab、三维度信号、最终三态结果、基本面&12个月估值区间、资产明细)
 │   ├── strategy.html           # 策略说明页
 │   └── data/fund.json          # 基本面数据(每日云端重算, 页面主数据源)
 ├── scripts/
 │   ├── fetch_fundamentals.py   # ★ 数据管道主脚本: 东财F10(财务) + 腾讯(行情/未复权K线) + akshare(港股财务/券商预期/指数估值) -> fund.json
 │   ├── stocks.json             # 股票清单(代码->名称), A股6位代码 + 港股5位代码
-│   ├── daily_signal.py         # 投资信号计算(动量轮动 + 三维度), 供邮件
+│   ├── daily_signal.py         # 投资信号计算(多周期趋势共识 + 三维度), 供邮件
 │   ├── datahub.py              # 信号数据源(csindex/新浪/乐咕)
 │   ├── email_signal.py         # 信号邮件(云端 SMTP 模式 + 本地 agently 模式)
 │   ├── holdings_email.py       # 持仓观察邮件(云端 SMTP 模式, 爱基金持仓 -> 双轮判断)

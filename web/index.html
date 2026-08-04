@@ -67,21 +67,21 @@
   </div>
 
   <div class="card">
-    <h2>■ 动量数据(40日涨幅)</h2>
+    <h2>■ 中长期趋势共识(研究观察)</h2>
     <table>
-      <tr><th>排名</th><th>资产</th><th class="num">40日动量</th></tr>
-      <tbody id="momBody"><tr><td colspan="3" class="loading">加载中...</td></tr></tbody>
+      <tr><th>排名</th><th>资产</th><th class="num">平均趋势</th><th class="num">周期共识</th><th class="num">60日波动</th></tr>
+      <tbody id="momBody"><tr><td colspan="5" class="loading">加载中...</td></tr></tbody>
     </table>
-    <div class="note">40日动量 = 最近40个交易日涨幅,数字越大说明近期涨得越好。口径: 红利低波/黄金用ETF价格(512890/518880),沪深300用指数点位,与邮件指数口径略有差异。</div>
+    <div class="note">平均趋势 = 160/200/240日涨幅的平均；至少2个周期向上才算形成共识。波动只提示风险,不生成买卖指令。三资产研究仍需继续向前验证。</div>
   </div>
 
   <div class="card">
-    <h2>■ 三维度信号(参考)</h2>
+    <h2>■ 三维度信号 & 最终结果</h2>
     <table>
-      <tr><th>资产</th><th style="text-align:center">V</th><th style="text-align:center">T</th><th style="text-align:center">M</th><th style="text-align:center">S</th></tr>
-      <tbody id="sigBody"><tr><td colspan="5" class="loading">加载中...</td></tr></tbody>
+      <tr><th>资产</th><th style="text-align:center">V</th><th style="text-align:center">T</th><th style="text-align:center">M</th><th style="text-align:center">S</th><th style="text-align:center">结果</th></tr>
+      <tbody id="sigBody"><tr><td colspan="6" class="loading">加载中...</td></tr></tbody>
     </table>
-    <div class="note" id="sigNote">V 估值 / T 趋势 / M 动能 / S 总分</div>
+    <div class="note" id="sigNote">最终结果由中长期趋势 + V/T/M 双轮共同确认；“持有”在未持有时理解为继续观望</div>
   </div>
 
   <div class="card" id="fundCard" style="display:none;">
@@ -101,13 +101,14 @@
       红色 = 涨 / 强,绿色 = 跌 / 弱<br>
       上涨中 = 现价 &gt; 1月线 &gt; 3月线 / 下跌中 = 现价 &lt; 1月线 &lt; 3月线<br>
       反弹中 = 短期回升、中期未确认 / 回调中 = 中期仍涨、短期回落<br>
-      V 估值分: +2 = 便宜,-2 = 贵(指数按PE/股息率,股票按目标价空间,黄金按年线乖离,每日更新)<br>
+      V 估值分: +2 = 相对自身历史偏便宜,-2 = 相对自身历史偏贵；红利低波看自身PE分位(股息率作背景),沪深300看PE/PB/股债利差,其他指数看自身PE分位,黄金看年线位置<br>
       T 趋势分: +2 = 上涨趋势,-2 = 下跌趋势<br>
       M 动能分: +2 = 短期上涨有延续,-2 = 下跌动能较强；过热/超跌另作风险提示<br>
-      S 总分: 仅在 V/T/M 都有数据时计算；正数偏强,负数偏弱<br>
+      中长期趋势: 看160/200/240日是否多数同向；60日波动越高,过程可能越颠簸<br>
+      S 总分: 仅在 V/T/M 都有数据时计算；正数偏强,负数偏弱,只作双轮解释<br>
       基本面: 五维评分(ROE/成长/负债/估值/毛利)+ 12个月估值区间,数据每日云端更新<br>
       选择历史日期时,无历史估值的数据会把 V/S 显示为 —,不会拿今天的估值冒充历史值<br>
-      估值(PE/PB/股息率)和详细理由见每日邮件
+      标有“观察”的指数尚未纳入三资产策略回测,但仍按同一套规则输出当前结果；标签只提示回测成熟度
     </div>
   </div>
 
@@ -119,9 +120,9 @@
 
 <script>
 var ASSETS = [
-  { name:"红利低波", symbol:"sh512890", digits:3, g:"fund" },
-  { name:"沪深300", symbol:"sh000300", digits:2, g:"fund" },
-  { name:"黄金", symbol:"sh518880", digits:3, g:"fund" },
+  { name:"红利低波", symbol:"sh512890", digits:3, g:"fund", validated:true, etf:true },
+  { name:"沪深300", symbol:"sh000300", digits:2, g:"fund", validated:true },
+  { name:"黄金", symbol:"sh518880", digits:3, g:"fund", validated:true, etf:true },
   { name:"中证500", symbol:"sh000905", digits:2, g:"fund" },
   { name:"科创50", symbol:"sh000688", digits:2, g:"fund" },
   { name:"中证白酒", symbol:"sz399997", digits:2, g:"fund" },
@@ -145,7 +146,7 @@ var loaded = 0;
 
 function loadK(a, varname, cb) {
   // 降级链: A股 新浪(JSONP) -> 腾讯(fetch); 港股 只走腾讯
-  if (a.hk) { loadTx(a, cb); return; }
+  if (a.hk || a.etf) { loadTx(a, cb); return; }
   loadSina(a, varname, function(data){
     if (data && data.length > 60) cb(data);
     else loadTx(a, cb);
@@ -192,6 +193,48 @@ function rsi14(arr) {
   return 100 - 100/(1 + ag/al);
 }
 
+function annualizedVol(arr, i, window) {
+  if (i < window) return null;
+  var rets = [];
+  for (var j = i-window+1; j <= i; j++) rets.push(arr[j]/arr[j-1]-1);
+  var mean = rets.reduce(function(a,b){ return a+b; }, 0) / rets.length;
+  var variance = rets.reduce(function(sum,x){ return sum + Math.pow(x-mean, 2); }, 0) / (rets.length-1);
+  return Math.sqrt(variance) * Math.sqrt(244);
+}
+
+function finalAction(v, r) {
+  if (v === null || r.t === null || r.m === null || r.longMom === null || r.longVotes === null) {
+    return { label:'数据不足', reason:'估值或中长期趋势数据不完整，暂不下结论', cls:'mid' };
+  }
+  var total = v + r.t + r.m;
+  var longPositive = r.longVotes >= 2 && r.longMom > 0;
+  var longNegative = r.longVotes <= 1 && r.longMom < 0;
+  var enter = longPositive && v >= -1 && r.t >= 0 && r.m >= -1;
+  var exitNow = total <= -4 || (r.t <= -2 && v <= -1) || (longNegative && r.t <= -1);
+  if (exitNow) return {
+    label:'卖出',
+    reason:(longNegative && r.t <= -1) ? '中长期多数周期向下，短期趋势也已转弱' : '估值与短期走势的弱项已经达到退出门槛',
+    cls:'down'
+  };
+  if (enter) return { label:'买入', reason:'中长期多数周期向上，估值不过分贵，短期走势没有拖后腿', cls:'up' };
+  if (longPositive) return { label:'持有', reason:'中长期方向仍向上，但估值或短期走势尚未同时确认', cls:'mid' };
+  return { label:'持有', reason:'中长期方向尚未形成明确反转，继续等待双轮确认', cls:'mid' };
+}
+
+function actionForAsset(a, v, r, useCurrentValuation) {
+  var action = finalAction(v, r);
+  if (!a.validated && a.g === 'fund' && useCurrentValuation && v === null &&
+      r.t !== null && r.m !== null && r.longMom !== null && r.longVotes !== null) {
+    return {
+      label:'持有',
+      reason:'当前缺少可靠估值，双轮没有同时确认；已有仓位按持有理解，未持有则继续观望',
+      cls:'mid',
+      quality:'估值缺失'
+    };
+  }
+  return action;
+}
+
 function calcAt(name, i) {
   var c = DATA[name].close;
   if (i < 60 || i >= c.length) return null;
@@ -201,6 +244,14 @@ function calcAt(name, i) {
   for (var j = i-59; j <= i; j++) ma60 += c[j];
   ma20 /= 20; ma60 /= 60;
   var mom = last/c[i-40] - 1;
+  var longMom = null, longVotes = null, longConsensus = false;
+  if (i >= 240) {
+    var longMoves = [last/c[i-160]-1, last/c[i-200]-1, last/c[i-240]-1];
+    longMom = longMoves.reduce(function(a,b){ return a+b; }, 0) / longMoves.length;
+    longVotes = longMoves.filter(function(x){ return x > 0; }).length;
+    longConsensus = longVotes >= 2 && longMom > 0;
+  }
+  var vol60 = annualizedVol(c, i, 60);
   var chg = last/prev - 1;
   var rs = rsi14(c.slice(0, i+1));
   var tr;
@@ -220,13 +271,14 @@ function calcAt(name, i) {
     for (var j = i-249; j <= i; j++) ma250 += c[j];
     ma250 /= 250;
     var bias = last/ma250 - 1;
-    if (bias > 0.15) vScore = -2; else if (bias > 0.08) vScore = -1;
-    else if (bias < -0.15) vScore = 2; else if (bias < -0.08) vScore = 1;
+    if (bias >= 0.15) vScore = -2; else if (bias >= 0.05) vScore = -1;
+    else if (bias < -0.15) vScore = 2; else if (bias < -0.05) vScore = 1;
     else vScore = 0;
   }
   var sScore = vScore === null ? null : vScore + tScore + mScore;
   var risk = (rs >= 80 || chg5 >= 0.08) ? '涨得偏急' : (rs < 20 || chg5 <= -0.08) ? '跌得偏急' : '';
-  return { mom:mom, chg:chg, chg5:chg5, rsi:rs, trend:tr, close:last, v:vScore, t:tScore, m:mScore, s:sScore, risk:risk };
+  return { mom:mom, longMom:longMom, longVotes:longVotes, longConsensus:longConsensus, vol60:vol60,
+           chg:chg, chg5:chg5, rsi:rs, trend:tr, close:last, v:vScore, t:tScore, m:mScore, s:sScore, risk:risk };
 }
 
 var CUR = "fund";
@@ -271,13 +323,13 @@ function fundVScore(a, r, useCurrentValuation) {
   if (!f) return null;
   var rangeScore = valuationRangeScore(f, r && r.close);
   if (rangeScore !== null) return rangeScore;
-  if (a.hk && f.pe && f.pe > 0) {          // 港股: 实时 PE -> V
+  if (a.g === 'stock' && a.hk && f.pe && f.pe > 0) { // 港股个股: 实时 PE -> V
     if (f.pe <= 12) return 2;
     if (f.pe <= 15) return 1;
     if (f.pe <= 20) return 0;
     return -1;
   }
-  if (a.hk && f.pb) {                      // 港股亏损(美团类): 实时 PB -> V
+  if (a.g === 'stock' && a.hk && f.pb) {   // 港股亏损个股(美团类): 实时 PB -> V
     if (f.pb <= 3) return 2;
     if (f.pb <= 5) return 1;
     if (f.pb <= 8) return 0;
@@ -331,14 +383,21 @@ function renderDay(day, useCurrentValuation) {
     return { name:a.name, r:r, index:ai, actualDay:ai >= 0 ? DATA[a.name].days[ai] : '' };
   });
   var bad = rows.some(function(x){ return !x.r; });
-  if (bad) { document.getElementById('momBody').innerHTML = '<tr><td colspan="3" class="err">该日期数据不足</td></tr>'; return; }
+  if (bad) { document.getElementById('momBody').innerHTML = '<tr><td colspan="5" class="err">该日期数据不足</td></tr>'; return; }
 
-  var momRows = rows.slice().sort(function(a,b){ return b.r.mom - a.r.mom; });
+  var momRows = rows.slice().sort(function(a,b){
+    return (b.r.longMom === null ? -99 : b.r.longMom) - (a.r.longMom === null ? -99 : a.r.longMom);
+  });
   var h = "";
   momRows.forEach(function(x, k){
-    var cls = x.r.mom >= 0 ? "up" : "down";
+    var cls = x.r.longConsensus ? "up" : "down";
+    var trendText = x.r.longMom === null ? '—' : (x.r.longMom*100 >= 0 ? '+' : '') + (x.r.longMom*100).toFixed(1) + '%';
+    var voteText = x.r.longVotes === null ? '—' : x.r.longVotes + '/3向上';
+    var volText = x.r.vol60 === null ? '—' : (x.r.vol60*100).toFixed(1) + '%';
     h += '<tr><td>' + (k+1) + '</td><td>' + x.name + '</td>' +
-         '<td class="num ' + cls + '">' + (x.r.mom*100).toFixed(1) + '%</td></tr>';
+         '<td class="num ' + cls + '">' + trendText + '</td>' +
+         '<td class="num ' + cls + '">' + voteText + '</td>' +
+         '<td class="num">' + volText + '</td></tr>';
   });
   document.getElementById('momBody').innerHTML = h;
 
@@ -353,28 +412,34 @@ function renderDay(day, useCurrentValuation) {
     var s = v === null ? null : v + r.t + r.m;
     var sTxt = s === null ? "—" : s > 0 ? "+" + s : s;
     var sCls = s === null ? "" : s > 0 ? "up" : s < 0 ? "down" : "";
-    sh += '<tr><td>' + a.name + '</td>' +
+    var action = actionForAsset(a, v, r, useCurrentValuation);
+    var actionQuality = action.quality ? '<span class="tag mid">' + action.quality + '</span>' : '';
+    var assetName = a.name + ((!a.validated && a.g === 'fund') ? '<span class="tag mid">观察</span>' : '');
+    sh += '<tr><td>' + assetName + '</td>' +
           '<td style="text-align:center" class="' + vCls + '">' + vTxt + '</td>' +
           '<td style="text-align:center">' + tTxt + '</td>' +
           '<td style="text-align:center">' + mTxt + '</td>' +
-          '<td style="text-align:center" class="' + sCls + '">' + sTxt + '</td></tr>';
+          '<td style="text-align:center" class="' + sCls + '">' + sTxt + '</td>' +
+          '<td style="text-align:center" class="' + action.cls + '" title="' + action.reason + '"><b>' + action.label + '</b>' + actionQuality + '</td></tr>';
   });
   document.getElementById('sigBody').innerHTML = sh;
   document.getElementById('sigNote').textContent = useCurrentValuation ?
-    'V 估值分 · T 趋势分 · M 动能分 · S=V+T+M(三项齐全才显示)' :
-    '历史回看: 只展示当时可由价格回算的指标；缺少历史估值时 V/S 显示为 —';
+    '结果 = 中长期趋势 + V/T/M 双轮确认；所有观察指数也输出结果；缺可靠估值时保守显示“持有 / 继续观望”，并明确标注' :
+    '历史回看: 缺少当时估值时 V/S/结果显示数据不足，不会拿今天的估值冒充历史值';
 
   var ah = "";
   assets.forEach(function(a){
     var r = rows[assets.indexOf(a)].r;
     var chgCls = r.chg >= 0 ? "up" : "down";
     var tag = '<span class="tag ' + r.trend.cls + '">' + r.trend.t + '</span>';
+    var longMeta = r.longMom === null ? '—' : (r.longMom*100 >= 0 ? '+' : '') + (r.longMom*100).toFixed(1) + '%';
+    var volMeta = r.vol60 === null ? '—' : (r.vol60*100).toFixed(1) + '%';
     ah += '<div class="asset">' +
       '<div><span class="name">' + a.name + '</span>' + tag + '</div>' +
       '<div style="text-align:right"><span class="price ' + chgCls + '">' +
       r.close.toFixed(a.digits) + '</span>' +
-      '<div class="meta">当日 ' + (r.chg*100 >= 0 ? '+' : '') + (r.chg*100).toFixed(2) + '% · 40日 ' +
-      (r.mom*100 >= 0 ? '+' : '') + (r.mom*100).toFixed(1) + '% · RSI ' + r.rsi.toFixed(0) +
+      '<div class="meta">当日 ' + (r.chg*100 >= 0 ? '+' : '') + (r.chg*100).toFixed(2) + '% · 长趋势 ' +
+      longMeta + ' · 60日波动 ' + volMeta + ' · RSI ' + r.rsi.toFixed(0) +
       (r.risk ? ' · ' + r.risk : '') + '</div></div>' +
       '</div>';
   });
