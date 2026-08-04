@@ -85,9 +85,9 @@
   </div>
 
   <div class="card" id="fundCard" style="display:none;">
-    <h2>■ 基本面 & 目标价</h2>
+    <h2>■ 基本面 & 12个月估值区间</h2>
     <div id="fundBody" class="loading">加载中...</div>
-    <div class="note" id="fundNote">目标价 = 该股自身历史PE中位数 × 预期每股收益(最近12个月盈利 × 平滑增速),仅供估值参考</div>
+    <div class="note" id="fundNote">估值区间 = 可获得时点一致的历史PE区间 × 未来12个月情景EPS；区间不是承诺价格</div>
   </div>
 
   <div class="card" id="assetCard">
@@ -103,10 +103,10 @@
       反弹中 = 短期回升、中期未确认 / 回调中 = 中期仍涨、短期回落<br>
       V 估值分: +2 = 便宜,-2 = 贵(指数按PE/股息率,股票按目标价空间,黄金按年线乖离,每日更新)<br>
       T 趋势分: +2 = 上涨趋势,-2 = 下跌趋势<br>
-      M 动能分: +2 = 短期强势,-2 = 弱势,涨太猛会扣分<br>
-      S 总分: V+T+M,正数偏强,负数偏弱<br>
-      基本面: 五维评分(ROE/成长/负债/估值/毛利)+ 目标价,数据每日云端更新,港股暂缺<br>
-      选择日期可查看该日收盘后的信号(最早约3年前)<br>
+      M 动能分: +2 = 短期上涨有延续,-2 = 下跌动能较强；过热/超跌另作风险提示<br>
+      S 总分: 仅在 V/T/M 都有数据时计算；正数偏强,负数偏弱<br>
+      基本面: 五维评分(ROE/成长/负债/估值/毛利)+ 12个月估值区间,数据每日云端更新<br>
+      选择历史日期时,无历史估值的数据会把 V/S 显示为 —,不会拿今天的估值冒充历史值<br>
       估值(PE/PB/股息率)和详细理由见每日邮件
     </div>
   </div>
@@ -187,6 +187,7 @@ function rsi14(arr) {
       ag = (ag*13 + Math.max(d,0))/14; al = (al*13 + Math.max(-d,0))/14;
     }
   }
+  if (ag === 0 && al === 0) return 50;
   if (al === 0) return 100;
   return 100 - 100/(1 + ag/al);
 }
@@ -201,7 +202,7 @@ function calcAt(name, i) {
   ma20 /= 20; ma60 /= 60;
   var mom = last/c[i-40] - 1;
   var chg = last/prev - 1;
-  var rs = rsi14(c.slice(i-14, i+1));
+  var rs = rsi14(c.slice(0, i+1));
   var tr;
   if (last > ma20 && ma20 > ma60) tr = { t:"上涨中", cls:"up" };
   else if (last > ma20) tr = { t:"反弹中", cls:"mid" };
@@ -210,9 +211,9 @@ function calcAt(name, i) {
   var tScore = tr.t === "上涨中" ? 2 : tr.t === "反弹中" ? 1 : tr.t === "回调中" ? -1 : -2;
   var chg5 = last/c[i-5] - 1;
   var mScore = 0;
-  if (rs < 30) mScore += 1; else if (rs > 80) mScore -= 2; else if (rs > 70) mScore -= 1;
-  if (rs > 55 && chg5 > 0.04) mScore -= 1;
-  if (rs < 45 && chg5 < -0.04) mScore += 1;
+  if (rs >= 60) mScore += 1; else if (rs < 40) mScore -= 1;
+  if (chg5 >= 0.04) mScore += 1; else if (chg5 <= -0.04) mScore -= 1;
+  mScore = Math.max(-2, Math.min(2, mScore));
   var vScore = null;
   if (name === "黄金" && i >= 249) {
     var ma250 = 0;
@@ -223,8 +224,9 @@ function calcAt(name, i) {
     else if (bias < -0.15) vScore = 2; else if (bias < -0.08) vScore = 1;
     else vScore = 0;
   }
-  var sScore = (vScore === null ? 0 : vScore) + tScore + mScore;
-  return { mom:mom, chg:chg, rsi:rs, trend:tr, close:last, v:vScore, t:tScore, m:mScore, s:sScore };
+  var sScore = vScore === null ? null : vScore + tScore + mScore;
+  var risk = (rs >= 80 || chg5 >= 0.08) ? '涨得偏急' : (rs < 20 || chg5 <= -0.08) ? '跌得偏急' : '';
+  return { mom:mom, chg:chg, chg5:chg5, rsi:rs, trend:tr, close:last, v:vScore, t:tScore, m:mScore, s:sScore, risk:risk };
 }
 
 var CUR = "fund";
@@ -239,21 +241,36 @@ function switchTab(g) {
   document.getElementById('tabStock').className = g === 'stock' ? 'tabbtn active' : 'tabbtn';
   document.getElementById('customCard').style.display = g === 'stock' ? '' : 'none';
   document.getElementById('fundCard').style.display = g === 'stock' ? '' : 'none';
+  updatePickerRange();
   showLatest();
   if (g === 'stock') renderFundamentals();
 }
 
-function fundVScore(a, r) {
-  if (r.v !== null) return r.v;   // 黄金用乖离(实时算)
-  var f = FUND[a.symbol] || FUND[a.symbol.replace(/^(sh|sz|hk)/, '')];
-  if (!f) return null;
-  if (f.target && r && r.close) {          // A股: 目标价不变, 用实时价重算空间 -> V
-    var sp = (f.target / r.close - 1) * 100;
+function valuationRangeScore(f, price) {
+  if (!f || !price) return null;
+  if (f.target_low && f.target && f.target_high) {
+    if (price <= f.target_low) return 2;
+    if (price <= f.target) return 1;
+    if (price <= f.target_high) return 0;
+    return -2;
+  }
+  if (f.target) {
+    var sp = (f.target / price - 1) * 100;
     if (sp >= 20) return 2;
     if (sp >= 0) return 1;
     if (sp > -20) return 0;
     return -2;
   }
+  return null;
+}
+
+function fundVScore(a, r, useCurrentValuation) {
+  if (r.v !== null) return r.v;   // 黄金按当日年线乖离,可历史回算
+  if (!useCurrentValuation) return null;
+  var f = FUND[a.symbol] || FUND[a.symbol.replace(/^(sh|sz|hk)/, '')];
+  if (!f) return null;
+  var rangeScore = valuationRangeScore(f, r && r.close);
+  if (rangeScore !== null) return rangeScore;
   if (a.hk && f.pe && f.pe > 0) {          // 港股: 实时 PE -> V
     if (f.pe <= 12) return 2;
     if (f.pe <= 15) return 1;
@@ -293,12 +310,25 @@ function loadHKQuotes() {
     }).catch(function(){});
 }
 
-function render(i) {
+function indexOnOrBefore(days, day) {
+  for (var i = days.length - 1; i >= 0; i--) if (days[i] <= day) return i;
+  return -1;
+}
+
+function latestDayFor(assets) {
+  var days = assets.map(function(a){
+    var d = DATA[a.name] && DATA[a.name].days;
+    return d && d.length ? d[d.length - 1] : '';
+  }).filter(Boolean);
+  return days.length ? days.sort().slice(-1)[0] : '';
+}
+
+function renderDay(day, useCurrentValuation) {
   var assets = curAssets();
-  var day = DATA[assets[0].name].days[i];
   var rows = assets.map(function(a){
-    var r = calcAt(a.name, i);
-    return { name:a.name, r:r };
+    var ai = indexOnOrBefore(DATA[a.name].days, day);
+    var r = calcAt(a.name, ai);
+    return { name:a.name, r:r, index:ai, actualDay:ai >= 0 ? DATA[a.name].days[ai] : '' };
   });
   var bad = rows.some(function(x){ return !x.r; });
   if (bad) { document.getElementById('momBody').innerHTML = '<tr><td colspan="3" class="err">该日期数据不足</td></tr>'; return; }
@@ -315,14 +345,14 @@ function render(i) {
   var sh = "";
   assets.forEach(function(a){
     var r = rows[assets.indexOf(a)].r;
-    var v = fundVScore(a, r);
+    var v = fundVScore(a, r, useCurrentValuation);
     var vTxt = v === null ? "—" : (v > 0 ? "+" + v : v);
     var vCls = v > 0 ? "up" : v < 0 ? "down" : "";
     var tTxt = r.t > 0 ? "+" + r.t : r.t;
     var mTxt = r.m > 0 ? "+" + r.m : r.m;
-    var s = (v === null ? 0 : v) + r.t + r.m;   // S = 显示的V + T + M (修复: 之前漏算V)
-    var sTxt = s > 0 ? "+" + s : s;
-    var sCls = s > 0 ? "up" : s < 0 ? "down" : "";
+    var s = v === null ? null : v + r.t + r.m;
+    var sTxt = s === null ? "—" : s > 0 ? "+" + s : s;
+    var sCls = s === null ? "" : s > 0 ? "up" : s < 0 ? "down" : "";
     sh += '<tr><td>' + a.name + '</td>' +
           '<td style="text-align:center" class="' + vCls + '">' + vTxt + '</td>' +
           '<td style="text-align:center">' + tTxt + '</td>' +
@@ -330,7 +360,9 @@ function render(i) {
           '<td style="text-align:center" class="' + sCls + '">' + sTxt + '</td></tr>';
   });
   document.getElementById('sigBody').innerHTML = sh;
-  document.getElementById('sigNote').textContent = 'V 估值分(每日更新: 指数按PE/股息率, 股票按目标价空间, 黄金按年线乖离) · T 趋势分 · M 动能分 · S 总分';
+  document.getElementById('sigNote').textContent = useCurrentValuation ?
+    'V 估值分 · T 趋势分 · M 动能分 · S=V+T+M(三项齐全才显示)' :
+    '历史回看: 只展示当时可由价格回算的指标；缺少历史估值时 V/S 显示为 —';
 
   var ah = "";
   assets.forEach(function(a){
@@ -342,25 +374,34 @@ function render(i) {
       '<div style="text-align:right"><span class="price ' + chgCls + '">' +
       r.close.toFixed(a.digits) + '</span>' +
       '<div class="meta">当日 ' + (r.chg*100 >= 0 ? '+' : '') + (r.chg*100).toFixed(2) + '% · 40日 ' +
-      (r.mom*100 >= 0 ? '+' : '') + (r.mom*100).toFixed(1) + '% · RSI ' + r.rsi.toFixed(0) + '</div></div>' +
+      (r.mom*100 >= 0 ? '+' : '') + (r.mom*100).toFixed(1) + '% · RSI ' + r.rsi.toFixed(0) +
+      (r.risk ? ' · ' + r.risk : '') + '</div></div>' +
       '</div>';
   });
   document.getElementById('assetBody').innerHTML = ah;
-  document.getElementById('date').textContent = '数据日期 ' + day + (i === DATA[ASSETS[0].name].close.length - 1 ? '' : ' (历史回看)');
+  document.getElementById('date').textContent = '数据日期 ' + day + (useCurrentValuation ? '' : ' (历史回看)');
 }
 
 function showPicked() {
   var d = document.getElementById('datePicker').value;
   if (!d) return;
-  var i = DATA[ASSETS[0].name].days.indexOf(d);
-  if (i < 0) { alert('该日期无数据(可能是非交易日或超出范围)'); return; }
-  render(i);
+  renderDay(d, false);
 }
 
 function showLatest() {
-  var i = DATA[ASSETS[0].name].close.length - 1;
-  document.getElementById('datePicker').value = DATA[ASSETS[0].name].days[i];
-  render(i);
+  var day = latestDayFor(curAssets());
+  if (!day) return;
+  document.getElementById('datePicker').value = day;
+  renderDay(day, true);
+}
+
+function updatePickerRange() {
+  var assets = curAssets();
+  if (!assets.length || !DATA[assets[0].name]) return;
+  var days = DATA[assets[0].name].days;
+  var picker = document.getElementById('datePicker');
+  picker.min = days[Math.min(249, days.length - 1)];
+  picker.max = latestDayFor(assets);
 }
 
 // ---------- 自选股票 ----------
@@ -521,25 +562,27 @@ function stockEval(a, f, livePrice) {
   else if (rs >= 45) mTxt = '短期不温不火 —— 短线强弱指标 ' + rs + '(45~55 属于中性)';
   else if (rs >= 30) mTxt = '短期偏弱 —— 短线强弱指标 ' + rs + '(30~45 属于偏弱)';
   else mTxt = '短期跌过头了 —— 短线强弱指标 ' + rs + '(30以下算超卖,可能反弹)';
-  rows.push('⚡ 上涨劲头:' + mTxt + ';近40个交易日累计' + (momPct >= 0 ? '涨了' : '跌了') + ' ' + Math.abs(momPct).toFixed(1) + '%。');
+  rows.push('⚡ 短期动能:' + mTxt + ';近40个交易日累计' + (momPct >= 0 ? '涨了' : '跌了') + ' ' + Math.abs(momPct).toFixed(1) + '%。');
   // 估值(大白话)
-  var v = fundVScore(a, r);
+  var v = fundVScore(a, r, true);
   var vTxt = v === null ? '暂无' : v >= 2 ? '偏便宜' : v === 1 ? '略便宜' : v === 0 ? '合理' : v === -1 ? '略贵' : '偏贵';
   var sp = (f.target && livePrice) ? (f.target / livePrice - 1) * 100 : f.space;
   var estTxt = '';
   if (f.target && livePrice) {
     var tgt0 = f.target.toLocaleString('zh-CN', { maximumFractionDigits: 1 });
     var spR = Math.round(sp * 10) / 10;
-    var head = f.analyst ? '券商一致预期目标价是 ' : '系统按盈利增速和赚钱能力(ROE)推导的目标价是 ';
-    if (sp >= 0) estTxt = head + tgt0 + ',现在价格离它还有 +' + spR + '% 的空间。';
-    else estTxt = head + tgt0 + ',现价已经比它高出 ' + Math.abs(spR) + '%。';
+    var lo = f.target_low ? f.target_low.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : null;
+    var hi = f.target_high ? f.target_high.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : null;
+    var head = f.analyst ? '近期开具目标价的券商样本中位数约 ' : '系统12个月基准估值约 ';
+    estTxt = head + tgt0 + (lo && hi ? ',情景区间 ' + lo + '～' + hi : '') +
+      (sp >= 0 ? ',相对现价约 +' + spR + '%。' : ',相对现价约 ' + spR + '%。');
   }
   var peTxt = '';
   if (f.eps_ttm && f.eps_ttm > 0 && livePrice) {
     var peL = Math.round(livePrice / f.eps_ttm * 10) / 10;
-    peTxt = '按现在的赚钱速度,约 ' + peL + ' 年回本(PE ' + peL + ' 倍)';
+    peTxt = '当前价格约为最近12个月每股利润的 ' + peL + ' 倍(PE)';
   } else if (f.pe) {
-    peTxt = '按现在的赚钱速度,约 ' + f.pe + ' 年回本(PE ' + f.pe + ' 倍)';
+    peTxt = '当前价格约为最近12个月每股利润的 ' + f.pe + ' 倍(PE)';
   } else if (f.pb) {
     peTxt = '股价约为净资产的 ' + f.pb + ' 倍(PB);公司近期整体亏损,看盈利倍数没意义,按净资产看';
   }
@@ -552,25 +595,25 @@ function stockEval(a, f, livePrice) {
 
 function stockOneLiner(f, trend, v) {
   if (f.verdict === '好') {
-    if (trend === '上涨中') return '公司质地好(评分' + f.score + ')、趋势向上、估值不贵 —— 安心拿着就行。';
-    if (trend === '反弹中') return '公司质地好(评分' + f.score + ')、短期在反弹 —— 先拿着,看这波能不能站稳。';
-    if (trend === '回调中') return '公司质地好(评分' + f.score + ')、中期仍涨,短期回调反而可以留意。';
-    return '公司质地好(评分' + f.score + ')但最近在下跌 —— 别急着接,等走势企稳再说。';
+    if (trend === '上涨中') return '基本面评分较好(' + f.score + ')、趋势向上；估值区间仍需结合风险承受能力判断。';
+    if (trend === '反弹中') return '基本面评分较好(' + f.score + ')、短期反弹；中期趋势尚未完全确认。';
+    if (trend === '回调中') return '基本面评分较好(' + f.score + ')、中期仍偏强,短期处于回调。';
+    return '基本面评分较好(' + f.score + ')但近期趋势偏弱,两类信息暂不一致。';
   }
   if (f.verdict === '中') {
-    if (trend === '上涨中') return '公司质地一般(评分' + f.score + ')、趋势向上 —— 可以拿着观察。';
-    if (trend === '下跌中') return '公司质地一般(评分' + f.score + ')、趋势向下 —— 先观望。';
-    return '公司质地一般(评分' + f.score + '),中性看待,跟着趋势走。';
+    if (trend === '上涨中') return '基本面评分中性(' + f.score + ')、趋势向上；优势主要来自价格趋势。';
+    if (trend === '下跌中') return '基本面评分中性(' + f.score + ')、趋势向下；当前两方面都没有明显优势。';
+    return '基本面评分中性(' + f.score + '),趋势尚不明确。';
   }
   if (f.verdict === '差') {
-    if (trend === '上涨中') return '公司质地偏弱(评分' + f.score + ')、短期只是反弹 —— 别当趋势追。';
-    return '公司质地偏弱(评分' + f.score + ')、走势偏空 —— 谨慎对待。';
+    if (trend === '上涨中') return '基本面评分偏弱(' + f.score + ')但趋势向上,两类信息互相矛盾。';
+    return '基本面评分偏弱(' + f.score + ')、趋势也偏弱,风险信号较多。';
   }
   var tTxt = trend === '上涨中' ? '向上' : trend === '下跌中' ? '向下' : '不明朗';
-  if (v === null) return '港股数据较少(暂无五维评分),走势' + tTxt + ',参考即可。';
-  if (v >= 2) return '港股数据较少(暂无五维评分),走势' + tTxt + '、估值偏便宜,参考即可。';
-  if (v === 0) return '港股数据较少(暂无五维评分),走势' + tTxt + '、估值合理,参考即可。';
-  return '港股数据较少(暂无五维评分),走势' + tTxt + '、估值偏贵,留意风险。';
+  if (v === null) return '基本面数据不足,当前只确认走势' + tTxt + '。';
+  if (v >= 2) return '走势' + tTxt + '、估值区间偏低；仍需结合基本面完整度判断。';
+  if (v === 0) return '走势' + tTxt + '、价格处在估值区间内。';
+  return '走势' + tTxt + '、价格高于估值区间,风险相对更高。';
 }
 
 function renderFundamentals() {
@@ -590,6 +633,9 @@ function renderFundamentals() {
     var sc = (sp !== null && sp !== undefined) ? (sp >= 0 ? 'up' : 'down') : '';
     var spaceTxt = (sp === null || sp === undefined) ? '—' : (sp >= 0 ? '+' : '') + (Math.round(sp * 10) / 10) + '%';
     var tgt = f.target ? f.target.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : '—';
+    var rangeTxt = (f.target_low && f.target_high) ?
+      f.target_low.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) + '～' +
+      f.target_high.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : tgt;
     var vtxt = (f.verdict !== undefined && f.verdict !== null) ? f.verdict : '—';
     var stxt = (f.score !== undefined && f.score !== null) ? f.score : '—';
     var tag = '<span class="tag ' + vc + '">' + vtxt + '</span>';
@@ -598,7 +644,7 @@ function renderFundamentals() {
     html += '<div class="asset" style="cursor:pointer" onclick="toggleEval(\'' + code + '\')">' +
       '<div><span class="arrow" id="arr_' + code + '">▸</span><span class="name">' + a.name + '</span> ' + tag +
       ' <span style="font-size:12px;color:#64748b;">评分' + stxt + '</span></div>' +
-      '<div style="text-align:right"><span class="' + sc + '" style="font-weight:600;">目标 ' + tgt + ' (' + spaceTxt + ')</span>' +
+      '<div style="text-align:right"><span class="' + sc + '" style="font-weight:600;">12个月区间 ' + rangeTxt + ' · 中枢 ' + tgt + ' (' + spaceTxt + ')</span>' +
       '<div class="meta">ROE ' + fnum(f.roe) + '% · 营收 ' + fnum(f.rev_g) + '%' +
       ' · 负债 ' + fnum(f.debt) + '% · PE ' + fnum(peShow) + '</div></div></div>' +
       '<div class="eval" id="eval_' + code + '">' + stockEval(a, f, livePrice) + '</div>';
@@ -608,10 +654,7 @@ function renderFundamentals() {
 
 function onAll() {
   if (loaded < INITIAL_COUNT) return;
-  var days = DATA[ASSETS[0].name].days;
-  var picker = document.getElementById('datePicker');
-  picker.min = days[60];
-  picker.max = days[days.length - 1];
+  updatePickerRange();
   showLatest();
   document.getElementById('foot').textContent = '数据来源: 新浪财经 · 更新于' + new Date().toLocaleString('zh-CN') + ' · 仅参考,不构成投资建议';
 }
