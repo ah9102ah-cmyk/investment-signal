@@ -375,3 +375,58 @@ signal_date / valuation_date / price_date
 1. `py scripts/shadow_log.py`（记录正式 vs 影子对比）
 2. `py scripts/snapshot_cons.py`（成分宽度快照，约 2 分钟）
 连续 8-12 周后，按任务书 §16 汇总：一致性、差异原因、后续 1/4/12 周表现、信号反复、数据源失败、类别改善，再按类单独决定是否切换 category_v2。
+
+---
+
+## 20. 2026-08 复审更正版执行记录（修正执行口径等 P1/P2 全部问题，已推送 dev 54267ea）
+
+### 20.1 复审发现问题与修复方式（对应更正任务书 P1-1~P2-5）
+
+| 编号 | 问题 | 修复 |
+|---|---|---|
+| P1-1 | 回测"次日执行"口径错误：旧实现把信号日仓位 shift(1) 后直接乘下一日 close-to-close 收益，等于信号日收盘成交 | 明确定义两种口径并重写 simulate：exec_mode="open"（成交日开盘成交，用真实开盘价，当日收益=收盘/开盘-1）、exec_mode="close"（成交日收盘成交，按旧持仓计当日收益，新持仓次日起算）；信号日不产生收益；成本只在真实换仓日扣除；合成时间线单测 11 项验证 |
+| P1-2 | Python 与页面动能算法不一致（5日收益实为4日跨度、波动率窗口19个 vs 20个） | 统一口径：5日收益=close[t]/close[t-5]-1，20日波动率=最近20个完整日收益；Python 修正下标/窗口；**Python 成为 V2 信号唯一计算源**（scripts/v2_daily.py → data/v2_signals.json），页面只读展示不再自行计算；golden fixture 一致性测试 |
+| P1-3 | 影子观察固定用 balanced，观察错了候选 | CANDIDATE_MAP 每指数显式主候选（候选仅 value/balanced/trend/no_candidate）；修正后回测标定：仅科创50=trend，其余 no_candidate（沿用 common_v1）；候选/版本冻结在 shadow_log meta，变更即升级版本并重开观察期；三套候选动作记录为研究数据 |
+| P1-4 | 类别特有因子没有真正接入 | 宽度快照接入中证500/白酒/医疗/科创50 信号；黄金宏观轮加入美元指数方向（无历史时降级标注）；科技高PE只限买入不直接卖（落实 high_pe_no_sell）；行业便宜+下跌不买、盈利周期缺失显式标注；沪深300/中证500 进入门槛分开（ASSET_ENTER_OFFSETS）；红利低波估值分位改用指数完整2013+PE历史（修复只用ETF窗口PE导致的分位失真） |
+| P1-5 | 宽度快照执行顺序错误（shadow_log 先跑） | weekly_shadow.py 顺序改为：snapshot_cons → 检查快照日期/有效比例 → shadow_log → 写周报；快照失败时降级运行并记录失败/陈旧，不静默用旧数据 |
+| P2-1 | 综合分漏掉宽度权重 | composite = Σ(可用分项×原始配置权重)/Σ(可用权重)；新增 valuation/macro/breadth/earnings/trend/momentum 独立分项 + structural/technical 解释字段 + available_weight_ratio；缺失剔除后归一化；可用权重<0.5 返回数据不足 |
+| P2-2 | 没有真正实现陈旧度控制 | 每个外部字段携带 source/data_date/fetched_at/staleness_days/status/fallback_source；行情/估值/宏观/宽度日期不一致时显示；超阈值不得标记完整；宏观/结构严重陈旧不得输出买入强信号；未来数据扰动测试 |
+| P2-3 | 影子日志不足以完成8~12周评估 | 每指数记录 strategy_version/candidate/信号日/价格/全部分项/结构轮价格轮综合分/数据源日期/质量降级/一致性与差异原因/信号反复/后续1/4/12周收益+同期BH+common_v1收益（日期到达后补写）；旧日志归档 legacy/ 不计入新观察期 |
+| P2-4 | 自动观察只在本机 | 新增 .github/workflows/shadow_weekly.yml（workflow_dispatch + 每周五 09:30 UTC=17:30 北京），顺序=安装依赖→宽度快照→影子周报→v2_daily→测试→JSON校验→提交；fundamentals.yml 加 concurrency 防提交冲突；不发邮件；weekly_shadow.py 仓库根由 __file__ 推导 |
+| P2-5 | 上线验证脚本读 PAT | 修改方案已提交用户（删除 PAT 读取，改公开 API 检查 workflow 名称/结论/触发方式/committer/fund.json 日期/双写一致）；仓库外文件，未获准不动 |
+
+### 20.2 新旧回测对比（科创50 旧结论无效声明）
+
+修正成交口径（收盘成交/延迟1/单边成本0.1%）后，各资产 v2_balanced 与新报告对照：
+
+| 资产 | 旧报告 v2_trend | 修正后 common_v1 | 修正后 v2_balanced | 修正后 v2_trend |
+|---|---:|---:|---:|---:|
+| 沪深300 | 6.0%/-43.5% | 5.3%/-19.9% | 2.5%/-21.1% | 5.2%/-43.5% |
+| 中证500 | 3.7%/-66.2% | 2.2%/-39.5% | 2.0%/-62.9% | 4.2%/-62.9% |
+| 科创50 | **6.0%/-29.7%** | 0.0%/-33.1% | -4.9%/-37.5% | **3.5%/-35.4%** |
+| 中证白酒 | -2.4%/-41.7% | 1.4%/-31.6% | -0.9%/-11.4% | -3.0%/-41.5% |
+| 中证医疗 | -1.1%/-51.3% | 1.0%/-44.3% | 2.7%/-34.5% | 1.9%/-34.5% |
+| 红利低波* | 9.1%/-14.6% | -0.6%/-5.4% | 0.0%/0.0% | 3.7%/-13.8% |
+| 黄金* | 6.3%/-30.5% | 14.5%/-12.0% | 15.7%/-30.5% | 15.8%/-30.5% |
+
+*红利低波/黄金：东财 ETF 历史当前经系统代理不可达，回退腾讯 800 行（2023-04 起），与旧回测同窗口可比；云端 Actions 网络不同大概率可取完整历史。
+
+**结论更正（重要）**：
+1. **旧报告"科创50 v2_trend 唯一明显改善（6.0%/-29.7%）"暂时无效**——修正后为 3.5%/-35.4%，年化仅 +3.5pp 且回撤略差于 common_v1（-35.4% vs -33.1%），不再是"明显改善"。仅因夏普改善（0.27 vs 0.08）保留为唯一观察候选（candidate=trend），需 8-12 周影子验证。
+2. 沪深300/黄金/红利低波：common_v1 仍最佳或回撤明显更优 → no_candidate。
+3. 中证500/白酒/医疗：V2 未通过验收门槛（白酒参与率 0.8%~4.5% 过度保守；医疗 v2_value 年化优但投入仅 16.6%、依赖 2019-20 单段行情）→ no_candidate。
+4. 成本 0.1%→0.5%：平均年化 2.46%→2.14%，未失效；延迟 1~5 天结论基本稳定；参数 ±20% 扰动区间窄（稳定）。
+
+### 20.3 测试与验证
+
+- test_logic.py 16/16、test_v2_logic.py 50/50（含动能精度/σ边界/原始权重/类别规则/陈旧度/golden fixture）、test_backtest_timeline.py 11/11（合成时间线/未来数据扰动）、test_web_logic.js 全过
+- 页面本地验证：控制台零错误；8 指数影子列只读展示 v2_signals.json（候选/版本/评估日/降级原因）；正式三态不变；恒生科技"— 估值缺失"
+- 一致性：index.html=web/index.html、data/fund.json=web/data/fund.json、data/v2_signals.json=web/data/v2_signals.json
+- 完整回测输出：data/backtest_v2_corrected.txt
+
+### 20.4 当前状态
+
+- 已推送 dev（a994bf9 + 54267ea），**未合并 main、未触发任何线上 workflow**
+- 影子观察新观察期 obs-2026-08-05（category_v2_shadow_v3）已启动；旧 2026-08-05 记录归档 legacy/ 不计入
+- 云端 shadow_weekly workflow 待合并 main 后手动 workflow_dispatch 验证（东财/腾讯/akshare 在 Actions 的可达性）
+- verify_after_launch.py（P2-5）修改方案已交用户，未获准未动

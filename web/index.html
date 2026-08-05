@@ -236,164 +236,76 @@ function actionForAsset(a, v, r, useCurrentValuation) {
   return action;
 }
 
-// ---------- category_v2_shadow(影子, 阶段B) ----------
-// 与 scripts/category_v2.py 同一套判定; 页面只渲染, 不复制第二套业务逻辑
-var SHADOW_W = {
-  '沪深300':  { valuation:0.40, trend:0.40, momentum:0.10 },
-  '中证500':  { valuation:0.25, trend:0.50, momentum:0.12 },
-  '红利低波': { valuation:0.50, trend:0.40, momentum:0.10 },
-  '科创50':   { valuation:0.15, trend:0.47, momentum:0.10 },
-  '恒生科技': { valuation:0.15, trend:0.47, momentum:0.10 },
-  '中证白酒': { valuation:0.32, trend:0.25, momentum:0.11 },
-  '中证医疗': { valuation:0.32, trend:0.25, momentum:0.11 },
-  '黄金':     { macro:0.42, trend:0.42, momentum:0.16 }
-};
-function shadowTrend(r) {
-  // 与 Python trend_score_v2 一致: 160/200/240 涨幅共识
-  if (r.longMom === null || r.longVotes === null) return null;
-  if (r.longVotes >= 2 && r.longMom > 0) return 2;
-  if (r.longVotes >= 2) return 1;
-  if (r.longVotes <= 1 && r.longMom < 0) return -2;
-  return -1;
+// ---------- category_v2_shadow(影子, 阶段B 更正版 2026-08) ----------
+// 更正原则(P1-2): Python 是 V2 信号唯一计算源(scripts/v2_daily.py -> data/v2_signals.json)。
+// 页面只读取展示结果, 不再自行计算买入/持有/卖出。
+var V2_SIGNALS = null;
+var V2_SIGNALS_LOADED = false;
+function loadV2Signals() {
+  var urls = [
+    'data/v2_signals.json?t=' + Date.now(),
+    'https://raw.githubusercontent.com/ah9102ah-cmyk/investment-signal/main/data/v2_signals.json?t=' + Date.now()
+  ];
+  tryFetchV2(urls, 0);
 }
-function shadowMomentum(name) {
-  // 波动率标准化动能(与 Python std_momentum 一致): 近5日收益 / (近20日日波动率 × √5)
-  var c = DATA[name].close;
-  var i = c.length - 1;
-  if (i < 25) return null;
-  var ret5 = c[i]/c[i-5] - 1;
-  var rets = [];
-  for (var j = i-19; j <= i; j++) rets.push(c[j]/c[j-1]-1);
-  var mean = rets.reduce(function(a,b){ return a+b; }, 0) / rets.length;
-  var sd = Math.sqrt(rets.reduce(function(s,x){ return s + Math.pow(x-mean,2); }, 0) / (rets.length-1));
-  var z = (!sd || sd <= 0) ? 0 : ret5 / (sd * Math.sqrt(5));
-  var m = z >= 1.5 ? 2 : z >= 0.5 ? 1 : z <= -1.5 ? -2 : z <= -0.5 ? -1 : 0;
-  // RSI 只做确认: 冲突时向 0 收, 不反向覆盖
-  if (rsi14(c.slice(0, i+1)) >= 60 && m < 0) m = 0;
-  else if (rsi14(c.slice(0, i+1)) < 40 && m > 0) m = 0;
-  return m;
+function tryFetchV2(urls, i) {
+  if (i >= urls.length) { V2_SIGNALS = null; V2_SIGNALS_LOADED = true; return; }
+  fetch(urls[i])
+    .then(function(r){ if (!r.ok) throw new Error('bad'); return r.json(); })
+    .then(function(j){ V2_SIGNALS = j || null; V2_SIGNALS_LOADED = true; if (loaded >= INITIAL_COUNT) showLatest(); })
+    .catch(function(){ tryFetchV2(urls, i + 1); });
 }
-function shadowSignal(a, r, useCurrentValuation) {
-  // 统一协议(影子): 结构轮 + 价格轮 + 三态(balanced 门槛), 与 Python 一致
-  var w = SHADOW_W[a.name] || SHADOW_W['沪深300'];
-  var degraded = [];
-  var structural = null;
-  if (a.name === '黄金') {
-    if (!useCurrentValuation) return { label:'数据不足', reason:'历史回看缺当时宏观数据，暂不下结论', cls:'mid', quality:'宏观缺失' };
-    var u = FUND.us10y;
-    var macro = null;
-    if (u && u.now !== undefined && u.prev20 !== undefined) {
-      var diff = u.prev20 - u.now;
-      macro = diff > 0.15 ? 2 : diff > 0.05 ? 1 : diff < -0.15 ? -2 : diff < -0.05 ? -1 : 0;
-    } else degraded.push('宏观缺失');
-    var position = r.v;   // 250 日线乖离分(calcAt 已按当日回算, 不进价格轮, 不重复计分)
-    if (position === null) degraded.push('250日线不足');
-    if (macro === null) return { label:'数据不足', reason:'宏观环境数据缺失，不出强信号', cls:'mid', quality:'宏观缺失' };
-    structural = (macro + (position === null ? 0 : position)) / (position === null ? 1 : 2);
-  } else {
-    if (!useCurrentValuation) return { label:'数据不足', reason:'历史回看缺当时估值，暂不下结论', cls:'mid', quality:'估值缺失' };
-    var f = FUND[a.symbol] || FUND[a.symbol.replace(/^(sh|sz|hk)/, '')];
-    var v = (f && f.v_score !== undefined && f.v_score !== null) ? f.v_score : null;
-    if (v === null) {
-      if (a.hk) return { label:'数据不足', reason:'缺少可靠历史估值，暂不下结论', cls:'mid', quality:'估值缺失' };
-      degraded.push('估值缺失');
-    } else structural = v;
+function shadowResult(name, useCurrentValuation) {
+  // 只读: 从 v2_signals.json 取该资产的影子结果(Python 已算好)
+  if (!useCurrentValuation) {
+    return { label:'数据不足', reason:'历史回看：影子信号只记录最近一次周频评估，不拿今天的数据冒充历史', cls:'mid', quality:'—', candidate:'' };
   }
-  if (a.name !== '黄金') degraded.push('宽度缺失');   // 宽度只做当前截面观察, 与 Python 降级标记一致
-  var t = shadowTrend(r);
-  var m = shadowMomentum(a.name);
-  if (t === null || m === null || structural === null) {
-    return { label:'数据不足', reason:'结构轮或价格轮数据不完整，暂不下结论', cls:'mid', quality:'数据不足' };
+  if (!V2_SIGNALS || !V2_SIGNALS.assets || !V2_SIGNALS.assets[name]) {
+    return { label:'—', reason:'影子数据未生成(等 Python 生成 v2_signals.json)', cls:'mid', quality:'', candidate:'' };
   }
-  var technical = (t*w.trend + m*w.momentum) / (w.trend + w.momentum);
-  var wt = w.trend + w.momentum;
-  var wv = a.name === '黄金' ? w.macro : w.valuation;
-  var composite = (structural*wv + technical*wt) / (wv + wt);
-  var enter = structural >= 0 && technical >= 1 && m >= -1 && composite !== null;
-  if (a.name === '中证白酒' || a.name === '中证医疗') {
-    if (structural >= 0 && technical <= -1 && m <= 0) enter = false;  // 便宜+继续下跌不买
-  }
-  var exitNow = (technical <= -1 && m <= -1) || (structural <= -1 && technical <= 0) || (composite !== null && composite <= -1.0);
-  var quality = degraded.length ? '降级' : '完整';
-  if (exitNow) {
-    if (technical <= -1 && m <= -1) return { label:'卖出', reason:'中长期多数周期向下，短期动能也已转弱', cls:'down', quality:quality };
-    if (structural <= -1 && technical <= 0) return { label:'卖出', reason:'估值结构与价格走势同步转弱', cls:'down', quality:quality };
-    return { label:'卖出', reason:'综合弱项达到退出门槛', cls:'down', quality:quality };
-  }
-  if (enter) return { label:'买入', reason:'结构轮与价格轮双轮确认，短期动能没有拖后腿', cls:'up', quality:quality };
-  return { label:'持有', reason:'双轮尚未同时确认，继续观察', cls:'mid', quality:quality };
+  var s = V2_SIGNALS.assets[name];
+  var label = s.action === '数据不足' ? '—' : s.action;
+  var cand = s.candidate || '';
+  var ver = (V2_SIGNALS.strategy_version || '').replace('category_v2_shadow_', '');
+  var reason = (s.action_reason || '');
+  if (s.degraded_fields && s.degraded_fields.length) reason += '（' + s.degraded_fields.join('、') + '）';
+  var cls = s.action === '买入' ? 'up' : s.action === '卖出' ? 'down' : 'mid';
+  var quality = (s.data_quality && s.data_quality !== '完整') ? s.data_quality : '';
+  return { label:label, reason:reason, cls:cls, quality:quality, candidate:cand, version:ver, sig:s };
+}
+function shadowColumnTitle(a, sh) {
+  var meta = (sh.candidate ? '候选:' + sh.candidate : '') + (sh.version ? ' v' + sh.version : '');
+  if (sh.sig && sh.sig.signal_date) meta += ' 评估日:' + sh.sig.signal_date;
+  return '影子(' + meta + (sh.reason ? ' ' + sh.reason : '') + ')';
 }
 
-// ---------- 组合层(阶段C): 类内排名 + 风险集中提示 ----------
-var SHADOW_CLUSTER = {
-  '沪深300':'大盘权益', '中证500':'中小盘权益', '红利低波':'防守/红利',
-  '科创50':'高成长科技', '恒生科技':'高成长科技', '中证白酒':'消费行业',
-  '中证医疗':'医疗行业', '黄金':'实物资产'
-};
-var SHADOW_EQUITY = { '大盘权益':1, '中小盘权益':1, '防守/红利':1, '高成长科技':1, '消费行业':1, '医疗行业':1 };
-function shadowRankScore(s) {
-  var t = (s.technical === null || s.technical === undefined) ? -2 : s.technical;
-  var score = t - Math.min(s.vol || 0, 0.6) * 2;
-  if (s.quality === '完整') score += 0.3;
-  else if (s.quality === '降级') score -= 0.2;
-  return score;
-}
-function shadowPortfolio() {
-  var signals = {};
-  curAssets().forEach(function(a){
-    var c = (DATA[a.name] && DATA[a.name].close) ? DATA[a.name].close : null;
-    if (!c || !c.length) return;
-    var r = calcAt(a.name, c.length - 1);
-    if (!r) return;
-    var s = shadowSignal(a, r, true);
-    signals[a.name] = {
-      action: s.label, quality: s.quality,
-      cluster: SHADOW_CLUSTER[a.name] || '其他',
-      technical: shadowTrend(r), vol: r.vol60 || 0
-    };
-  });
-  // 类内排名(风险调整: 趋势 - 波动惩罚 + 数据完整度)
-  var clusters = {};
-  Object.keys(signals).forEach(function(n){ (clusters[signals[n].cluster] = clusters[signals[n].cluster] || []).push(n); });
-  Object.keys(clusters).forEach(function(c){
-    clusters[c].sort(function(a,b){ return shadowRankScore(signals[b]) - shadowRankScore(signals[a]); });
-    clusters[c].forEach(function(n, i){ signals[n].rank = i + 1; });
-  });
-  // 风险提示(任务书 §10)
-  var warnings = [];
-  var buys = Object.keys(signals).filter(function(n){ return signals[n].action === '买入'; });
-  var techBuys = buys.filter(function(n){ return signals[n].cluster === '高成长科技'; });
-  if (techBuys.length >= 2) warnings.push('科创50与恒生科技同时偏强，科技类风险集中，注意别重复押注同一方向');
-  var hs = signals['沪深300'], bj = signals['中证白酒'];
-  if (hs && bj) {
-    var strong = function(s){ return s && s.technical >= 1 && (s.action === '买入' || s.action === '持有'); };
-    if (strong(hs) && strong(bj)) warnings.push('沪深300与白酒同时偏强，成分暴露有重叠');
-  }
-  var equitySells = Object.keys(signals).filter(function(n){
-    return signals[n].action === '卖出' && SHADOW_EQUITY[signals[n].cluster];
-  });
-  if (equitySells.length >= 3) warnings.push('多个权益指数同时走弱，权益整体偏弱');
-  return { signals: signals, warnings: warnings };
-}
+// ---------- 组合层(阶段C, 更正版): 类内排名 + 风险集中提示 ----------
+// 组合层结果由 Python(portfolio_v2.py)在 v2_signals.json 里算好, 页面只渲染。
 function renderShadowPortfolio() {
   var el = document.getElementById('shadowPortfolio');
   if (!el) return;
-  var p = shadowPortfolio();
+  if (!V2_SIGNALS || !V2_SIGNALS.assets) { el.innerHTML = ''; return; }
+  var warnings = V2_SIGNALS.warnings || [];
+  var assets = V2_SIGNALS.assets;
   var html = '';
-  if (p.warnings.length) {
+  if (warnings.length) {
     html += '<div style="margin-top:8px;padding:8px 10px;background:#fef3c7;border-left:3px solid #d97706;border-radius:6px;font-size:12.5px;line-height:1.8;color:#78350f;">' +
-            '<b>组合提示(影子观察):</b><br>' + p.warnings.join('<br>') + '</div>';
+            '<b>组合提示(影子观察):</b><br>' + warnings.join('<br>') + '</div>';
   }
+  // 类内优先顺序(买入且同簇>=2): 用 Python 已给的 class_rank
   var clusterBuys = {};
-  Object.keys(p.signals).forEach(function(n){
-    if (p.signals[n].action === '买入') (clusterBuys[p.signals[n].cluster] = clusterBuys[p.signals[n].cluster] || []).push(n);
+  Object.keys(assets).forEach(function(n){
+    var s = assets[n];
+    if (s && s.action === '买入' && s.risk_cluster) {
+      (clusterBuys[s.risk_cluster] = clusterBuys[s.risk_cluster] || []).push({name:n, rank:s.class_rank || 99});
+    }
   });
   Object.keys(clusterBuys).forEach(function(c){
     var arr = clusterBuys[c];
     if (arr.length < 2) return;
-    arr.sort(function(a,b){ return p.signals[a].rank - p.signals[b].rank; });
+    arr.sort(function(a,b){ return a.rank - b.rank; });
     html += '<div style="margin-top:6px;padding:6px 10px;background:#ecfdf5;border-left:3px solid #059669;border-radius:6px;font-size:12.5px;color:#064e3b;">' +
-            '<b>' + c + ' 类内优先顺序(影子):</b> ' + arr.join(' → ') + '</div>';
+            '<b>' + c + ' 类内优先顺序(影子):</b> ' + arr.map(function(x){ return x.name; }).join(' → ') + '</div>';
   });
   el.innerHTML = html;
 }
@@ -578,16 +490,16 @@ function renderDay(day, useCurrentValuation) {
     var action = actionForAsset(a, v, r, useCurrentValuation);
     var actionQuality = action.quality ? '<span class="tag mid">' + action.quality + '</span>' : '';
     var assetName = a.name + ((!a.validated && a.g === 'fund') ? '<span class="tag mid">观察</span>' : '');
-    var shadow = shadowSignal(a, r, useCurrentValuation);
+    var shadow = shadowResult(a.name, useCurrentValuation);
     var shTxt = shadow.label === '数据不足' ? '—' : shadow.label;
-    var shQuality = (shadow.quality && shadow.quality !== '完整') ? '<span class="tag mid">' + shadow.quality + '</span>' : '';
+    var shQuality = (shadow.quality && shadow.quality !== '完整' && shadow.quality !== '—') ? '<span class="tag mid">' + shadow.quality + '</span>' : '';
     sh += '<tr><td>' + assetName + '</td>' +
           '<td style="text-align:center" class="' + vCls + '">' + vTxt + '</td>' +
           '<td style="text-align:center">' + tTxt + '</td>' +
           '<td style="text-align:center">' + mTxt + '</td>' +
           '<td style="text-align:center" class="' + sCls + '">' + sTxt + '</td>' +
           '<td style="text-align:center" class="' + action.cls + '" title="' + action.reason + '"><b>' + action.label + '</b>' + actionQuality + '</td>' +
-          '<td style="text-align:center" class="' + shadow.cls + '" title="影子(' + shadow.reason + ')"><b>' + shTxt + '</b>' + shQuality + '</td></tr>';
+          '<td style="text-align:center" class="' + shadow.cls + '" title="' + shadowColumnTitle(a, shadow) + '"><b>' + shTxt + '</b>' + shQuality + '</td></tr>';
   });
   document.getElementById('sigBody').innerHTML = sh;
   renderShadowPortfolio();
@@ -910,6 +822,7 @@ ASSETS.forEach(function(a, i){
   });
 });
 loadCustomStocks();
+loadV2Signals();
 loadFundamentals();
 </script>
 </body>
