@@ -21,13 +21,16 @@ OUT_DIR = os.path.join(ROOT, "data", "cons_snapshots")
 HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "Referer": "https://gu.qq.com/"}
 
 # 指数代码 -> 名称 (中证官网成分接口)
+# 2026-08 更正: 中证500 加入宽度快照(P1-4: 中证500 必须真正使用市场宽度)
 CONS_INDEXES = {
+    "000905": "中证500",
     "399997": "中证白酒",
     "399989": "中证医疗",
     "000688": "科创50",
 }
 # 指数行情 symbol(算等权 vs 市值加权方向)
-INDEX_PX = {"399997": "sz399997", "399989": "sz399989", "000688": "sh000688"}
+INDEX_PX = {"000905": "sh000905", "399997": "sz399997", "399989": "sz399989", "000688": "sh000688"}
+SLEEP_SEC = 0.05   # 温和限速(中证500共500只, 全量约5-8分钟)
 
 
 def tencent_kline(symbol, days=800):
@@ -90,7 +93,7 @@ def main():
             valid += 1
             eq_ret20 += closes[-1] / closes[-21] - 1
             rows.append({"code": code, "name": str(row["成分券名称"]), "above_ma250": above, "up20": up20})
-            time.sleep(0.08)   # 温和限速
+            time.sleep(SLEEP_SEC)   # 温和限速
         if valid == 0:
             snap["indexes"][iname] = {"error": "成分股行情不可用", "cons": len(cons)}
             continue

@@ -1,0 +1,447 @@
+{
+ "generated_at": "2026-08-05T23:43:04",
+ "strategy_version": "category_v2_shadow_v3",
+ "signal_date": "2026-07-31",
+ "candidate_map": {
+  "沪深300": "no_candidate",
+  "中证500": "no_candidate",
+  "红利低波": "no_candidate",
+  "科创50": "trend",
+  "恒生科技": "no_candidate",
+  "中证白酒": "no_candidate",
+  "中证医疗": "no_candidate",
+  "黄金": "no_candidate"
+ },
+ "assets": {
+  "沪深300": {
+   "strategy_version": "category_v2_shadow_v3",
+   "strategy_type": "宽基核心",
+   "asset_name": "沪深300",
+   "valuation_score": -1,
+   "macro_score": null,
+   "breadth_score": null,
+   "earnings_score": null,
+   "trend_score": 2,
+   "momentum_score": 0,
+   "quality_score": null,
+   "structural_score": -1.0,
+   "technical_score": 1.6,
+   "composite_score": 0.44,
+   "available_weight_ratio": 0.9,
+   "action": "卖出",
+   "action_reason": "无候选通过验收门槛，影子观察沿用正式策略(common_v1)",
+   "data_quality": "降级",
+   "degraded_fields": [
+    "宽度缺失"
+   ],
+   "data_sources": {
+    "price": {
+     "source": "腾讯/中证日线",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    },
+    "valuation": {
+     "source": "中证官网滚动PE",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    }
+   },
+   "class_rank": 1,
+   "risk_cluster": "大盘权益",
+   "risk_warning": null,
+   "signal_date": "2026-07-31",
+   "valuation_date": "2026-07-31",
+   "price_date": "2026-07-31",
+   "candidate": "no_candidate",
+   "candidates_research": {
+    "value": "持有",
+    "balanced": "持有",
+    "trend": "持有"
+   }
+  },
+  "中证500": {
+   "strategy_version": "category_v2_shadow_v3",
+   "strategy_type": "宽基核心",
+   "asset_name": "中证500",
+   "valuation_score": -2,
+   "macro_score": null,
+   "breadth_score": null,
+   "earnings_score": null,
+   "trend_score": 2,
+   "momentum_score": 0,
+   "quality_score": null,
+   "structural_score": -2.0,
+   "technical_score": 1.61,
+   "composite_score": 0.57,
+   "available_weight_ratio": 0.87,
+   "action": "卖出",
+   "action_reason": "无候选通过验收门槛，影子观察沿用正式策略(common_v1)",
+   "data_quality": "降级",
+   "degraded_fields": [
+    "宽度缺失"
+   ],
+   "data_sources": {
+    "price": {
+     "source": "腾讯/中证日线",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    },
+    "valuation": {
+     "source": "中证官网滚动PE",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    }
+   },
+   "class_rank": 1,
+   "risk_cluster": "中小盘权益",
+   "risk_warning": null,
+   "signal_date": "2026-07-31",
+   "valuation_date": "2026-07-31",
+   "price_date": "2026-07-31",
+   "candidate": "no_candidate",
+   "candidates_research": {
+    "value": "持有",
+    "balanced": "持有",
+    "trend": "持有"
+   }
+  },
+  "科创50": {
+   "strategy_version": "category_v2_shadow_v3",
+   "strategy_type": "高成长科技",
+   "asset_name": "科创50",
+   "valuation_score": -2,
+   "macro_score": null,
+   "breadth_score": 0,
+   "earnings_score": null,
+   "trend_score": 2,
+   "momentum_score": -1,
+   "quality_score": null,
+   "structural_score": -0.61,
+   "technical_score": 1.33,
+   "composite_score": 0.69,
+   "available_weight_ratio": 1.0,
+   "action": "持有",
+   "action_reason": "双轮尚未同时确认，继续观察",
+   "data_quality": "降级",
+   "degraded_fields": [
+    "宽度仅当前截面"
+   ],
+   "data_sources": {
+    "price": {
+     "source": "腾讯/中证日线",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    },
+    "valuation": {
+     "source": "中证官网滚动PE",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    },
+    "breadth": {
+     "source": "成分股宽度快照",
+     "data_date": "2026-08-05",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    }
+   },
+   "class_rank": 1,
+   "risk_cluster": "高成长科技",
+   "risk_warning": null,
+   "signal_date": "2026-07-31",
+   "valuation_date": "2026-07-31",
+   "price_date": "2026-07-31",
+   "candidate": "trend"
+  },
+  "中证白酒": {
+   "strategy_version": "category_v2_shadow_v3",
+   "strategy_type": "行业主题",
+   "asset_name": "中证白酒",
+   "valuation_score": 0,
+   "macro_score": null,
+   "breadth_score": -2,
+   "earnings_score": null,
+   "trend_score": -2,
+   "momentum_score": 1,
+   "quality_score": null,
+   "structural_score": -1.0,
+   "technical_score": -1.08,
+   "composite_score": -1.03,
+   "available_weight_ratio": 1.0,
+   "action": "持有",
+   "action_reason": "无候选通过验收门槛，影子观察沿用正式策略(common_v1)",
+   "data_quality": "降级",
+   "degraded_fields": [
+    "宽度仅当前截面",
+    "盈利周期缺失"
+   ],
+   "data_sources": {
+    "price": {
+     "source": "腾讯/中证日线",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    },
+    "valuation": {
+     "source": "中证官网滚动PE",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    },
+    "breadth": {
+     "source": "成分股宽度快照",
+     "data_date": "2026-08-05",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    }
+   },
+   "class_rank": 1,
+   "risk_cluster": "消费行业",
+   "risk_warning": null,
+   "signal_date": "2026-07-31",
+   "valuation_date": "2026-07-31",
+   "price_date": "2026-07-31",
+   "candidate": "no_candidate",
+   "candidates_research": {
+    "value": "持有",
+    "balanced": "持有",
+    "trend": "持有"
+   }
+  },
+  "中证医疗": {
+   "strategy_version": "category_v2_shadow_v3",
+   "strategy_type": "行业主题",
+   "asset_name": "中证医疗",
+   "valuation_score": 0,
+   "macro_score": null,
+   "breadth_score": -2,
+   "earnings_score": null,
+   "trend_score": -2,
+   "momentum_score": 1,
+   "quality_score": null,
+   "structural_score": -1.0,
+   "technical_score": -1.08,
+   "composite_score": -1.03,
+   "available_weight_ratio": 1.0,
+   "action": "持有",
+   "action_reason": "无候选通过验收门槛，影子观察沿用正式策略(common_v1)",
+   "data_quality": "降级",
+   "degraded_fields": [
+    "宽度仅当前截面",
+    "盈利周期缺失"
+   ],
+   "data_sources": {
+    "price": {
+     "source": "腾讯/中证日线",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    },
+    "valuation": {
+     "source": "中证官网滚动PE",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    },
+    "breadth": {
+     "source": "成分股宽度快照",
+     "data_date": "2026-08-05",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    }
+   },
+   "class_rank": 1,
+   "risk_cluster": "医疗行业",
+   "risk_warning": null,
+   "signal_date": "2026-07-31",
+   "valuation_date": "2026-07-31",
+   "price_date": "2026-07-31",
+   "candidate": "no_candidate",
+   "candidates_research": {
+    "value": "持有",
+    "balanced": "持有",
+    "trend": "持有"
+   }
+  },
+  "红利低波": {
+   "strategy_version": "category_v2_shadow_v3",
+   "strategy_type": "红利因子",
+   "asset_name": "红利低波",
+   "valuation_score": -2,
+   "macro_score": null,
+   "breadth_score": null,
+   "earnings_score": null,
+   "trend_score": 2,
+   "momentum_score": 2,
+   "quality_score": null,
+   "structural_score": -2.0,
+   "technical_score": 2.0,
+   "composite_score": 0.0,
+   "available_weight_ratio": 1.0,
+   "action": "持有",
+   "action_reason": "无候选通过验收门槛，影子观察沿用正式策略(common_v1)",
+   "data_quality": "降级",
+   "degraded_fields": [
+    "dividend"
+   ],
+   "data_sources": {
+    "price": {
+     "source": "腾讯/中证日线",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    },
+    "valuation": {
+     "source": "中证官网滚动PE",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    }
+   },
+   "class_rank": 1,
+   "risk_cluster": "防守/红利",
+   "risk_warning": null,
+   "signal_date": "2026-07-31",
+   "valuation_date": "2026-07-31",
+   "price_date": "2026-07-31",
+   "candidate": "no_candidate",
+   "candidates_research": {
+    "value": "持有",
+    "balanced": "持有",
+    "trend": "持有"
+   }
+  },
+  "黄金": {
+   "strategy_version": "category_v2_shadow_v3",
+   "strategy_type": "实物资产",
+   "asset_name": "黄金",
+   "valuation_score": null,
+   "macro_score": -2.0,
+   "breadth_score": null,
+   "earnings_score": null,
+   "trend_score": 2,
+   "momentum_score": 0,
+   "quality_score": null,
+   "structural_score": -0.5,
+   "technical_score": 1.45,
+   "composite_score": 0.63,
+   "available_weight_ratio": 1.0,
+   "action": "持有",
+   "action_reason": "无候选通过验收门槛，影子观察沿用正式策略(common_v1)",
+   "data_quality": "降级",
+   "degraded_fields": [
+    "美元指数无历史(仅当前值)"
+   ],
+   "data_sources": {
+    "price": {
+     "source": "腾讯/中证日线",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    },
+    "us10y": {
+     "source": "新浪美债10Y",
+     "data_date": "2026-07-31",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": "bond_zh_us_rate(英为)"
+    },
+    "dollar": {
+     "source": "新浪DINIW实时",
+     "data_date": "2026-08-05",
+     "fetched_at": "2026-08-05T23:43:04",
+     "staleness_days": 0,
+     "status": "ok",
+     "fallback_source": null
+    }
+   },
+   "class_rank": 1,
+   "risk_cluster": "实物资产",
+   "risk_warning": null,
+   "signal_date": "2026-07-31",
+   "valuation_date": null,
+   "price_date": "2026-07-31",
+   "candidate": "no_candidate",
+   "candidates_research": {
+    "value": "持有",
+    "balanced": "持有",
+    "trend": "买入"
+   }
+  },
+  "恒生科技": {
+   "strategy_version": "category_v2_shadow_v3",
+   "strategy_type": "高成长科技",
+   "asset_name": "恒生科技",
+   "valuation_score": null,
+   "macro_score": null,
+   "breadth_score": null,
+   "earnings_score": null,
+   "trend_score": null,
+   "momentum_score": null,
+   "quality_score": null,
+   "structural_score": null,
+   "technical_score": null,
+   "composite_score": null,
+   "available_weight_ratio": 0.0,
+   "action": "数据不足",
+   "action_reason": "缺少可靠历史估值且行情长度不足，暂不下结论",
+   "data_quality": "估值缺失",
+   "degraded_fields": [
+    "估值数据不足",
+    "估值缺失",
+    "宽度缺失",
+    "波动率历史不足",
+    "行情历史不足",
+    "趋势历史不足"
+   ],
+   "data_sources": {},
+   "class_rank": 2,
+   "risk_cluster": "高成长科技",
+   "risk_warning": null,
+   "signal_date": "2026-07-31",
+   "valuation_date": null,
+   "price_date": null,
+   "candidate": "no_candidate"
+  }
+ },
+ "warnings": [],
+ "note": "V2 影子研究数据(影子观察, 不改变正式三态); 页面只读取展示, 不自行计算。"
+}

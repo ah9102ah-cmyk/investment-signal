@@ -1,0 +1,65 @@
+name: shadow-weekly
+
+# 每周五 17:30 北京时间(UTC+8)自动生成影子观察数据(宽度快照+影子周报+页面影子信号)。
+# 只提交数据文件, 不发送任何邮件; 影子观察是研究数据, 不改变正式三态(P2-4)。
+
+on:
+  schedule:
+    - cron: '30 9 * * 5'      # 每周五 09:30 UTC = 17:30 北京时间
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+# 与每日基本面 workflow(fundamentals.yml)共用并发组, 防止同时 git push 冲突
+concurrency:
+  group: data-updates
+  cancel-in-progress: false
+
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装固定版本依赖
+        run: pip install -r requirements.txt
+
+      - name: 生成宽度快照(先于影子周报, P1-5)
+        run: python scripts/snapshot_cons.py
+
+      - name: 生成影子周报
+        run: python scripts/shadow_log.py
+
+      - name: 生成页面影子信号(v2_signals.json, Python 唯一计算源)
+        run: python scripts/v2_daily.py
+
+      - name: 跑测试
+        run: |
+          python scripts/test_logic.py
+          python scripts/test_v2_logic.py
+          python scripts/test_backtest_timeline.py
+
+      - name: 检查JSON合法性
+        run: |
+          python - <<'EOF'
+          import json, os
+          for p in ["data/shadow_log.json", "data/v2_signals.json", "web/data/v2_signals.json"]:
+              json.load(open(p, encoding="utf-8"))
+          snaps = sorted(os.listdir("data/cons_snapshots"))
+          assert snaps, "无宽度快照"
+          json.load(open(os.path.join("data/cons_snapshots", snaps[-1]), encoding="utf-8"))
+          print("JSON OK:", len(snaps), "份宽度快照")
+          EOF
+
+      - name: 提交影子观察数据
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/shadow_log.json data/v2_signals.json web/data/v2_signals.json data/cons_snapshots
+          git commit -m "每周影子观察更新(周五17:30)" || echo "无变化"
+          git push
