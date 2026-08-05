@@ -108,7 +108,9 @@ def hist_au():
 
 
 def hist_etf(symbol):
-    """场内基金前复权日线；避免把分红除权误判成真实下跌。"""
+    """场内基金前复权日线；避免把分红除权误判成真实下跌。
+
+    2026-08 更正: 返回 日期/开盘/收盘(开盘价供回测"次日开盘成交"口径使用)。"""
     def loader():
         try:
             import akshare as ak
@@ -120,7 +122,7 @@ def hist_etf(symbol):
                 adjust="qfq",
             )
             df["日期"] = pd.to_datetime(df["日期"])
-            return df[["日期", "收盘"]].sort_values("日期").reset_index(drop=True)
+            return df[["日期", "开盘", "收盘"]].sort_values("日期").reset_index(drop=True)
         except Exception as primary_error:
             # 东财偶发代理/限流时，降级到与网页相同的腾讯前复权800日K线。
             market = "sh" if symbol.startswith(("5", "6")) else "sz"
@@ -134,14 +136,18 @@ def hist_etf(symbol):
                 raise RuntimeError(f"东财失败({primary_error}); 腾讯数据不足")
             return pd.DataFrame({
                 "日期": pd.to_datetime([row[0] for row in rows]),
+                "开盘": [float(row[1]) for row in rows],
                 "收盘": [float(row[2]) for row in rows],
             })
 
-    return cached(f"hist_etf_{symbol}_qfq", loader)
+    # 缓存名带 v2 后缀: 旧缓存没有"开盘"列, 强制重抓一次(单次开销, 之后每日缓存)
+    return cached(f"hist_etf_{symbol}_qfq_v2", loader)
 
 
 def hist_etf_unadjusted(symbol):
-    """ETF 完整原始日线，供研究回测在前复权长历史不可用时降级。"""
+    """ETF 完整原始日线，供研究回测在前复权长历史不可用时降级。
+
+    2026-08 更正: 返回 日期/开盘/收盘。"""
     def loader():
         import akshare as ak
         df = ak.fund_etf_hist_em(
@@ -152,34 +158,44 @@ def hist_etf_unadjusted(symbol):
             adjust="",
         )
         df["日期"] = pd.to_datetime(df["日期"])
-        return df[["日期", "收盘"]].sort_values("日期").reset_index(drop=True)
+        return df[["日期", "开盘", "收盘"]].sort_values("日期").reset_index(drop=True)
 
-    return cached(f"hist_etf_{symbol}", loader)
+    return cached(f"hist_etf_{symbol}_v2", loader)
 
 
 def repair_etf_unit_changes(df, threshold=0.30):
     """修复ETF份额折算造成的非市场价格断点，仅用于研究回测。
 
     普通非杠杆ETF单日超过30%的跳变视为份额折算；把折算日前价格按断点比例衔接。
+    2026-08: 开盘价与收盘价一起按同一因子衔接(保持开/收比例)。
     返回 (修复后数据, 修复日期列表)，不改写原始缓存。
     """
-    out = df[["日期", "收盘"]].copy().sort_values("日期").reset_index(drop=True)
+    out = df[["日期", "开盘", "收盘"]].copy().sort_values("日期").reset_index(drop=True)
+    out["开盘"] = pd.to_numeric(out["开盘"], errors="coerce")
     out["收盘"] = pd.to_numeric(out["收盘"], errors="coerce")
     repaired = []
     raw_return = out["收盘"].pct_change()
     for i in raw_return[raw_return.abs() > threshold].index:
         factor = out.loc[i, "收盘"] / out.loc[i - 1, "收盘"]
+        out.loc[:i - 1, "开盘"] *= factor
         out.loc[:i - 1, "收盘"] *= factor
         repaired.append(str(pd.to_datetime(out.loc[i, "日期"]).date()))
     return out, repaired
 
 
 def hist_etf_research(symbol, preferred_min_rows=1200):
-    """研究用长历史：优先完整前复权，短历史时降级为断点修复后的原始日线。"""
+    """研究用长历史：优先完整前复权，短历史时降级为断点修复后的原始日线。
+
+    2026-08 更正: 原始日线失败(如东财经系统代理不可达)时, 回退到已取得的前复权帧,
+    不再让整个回测崩溃; 数据长度会在返回值 source 里注明。"""
     qfq = hist_etf(symbol)
     if len(qfq) >= preferred_min_rows:
         return qfq, {"source": "完整前复权", "repaired": []}
-    raw = hist_etf_unadjusted(symbol)
+    try:
+        raw = hist_etf_unadjusted(symbol)
+    except Exception as e:
+        print(f"[datahub:hist_etf_research] 原始日线不可用({e}), 回退前复权 {len(qfq)} 行")
+        return qfq, {"source": f"前复权({len(qfq)}行, 东财原始日线失败)", "repaired": []}
     repaired_df, repaired = repair_etf_unit_changes(raw)
     return repaired_df, {"source": "原始日线+份额折算修复", "repaired": repaired}
 
