@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-05T23:43:04",
+ "generated_at": "2026-08-05T16:01:46",
  "strategy_version": "category_v2_shadow_v3",
  "signal_date": "2026-07-31",
  "candidate_map": {
@@ -38,7 +38,7 @@
     "price": {
      "source": "腾讯/中证日线",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -46,7 +46,7 @@
     "valuation": {
      "source": "中证官网滚动PE",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -90,7 +90,7 @@
     "price": {
      "source": "腾讯/中证日线",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -98,7 +98,7 @@
     "valuation": {
      "source": "中证官网滚动PE",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -142,7 +142,7 @@
     "price": {
      "source": "腾讯/中证日线",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -150,7 +150,7 @@
     "valuation": {
      "source": "中证官网滚动PE",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -158,7 +158,7 @@
     "breadth": {
      "source": "成分股宽度快照",
      "data_date": "2026-08-05",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -198,7 +198,7 @@
     "price": {
      "source": "腾讯/中证日线",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -206,7 +206,7 @@
     "valuation": {
      "source": "中证官网滚动PE",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -214,7 +214,7 @@
     "breadth": {
      "source": "成分股宽度快照",
      "data_date": "2026-08-05",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -259,7 +259,7 @@
     "price": {
      "source": "腾讯/中证日线",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -267,7 +267,7 @@
     "valuation": {
      "source": "中证官网滚动PE",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -275,7 +275,7 @@
     "breadth": {
      "source": "成分股宽度快照",
      "data_date": "2026-08-05",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -319,7 +319,7 @@
     "price": {
      "source": "腾讯/中证日线",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -327,7 +327,7 @@
     "valuation": {
      "source": "中证官网滚动PE",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -371,7 +371,7 @@
     "price": {
      "source": "腾讯/中证日线",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -379,7 +379,7 @@
     "us10y": {
      "source": "新浪美债10Y",
      "data_date": "2026-07-31",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": "bond_zh_us_rate(英为)"
@@ -387,7 +387,7 @@
     "dollar": {
      "source": "新浪DINIW实时",
      "data_date": "2026-08-05",
-     "fetched_at": "2026-08-05T23:43:04",
+     "fetched_at": "2026-08-05T16:01:46",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
