@@ -51,6 +51,16 @@ node scripts/test_web_logic.js       # 页面端动能、估值与历史日期�
 cd web && py -3 -m http.server 8765  # 本地预览 http://127.0.0.1:8765
 ```
 
+V2 基金分类策略(影子, 见 STRATEGY_V2_PLAN.md):
+
+```bash
+py scripts/test_v2_logic.py          # V2 引擎+组合层单元测试(25项)
+py scripts/backtest_v2.py            # 5方案对比回测(common_v1/持有/200日趋势/估值单因子/v2三候选)
+py scripts/shadow_log.py             # 影子观察周报(正式vs影子三态对比)
+py scripts/snapshot_cons.py          # 成分宽度快照(白酒/医疗/科创50)
+py scripts/weekly_shadow.py          # 以上两者打包(供 cron 每周五 17:30)
+```
+
 ## 相关仓库(每日邮件, 独立)
 
 - `ah9102ah-cmyk/signal-email` — 投资信号邮件(每日 12:00 + 14:50 北京, SMTP)
