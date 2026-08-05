@@ -269,3 +269,76 @@ def hq(codes):
         if len(parts) >= 10:
             out[code] = (parts[0], parts)
     return out
+
+
+# ---------------------------------------------------------------- V2 新增数据源(阶段 B)
+def dollar_index():
+    """美元指数实时(新浪 DINIW)。只有当前值, 无历史序列; 失败返回 None。
+
+    V2 黄金结构轮 G 的代理指标之一(与美债方向组合)。G 只在宏观数据可用时输出,
+    缺失/陈旧时不允许给强买入(任务书 §5.5)。"""
+    try:
+        r = requests.get("https://hq.sinajs.cn/list=DINIW", headers=HDR, timeout=15)
+        r.encoding = "gbk"
+        body = r.text.split('="')[1].rstrip('";')
+        parts = body.split(",")
+        # 新浪美元指数格式: 时间,买价,卖价,最新价,涨跌量,开盘,最高,最低,收盘,名称,日期
+        if len(parts) >= 9:
+            return float(parts[3])
+    except Exception as e:
+        print(f"[datahub:dollar_index] 美元指数获取失败: {e}")
+    return None
+
+
+def hist_pe_legu(symbol="中证500", cache_name=None):
+    """乐咕指数 PE 历史(含等权/加权滚动PE与中位数), 用于与中证官网 PE 交叉验证。
+
+    乐咕为海外源, GitHub Actions 上可能失败 -> 调用方必须提供中证 PE 降级路径。
+    返回 DataFrame(日期, 滚动市盈率, 等权滚动市盈率, 市盈率中位数) 或 None。"""
+    def loader():
+        import akshare as ak
+        df = ak.stock_index_pe_lg(symbol=symbol)
+        df = df.rename(columns={"日期": "日期"})
+        df["日期"] = pd.to_datetime(df["日期"])
+        cols = ["日期"]
+        for src, dst in [("滚动市盈率", "滚动市盈率"),
+                         ("等权滚动市盈率", "等权滚动市盈率"),
+                         ("滚动市盈率中位数", "市盈率中位数")]:
+            if src in df.columns:
+                cols.append(dst)
+        return df[cols].sort_values("日期").reset_index(drop=True)
+    try:
+        return cached(cache_name or f"pe_legu_{symbol.lower()}", loader)
+    except Exception as e:
+        print(f"[datahub:hist_pe_legu] {symbol} PE 历史不可用(乐咕), 使用中证口径: {e}")
+        return None
+
+
+def bond_zh_us():
+    """中美主要期限利率长历史(akshare 统一表, 约7年), 供黄金宏观 G 与沪深300 利差。
+
+    失败返回 None, 调用方降级回 bond_cn()/bond_us()(新浪4年)。"""
+    def loader():
+        import akshare as ak
+        df = ak.bond_zh_us_rate(start_date="20180101")
+        df["日期"] = pd.to_datetime(df["日期"])
+        return df.sort_values("日期").reset_index(drop=True)
+    try:
+        return cached("bond_zh_us", loader)
+    except Exception as e:
+        print(f"[datahub:bond_zh_us] 中美利率长历史不可用: {e}")
+        return None
+
+
+def index_cons(symbol):
+    """中证指数成分股当前快照(阶段 A 已实测: 中证500 500只/科创50 50只/白酒 17只/医疗 50只)。
+
+    只用于当前截面观察, 不得回填历史(任务书 §11: 无历史成分快照)。失败返回 None。"""
+    try:
+        import akshare as ak
+        df = ak.index_stock_cons_csindex(symbol=symbol)
+        df["日期"] = pd.to_datetime(df["日期"])
+        return df.sort_values("日期").reset_index(drop=True)
+    except Exception as e:
+        print(f"[datahub:index_cons] 成分股快照失败 {symbol}: {e}")
+        return None

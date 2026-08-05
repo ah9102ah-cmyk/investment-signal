@@ -534,6 +534,18 @@ def main():
         result.update(fetch_hk_vals())
     except Exception as e:
         print("港股估值跳过:", e)
+    # 美债 10Y(黄金宏观 G 供页面 shadow 用; 失败不影响主数据, 页面降级为宏观缺失)
+    try:
+        us_df = datahub.bond_us()
+        us_vals = us_df["收益率"].dropna()
+        if len(us_vals) > 21:
+            result["us10y"] = {
+                "now": round(float(us_vals.iloc[-1]), 3),
+                "prev20": round(float(us_vals.iloc[-21]), 3),
+                "date": str(us_df["日期"].iloc[-1])[:10],
+            }
+    except Exception as e:
+        print("美债10Y 写入跳过:", e)
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
     # 同时写 web/data/fund.json(本地页面与仓库 web/ 副本)
@@ -544,6 +556,8 @@ def main():
     for code, r in result.items():
         if "error" in r:
             print(f"  {code} {r['name']}: {r['error']}")
+        elif "name" not in r:
+            continue   # 非资产条目(如 us10y 宏观字段)
         else:
             v = r.get("v_score")
             vtxt = "—" if v is None else ("+" + str(v) if v > 0 else str(v))

@@ -78,10 +78,10 @@
   <div class="card">
     <h2>■ 三维度信号 & 最终结果</h2>
     <table>
-      <tr><th>资产</th><th style="text-align:center">V</th><th style="text-align:center">T</th><th style="text-align:center">M</th><th style="text-align:center">S</th><th style="text-align:center">结果</th></tr>
-      <tbody id="sigBody"><tr><td colspan="6" class="loading">加载中...</td></tr></tbody>
+      <tr><th>资产</th><th style="text-align:center">V</th><th style="text-align:center">T</th><th style="text-align:center">M</th><th style="text-align:center">S</th><th style="text-align:center">结果</th><th style="text-align:center">影子</th></tr>
+      <tbody id="sigBody"><tr><td colspan="7" class="loading">加载中...</td></tr></tbody>
     </table>
-    <div class="note" id="sigNote">最终结果由中长期趋势 + V/T/M 双轮共同确认；“持有”在未持有时理解为继续观望</div>
+    <div class="note" id="sigNote">最终结果由中长期趋势 + V/T/M 双轮共同确认；“持有”在未持有时理解为继续观望。影子列 = 分类策略 V2 的并列观察结果(均衡参数)，不改变正式结果</div>
   </div>
 
   <div class="card" id="fundCard" style="display:none;">
@@ -233,6 +233,94 @@ function actionForAsset(a, v, r, useCurrentValuation) {
     };
   }
   return action;
+}
+
+// ---------- category_v2_shadow(影子, 阶段B) ----------
+// 与 scripts/category_v2.py 同一套判定; 页面只渲染, 不复制第二套业务逻辑
+var SHADOW_W = {
+  '沪深300':  { valuation:0.40, trend:0.40, momentum:0.10 },
+  '中证500':  { valuation:0.25, trend:0.50, momentum:0.12 },
+  '红利低波': { valuation:0.50, trend:0.40, momentum:0.10 },
+  '科创50':   { valuation:0.15, trend:0.47, momentum:0.10 },
+  '恒生科技': { valuation:0.15, trend:0.47, momentum:0.10 },
+  '中证白酒': { valuation:0.32, trend:0.25, momentum:0.11 },
+  '中证医疗': { valuation:0.32, trend:0.25, momentum:0.11 },
+  '黄金':     { macro:0.42, trend:0.42, momentum:0.16 }
+};
+function shadowTrend(r) {
+  // 与 Python trend_score_v2 一致: 160/200/240 涨幅共识
+  if (r.longMom === null || r.longVotes === null) return null;
+  if (r.longVotes >= 2 && r.longMom > 0) return 2;
+  if (r.longVotes >= 2) return 1;
+  if (r.longVotes <= 1 && r.longMom < 0) return -2;
+  return -1;
+}
+function shadowMomentum(name) {
+  // 波动率标准化动能(与 Python std_momentum 一致): 近5日收益 / (近20日日波动率 × √5)
+  var c = DATA[name].close;
+  var i = c.length - 1;
+  if (i < 25) return null;
+  var ret5 = c[i]/c[i-5] - 1;
+  var rets = [];
+  for (var j = i-19; j <= i; j++) rets.push(c[j]/c[j-1]-1);
+  var mean = rets.reduce(function(a,b){ return a+b; }, 0) / rets.length;
+  var sd = Math.sqrt(rets.reduce(function(s,x){ return s + Math.pow(x-mean,2); }, 0) / (rets.length-1));
+  var z = (!sd || sd <= 0) ? 0 : ret5 / (sd * Math.sqrt(5));
+  var m = z >= 1.5 ? 2 : z >= 0.5 ? 1 : z <= -1.5 ? -2 : z <= -0.5 ? -1 : 0;
+  // RSI 只做确认: 冲突时向 0 收, 不反向覆盖
+  if (rsi14(c.slice(0, i+1)) >= 60 && m < 0) m = 0;
+  else if (rsi14(c.slice(0, i+1)) < 40 && m > 0) m = 0;
+  return m;
+}
+function shadowSignal(a, r, useCurrentValuation) {
+  // 统一协议(影子): 结构轮 + 价格轮 + 三态(balanced 门槛), 与 Python 一致
+  var w = SHADOW_W[a.name] || SHADOW_W['沪深300'];
+  var degraded = [];
+  var structural = null;
+  if (a.name === '黄金') {
+    if (!useCurrentValuation) return { label:'数据不足', reason:'历史回看缺当时宏观数据，暂不下结论', cls:'mid', quality:'宏观缺失' };
+    var u = FUND.us10y;
+    var macro = null;
+    if (u && u.now !== undefined && u.prev20 !== undefined) {
+      var diff = u.prev20 - u.now;
+      macro = diff > 0.15 ? 2 : diff > 0.05 ? 1 : diff < -0.15 ? -2 : diff < -0.05 ? -1 : 0;
+    } else degraded.push('宏观缺失');
+    var position = r.v;   // 250 日线乖离分(calcAt 已按当日回算, 不进价格轮, 不重复计分)
+    if (position === null) degraded.push('250日线不足');
+    if (macro === null) return { label:'数据不足', reason:'宏观环境数据缺失，不出强信号', cls:'mid', quality:'宏观缺失' };
+    structural = (macro + (position === null ? 0 : position)) / (position === null ? 1 : 2);
+  } else {
+    if (!useCurrentValuation) return { label:'数据不足', reason:'历史回看缺当时估值，暂不下结论', cls:'mid', quality:'估值缺失' };
+    var f = FUND[a.symbol] || FUND[a.symbol.replace(/^(sh|sz|hk)/, '')];
+    var v = (f && f.v_score !== undefined && f.v_score !== null) ? f.v_score : null;
+    if (v === null) {
+      if (a.hk) return { label:'数据不足', reason:'缺少可靠历史估值，暂不下结论', cls:'mid', quality:'估值缺失' };
+      degraded.push('估值缺失');
+    } else structural = v;
+  }
+  if (a.name !== '黄金') degraded.push('宽度缺失');   // 宽度只做当前截面观察, 与 Python 降级标记一致
+  var t = shadowTrend(r);
+  var m = shadowMomentum(a.name);
+  if (t === null || m === null || structural === null) {
+    return { label:'数据不足', reason:'结构轮或价格轮数据不完整，暂不下结论', cls:'mid', quality:'数据不足' };
+  }
+  var technical = (t*w.trend + m*w.momentum) / (w.trend + w.momentum);
+  var wt = w.trend + w.momentum;
+  var wv = a.name === '黄金' ? w.macro : w.valuation;
+  var composite = (structural*wv + technical*wt) / (wv + wt);
+  var enter = structural >= 0 && technical >= 1 && m >= -1 && composite !== null;
+  if (a.name === '中证白酒' || a.name === '中证医疗') {
+    if (structural >= 0 && technical <= -1 && m <= 0) enter = false;  // 便宜+继续下跌不买
+  }
+  var exitNow = (technical <= -1 && m <= -1) || (structural <= -1 && technical <= 0) || (composite !== null && composite <= -1.0);
+  var quality = degraded.length ? '降级' : '完整';
+  if (exitNow) {
+    if (technical <= -1 && m <= -1) return { label:'卖出', reason:'中长期多数周期向下，短期动能也已转弱', cls:'down', quality:quality };
+    if (structural <= -1 && technical <= 0) return { label:'卖出', reason:'估值结构与价格走势同步转弱', cls:'down', quality:quality };
+    return { label:'卖出', reason:'综合弱项达到退出门槛', cls:'down', quality:quality };
+  }
+  if (enter) return { label:'买入', reason:'结构轮与价格轮双轮确认，短期动能没有拖后腿', cls:'up', quality:quality };
+  return { label:'持有', reason:'双轮尚未同时确认，继续观察', cls:'mid', quality:quality };
 }
 
 function calcAt(name, i) {
@@ -415,12 +503,16 @@ function renderDay(day, useCurrentValuation) {
     var action = actionForAsset(a, v, r, useCurrentValuation);
     var actionQuality = action.quality ? '<span class="tag mid">' + action.quality + '</span>' : '';
     var assetName = a.name + ((!a.validated && a.g === 'fund') ? '<span class="tag mid">观察</span>' : '');
+    var shadow = shadowSignal(a, r, useCurrentValuation);
+    var shTxt = shadow.label === '数据不足' ? '—' : shadow.label;
+    var shQuality = (shadow.quality && shadow.quality !== '完整') ? '<span class="tag mid">' + shadow.quality + '</span>' : '';
     sh += '<tr><td>' + assetName + '</td>' +
           '<td style="text-align:center" class="' + vCls + '">' + vTxt + '</td>' +
           '<td style="text-align:center">' + tTxt + '</td>' +
           '<td style="text-align:center">' + mTxt + '</td>' +
           '<td style="text-align:center" class="' + sCls + '">' + sTxt + '</td>' +
-          '<td style="text-align:center" class="' + action.cls + '" title="' + action.reason + '"><b>' + action.label + '</b>' + actionQuality + '</td></tr>';
+          '<td style="text-align:center" class="' + action.cls + '" title="' + action.reason + '"><b>' + action.label + '</b>' + actionQuality + '</td>' +
+          '<td style="text-align:center" class="' + shadow.cls + '" title="影子(' + shadow.reason + ')"><b>' + shTxt + '</b>' + shQuality + '</td></tr>';
   });
   document.getElementById('sigBody').innerHTML = sh;
   document.getElementById('sigNote').textContent = useCurrentValuation ?
