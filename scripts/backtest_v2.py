@@ -113,15 +113,17 @@ def common_v1_actions(df, asset_name):
                 bias = (df["close"].iloc[i] / ma250 - 1) * 100
                 v = rules.gold_bias_score(bias)
         elif asset_name == "沪深300":
+            pe_h = df["pe"].iloc[:i + 1].dropna()
+            pb_h = df["pb"].iloc[:i + 1].dropna() if "pb" in df else pd.Series(dtype=float)
+            erp_h = df["erp"].iloc[:i + 1].dropna() if "erp" in df else pd.Series(dtype=float)
             v = rules.hs300_value_score(
-                df["pe"].iloc[:i + 1].dropna(), df["pe"].iloc[i],
-                df["pb"].iloc[:i + 1].dropna() if "pb" in df else [], 
-                df["pb"].iloc[i] if "pb" in df and pd.notna(df["pb"].iloc[i]) else float("nan"),
-                df["erp"].iloc[:i + 1].dropna() if "erp" in df else [],
-                df["erp"].iloc[i] if "erp" in df and pd.notna(df["erp"].iloc[i]) else float("nan"),
+                pe_h, float(pe_h.iloc[-1]) if len(pe_h) else float("nan"),
+                pb_h, float(pb_h.iloc[-1]) if len(pb_h) else float("nan"),
+                erp_h, float(erp_h.iloc[-1]) if len(erp_h) else float("nan"),
             )[0]
         else:
-            v = rules.valuation_percentile_score(df["pe"].iloc[:i + 1].dropna(), df["pe"].iloc[i])
+            pe_h = df["pe"].iloc[:i + 1].dropna()
+            v = rules.valuation_percentile_score(pe_h, float(pe_h.iloc[-1]) if len(pe_h) else float("nan"))
         close = df["close"]
         t = 2 if (close.iloc[i] > df["ma20"].iloc[i] and df["ma20"].iloc[i] > df["ma60"].iloc[i]) else \
             1 if (close.iloc[i] > df["ma20"].iloc[i] and df["ma20"].iloc[i] <= df["ma60"].iloc[i]) else \
@@ -146,6 +148,32 @@ def ds_score_momentum(rsi_value, chg5):
     return ds.score_momentum_values(rsi_value, chg5)
 
 
+def v2_signal_at(df, asset_name, candidate, day):
+    """评估日 day 的完整 v2 信号 dict(供回测与影子日志共用)。"""
+    i = df.index.get_loc(day)
+    close = df["close"].iloc[:i + 1]
+    kwargs = dict(
+        close=close.tolist(), spot=float(close.iloc[-1]),
+        rsi_value=float(df["rsi"].iloc[i]) if pd.notna(df["rsi"].iloc[i]) else None,
+        candidate=candidate, signal_date=str(day.date()),
+    )
+    if asset_name == "黄金":
+        us = df["us10y"].iloc[:i + 1].dropna()
+        kwargs.update(us10y_history=us.tolist())
+    else:
+        pe = df["pe"].iloc[:i + 1].dropna()
+        kwargs.update(pe_history=pe.tolist(),
+                      pe_now=float(pe.iloc[-1]) if len(pe) else None)
+        if asset_name == "沪深300":
+            pb = df["pb"].iloc[:i + 1].dropna()
+            erp = df["erp"].iloc[:i + 1].dropna()
+            kwargs.update(pb_history=pb.tolist(),
+                          pb_now=float(pb.iloc[-1]) if len(pb) else None,
+                          erp_history=erp.tolist(),
+                          erp_now=float(erp.iloc[-1]) if len(erp) else None)
+    return v2.compute_signal(asset_name, **kwargs)
+
+
 def v2_shadow_actions(df, asset_name, candidate):
     """category_v2_shadow 动作序列(周频评估日计算, 其余日沿用)。"""
     actions = {}
@@ -153,29 +181,8 @@ def v2_shadow_actions(df, asset_name, candidate):
     weeks = pd.Series(idx.to_period("W-FRI"), index=idx)
     week_end = weeks.ne(weeks.shift(-1))
     eval_days = idx[week_end]
-    category, _ = cfg.CATEGORY_MAP[asset_name]
     for day in eval_days:
-        i = idx.get_loc(day)
-        close = df["close"].iloc[:i + 1]
-        kwargs = dict(
-            close=close.tolist(), spot=float(close.iloc[-1]),
-            rsi_value=float(df["rsi"].iloc[i]) if pd.notna(df["rsi"].iloc[i]) else None,
-            candidate=candidate, signal_date=str(day.date()),
-        )
-        if asset_name == "黄金":
-            us = df["us10y"].iloc[:i + 1].dropna()
-            kwargs.update(us10y_history=us.tolist())
-        else:
-            pe = df["pe"].iloc[:i + 1].dropna()
-            kwargs.update(pe_history=pe.tolist(), pe_now=float(df["pe"].iloc[i]))
-            if asset_name == "沪深300":
-                pb = df["pb"].iloc[:i + 1].dropna()
-                erp = df["erp"].iloc[:i + 1].dropna()
-                kwargs.update(pb_history=pb.tolist(),
-                              pb_now=float(df["pb"].iloc[i]) if pd.notna(df["pb"].iloc[i]) else None,
-                              erp_history=erp.tolist(),
-                              erp_now=float(df["erp"].iloc[i]) if pd.notna(df["erp"].iloc[i]) else None)
-        sig = v2.compute_signal(asset_name, **kwargs)
+        sig = v2_signal_at(df, asset_name, candidate, day)
         actions[day] = sig["action"]
     return actions
 

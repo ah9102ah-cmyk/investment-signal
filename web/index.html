@@ -82,6 +82,7 @@
       <tbody id="sigBody"><tr><td colspan="7" class="loading">加载中...</td></tr></tbody>
     </table>
     <div class="note" id="sigNote">最终结果由中长期趋势 + V/T/M 双轮共同确认；“持有”在未持有时理解为继续观望。影子列 = 分类策略 V2 的并列观察结果(均衡参数)，不改变正式结果</div>
+    <div id="shadowPortfolio"></div>
   </div>
 
   <div class="card" id="fundCard" style="display:none;">
@@ -323,6 +324,80 @@ function shadowSignal(a, r, useCurrentValuation) {
   return { label:'持有', reason:'双轮尚未同时确认，继续观察', cls:'mid', quality:quality };
 }
 
+// ---------- 组合层(阶段C): 类内排名 + 风险集中提示 ----------
+var SHADOW_CLUSTER = {
+  '沪深300':'大盘权益', '中证500':'中小盘权益', '红利低波':'防守/红利',
+  '科创50':'高成长科技', '恒生科技':'高成长科技', '中证白酒':'消费行业',
+  '中证医疗':'医疗行业', '黄金':'实物资产'
+};
+var SHADOW_EQUITY = { '大盘权益':1, '中小盘权益':1, '防守/红利':1, '高成长科技':1, '消费行业':1, '医疗行业':1 };
+function shadowRankScore(s) {
+  var t = (s.technical === null || s.technical === undefined) ? -2 : s.technical;
+  var score = t - Math.min(s.vol || 0, 0.6) * 2;
+  if (s.quality === '完整') score += 0.3;
+  else if (s.quality === '降级') score -= 0.2;
+  return score;
+}
+function shadowPortfolio() {
+  var signals = {};
+  curAssets().forEach(function(a){
+    var c = (DATA[a.name] && DATA[a.name].close) ? DATA[a.name].close : null;
+    if (!c || !c.length) return;
+    var r = calcAt(a.name, c.length - 1);
+    if (!r) return;
+    var s = shadowSignal(a, r, true);
+    signals[a.name] = {
+      action: s.label, quality: s.quality,
+      cluster: SHADOW_CLUSTER[a.name] || '其他',
+      technical: shadowTrend(r), vol: r.vol60 || 0
+    };
+  });
+  // 类内排名(风险调整: 趋势 - 波动惩罚 + 数据完整度)
+  var clusters = {};
+  Object.keys(signals).forEach(function(n){ (clusters[signals[n].cluster] = clusters[signals[n].cluster] || []).push(n); });
+  Object.keys(clusters).forEach(function(c){
+    clusters[c].sort(function(a,b){ return shadowRankScore(signals[b]) - shadowRankScore(signals[a]); });
+    clusters[c].forEach(function(n, i){ signals[n].rank = i + 1; });
+  });
+  // 风险提示(任务书 §10)
+  var warnings = [];
+  var buys = Object.keys(signals).filter(function(n){ return signals[n].action === '买入'; });
+  var techBuys = buys.filter(function(n){ return signals[n].cluster === '高成长科技'; });
+  if (techBuys.length >= 2) warnings.push('科创50与恒生科技同时偏强，科技类风险集中，注意别重复押注同一方向');
+  var hs = signals['沪深300'], bj = signals['中证白酒'];
+  if (hs && bj) {
+    var strong = function(s){ return s && s.technical >= 1 && (s.action === '买入' || s.action === '持有'); };
+    if (strong(hs) && strong(bj)) warnings.push('沪深300与白酒同时偏强，成分暴露有重叠');
+  }
+  var equitySells = Object.keys(signals).filter(function(n){
+    return signals[n].action === '卖出' && SHADOW_EQUITY[signals[n].cluster];
+  });
+  if (equitySells.length >= 3) warnings.push('多个权益指数同时走弱，权益整体偏弱');
+  return { signals: signals, warnings: warnings };
+}
+function renderShadowPortfolio() {
+  var el = document.getElementById('shadowPortfolio');
+  if (!el) return;
+  var p = shadowPortfolio();
+  var html = '';
+  if (p.warnings.length) {
+    html += '<div style="margin-top:8px;padding:8px 10px;background:#fef3c7;border-left:3px solid #d97706;border-radius:6px;font-size:12.5px;line-height:1.8;color:#78350f;">' +
+            '<b>组合提示(影子观察):</b><br>' + p.warnings.join('<br>') + '</div>';
+  }
+  var clusterBuys = {};
+  Object.keys(p.signals).forEach(function(n){
+    if (p.signals[n].action === '买入') (clusterBuys[p.signals[n].cluster] = clusterBuys[p.signals[n].cluster] || []).push(n);
+  });
+  Object.keys(clusterBuys).forEach(function(c){
+    var arr = clusterBuys[c];
+    if (arr.length < 2) return;
+    arr.sort(function(a,b){ return p.signals[a].rank - p.signals[b].rank; });
+    html += '<div style="margin-top:6px;padding:6px 10px;background:#ecfdf5;border-left:3px solid #059669;border-radius:6px;font-size:12.5px;color:#064e3b;">' +
+            '<b>' + c + ' 类内优先顺序(影子):</b> ' + arr.join(' → ') + '</div>';
+  });
+  el.innerHTML = html;
+}
+
 function calcAt(name, i) {
   var c = DATA[name].close;
   if (i < 60 || i >= c.length) return null;
@@ -515,6 +590,7 @@ function renderDay(day, useCurrentValuation) {
           '<td style="text-align:center" class="' + shadow.cls + '" title="影子(' + shadow.reason + ')"><b>' + shTxt + '</b>' + shQuality + '</td></tr>';
   });
   document.getElementById('sigBody').innerHTML = sh;
+  renderShadowPortfolio();
   document.getElementById('sigNote').textContent = useCurrentValuation ?
     '结果 = 中长期趋势 + V/T/M 双轮确认；所有观察指数也输出结果；缺可靠估值时保守显示“持有 / 继续观望”，并明确标注' :
     '历史回看: 缺少当时估值时 V/S/结果显示数据不足，不会拿今天的估值冒充历史值';

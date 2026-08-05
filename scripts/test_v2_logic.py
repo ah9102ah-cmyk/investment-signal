@@ -161,5 +161,64 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(sig["technical_score"], 2.0)   # 趋势+动能, 不含 250 线
 
 
+class PortfolioTests(unittest.TestCase):
+    """组合层: 类内排名 + 风险集中提示(阶段 C)"""
+
+    def _sig(self, action, cluster, technical=0, quality="完整"):
+        return {"action": action, "risk_cluster": cluster, "technical_score": technical,
+                "data_quality": quality}
+
+    def test_same_cluster_multi_buy_gives_rank(self):
+        import portfolio_v2 as pf
+        signals = {
+            "科创50": self._sig("买入", "高成长科技", 2),
+            "恒生科技": self._sig("买入", "高成长科技", 1),
+        }
+        warnings = pf.apply_portfolio(signals, vol_map={"科创50": 0.3, "恒生科技": 0.4})
+        self.assertEqual(signals["科创50"]["class_rank"], 1)
+        self.assertEqual(signals["恒生科技"]["class_rank"], 2)
+        self.assertTrue(any("科技" in w for w in warnings), warnings)
+        self.assertTrue(any("类内" in w for w in warnings), warnings)
+
+    def test_three_equity_sells_warns(self):
+        import portfolio_v2 as pf
+        signals = {
+            "红利低波": self._sig("卖出", "防守/红利"),
+            "沪深300": self._sig("卖出", "大盘权益"),
+            "中证医疗": self._sig("卖出", "医疗行业"),
+            "黄金": self._sig("持有", "实物资产"),
+        }
+        warnings = pf.apply_portfolio(signals)
+        self.assertTrue(any("权益整体偏弱" in w for w in warnings), warnings)
+
+    def test_hs300_and_baijiu_overlap(self):
+        import portfolio_v2 as pf
+        signals = {
+            "沪深300": self._sig("持有", "大盘权益", 1),
+            "中证白酒": self._sig("持有", "消费行业", 1),
+        }
+        warnings = pf.apply_portfolio(signals)
+        self.assertTrue(any("重叠" in w for w in warnings), warnings)
+
+    def test_no_warning_when_quiet(self):
+        import portfolio_v2 as pf
+        signals = {
+            "黄金": self._sig("持有", "实物资产"),
+            "沪深300": self._sig("持有", "大盘权益"),
+        }
+        warnings = pf.apply_portfolio(signals)
+        self.assertEqual(warnings, [])
+
+    def test_rank_prefers_lower_volatility(self):
+        import portfolio_v2 as pf
+        signals = {
+            "科创50": self._sig("买入", "高成长科技", 1),
+            "恒生科技": self._sig("买入", "高成长科技", 1),
+        }
+        pf.apply_portfolio(signals, vol_map={"科创50": 0.2, "恒生科技": 0.5})
+        self.assertEqual(signals["科创50"]["class_rank"], 1)
+        self.assertEqual(signals["恒生科技"]["class_rank"], 2)
+
+
 if __name__ == "__main__":
     unittest.main()

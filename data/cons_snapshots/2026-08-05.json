@@ -1,0 +1,32 @@
+{
+ "date": "2026-08-05",
+ "indexes": {
+  "中证白酒": {
+   "cons": 17,
+   "valid": 17,
+   "above_ma250_ratio": 0.0,
+   "up20_ratio": 1.0,
+   "eq_ret20": 0.1336,
+   "index_ret20": 0.109,
+   "direction": 1
+  },
+  "中证医疗": {
+   "cons": 50,
+   "valid": 49,
+   "above_ma250_ratio": 0.204,
+   "up20_ratio": 0.837,
+   "eq_ret20": 0.0811,
+   "index_ret20": 0.1132,
+   "direction": 1
+  },
+  "科创50": {
+   "cons": 50,
+   "valid": 48,
+   "above_ma250_ratio": 0.521,
+   "up20_ratio": 0.375,
+   "eq_ret20": -0.0796,
+   "index_ret20": -0.16,
+   "direction": 0
+  }
+ }
+}

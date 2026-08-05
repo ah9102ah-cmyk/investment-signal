@@ -1,0 +1,177 @@
+{
+ "2026-08-05": {
+  "date": "2026-08-05",
+  "entries": {
+   "沪深300": {
+    "formal": "卖出",
+    "shadow": "卖出",
+    "match": true,
+    "reason": "",
+    "quality": "降级",
+    "degraded": [
+     "宽度缺失"
+    ],
+    "structural": -1.0,
+    "technical": -0.8,
+    "momentum": 0,
+    "composite": -0.89,
+    "class_rank": 1,
+    "signal_date": "2026-08-03"
+   },
+   "中证500": {
+    "formal": "卖出",
+    "shadow": "持有",
+    "match": false,
+    "reason": "正式版按弱项总分卖出；影子版在中长期趋势仍向上时不会仅因估值偏贵卖出",
+    "quality": "降级",
+    "degraded": [
+     "宽度缺失"
+    ],
+    "structural": -2.0,
+    "technical": 1.61,
+    "momentum": 0,
+    "composite": 0.57,
+    "class_rank": 1,
+    "signal_date": "2026-08-04"
+   },
+   "科创50": {
+    "formal": "卖出",
+    "shadow": "持有",
+    "match": false,
+    "reason": "正式版按弱项总分卖出；影子版在中长期趋势仍向上时不会仅因估值偏贵卖出",
+    "quality": "降级",
+    "degraded": [
+     "宽度缺失"
+    ],
+    "structural": -2.0,
+    "technical": 1.65,
+    "momentum": 0,
+    "composite": 0.89,
+    "class_rank": 1,
+    "signal_date": "2026-08-04"
+   },
+   "中证白酒": {
+    "formal": "持有",
+    "shadow": "持有",
+    "match": true,
+    "reason": "",
+    "quality": "降级",
+    "degraded": [
+     "宽度缺失"
+    ],
+    "structural": 1.0,
+    "technical": -1.39,
+    "momentum": 0,
+    "composite": -0.26,
+    "class_rank": 1,
+    "signal_date": "2026-08-04"
+   },
+   "中证医疗": {
+    "formal": "持有",
+    "shadow": "卖出",
+    "match": false,
+    "reason": "正式版未达弱项门槛；影子版双轮同步转弱提前退出",
+    "quality": "降级",
+    "degraded": [
+     "宽度缺失"
+    ],
+    "structural": -1.0,
+    "technical": -1.08,
+    "momentum": 1,
+    "composite": -1.04,
+    "class_rank": 1,
+    "signal_date": "2026-08-04"
+   },
+   "红利低波": {
+    "formal": "持有",
+    "shadow": "卖出",
+    "match": false,
+    "reason": "正式版未达弱项门槛；影子版双轮同步转弱提前退出",
+    "quality": "降级",
+    "degraded": [
+     "dividend",
+     "宽度缺失"
+    ],
+    "structural": -2.0,
+    "technical": -1.6,
+    "momentum": 0,
+    "composite": -1.8,
+    "class_rank": 1,
+    "signal_date": "2026-08-04"
+   },
+   "黄金": {
+    "formal": "持有",
+    "shadow": "持有",
+    "match": true,
+    "reason": "",
+    "quality": "完整",
+    "degraded": [],
+    "structural": -0.5,
+    "technical": -0.72,
+    "momentum": 0,
+    "composite": -0.63,
+    "class_rank": 1,
+    "signal_date": "2026-08-04"
+   }
+  },
+  "warnings": [
+   "多个权益指数同时走弱，权益整体偏弱，暂不适合加仓权益类"
+  ],
+  "health": {
+   "沪深300": {
+    "days": 3298,
+    "first": "2013-01-01",
+    "last": "2026-08-03",
+    "pe_valid": 3298,
+    "us10y_valid": null
+   },
+   "中证500": {
+    "days": 3300,
+    "first": "2013-01-01",
+    "last": "2026-08-04",
+    "pe_valid": 3300,
+    "us10y_valid": null
+   },
+   "科创50": {
+    "days": 1598,
+    "first": "2013-01-01",
+    "last": "2026-08-04",
+    "pe_valid": 1476,
+    "us10y_valid": null
+   },
+   "中证白酒": {
+    "days": 3300,
+    "first": "2013-01-01",
+    "last": "2026-08-04",
+    "pe_valid": 2707,
+    "us10y_valid": null
+   },
+   "中证医疗": {
+    "days": 3300,
+    "first": "2013-01-01",
+    "last": "2026-08-04",
+    "pe_valid": 2728,
+    "us10y_valid": null
+   },
+   "红利低波": {
+    "days": 1827,
+    "first": "2019-01-18",
+    "last": "2026-08-04",
+    "pe_valid": 1826,
+    "us10y_valid": null
+   },
+   "黄金": {
+    "days": 3165,
+    "first": "2013-07-29",
+    "last": "2026-08-04",
+    "pe_valid": null,
+    "us10y_valid": 927
+   },
+   "fund_us10y": {
+    "now": 4.71,
+    "prev20": 4.485,
+    "date": "2026-07-31"
+   }
+  }
+ }
+}
