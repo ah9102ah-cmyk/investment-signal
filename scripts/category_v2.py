@@ -609,21 +609,25 @@ def compute_signal(name, *, close=None, spot=None, pe_history=None, pe_now=None,
         degraded.append("行情历史不足")
 
     # v4.1: 计算所有分项之前, 按字段日期过滤未来输入。
-    # 未来估值/PB/ERP/宽度/美债/美元/盈利 必须等同于缺失: 置 None 后不参与任何分项/结构轮/综合分。
+    # 分字段精确清空(v4.2): valuation 未来只清 PE, pb 未来只清 PB, erp 未来只清 ERP,
+    # us10y 未来只清美债, dollar 未来只清美元, 宽度/盈利独立清空。
+    # 有效字段必须保留(回归测试验证: 如 有效PE+ERP、未来PB 与 仅PB缺失 完全一致)。
     # 生产路径(build_signal_for)已按信号日截断, 此处是引擎层硬保障, 防止直接调用方混入未来数据。
     future_fields = sorted(f for f, d in (staleness_days(data_dates, signal_date) or {}).items()
                            if d is not None and d < 0)
     if future_fields:
         degraded.append("未来数据已按缺失处理: " + ",".join(future_fields))
-        if any(f in future_fields for f in ("valuation", "pb", "erp")):
+        if "valuation" in future_fields:
             pe_history = pe_now = None
+        if "pb" in future_fields:
             pb_history = pb_now = None
+        if "erp" in future_fields:
             erp_history = erp_now = None
-            div_history = div_now = None
         if "breadth" in future_fields:
             breadth_ratio = None
-        if any(f in future_fields for f in ("us10y", "dollar")):
+        if "us10y" in future_fields:
             us10y_history = None
+        if "dollar" in future_fields:
             dollar_history = None
             dollar_now = None
         if "earnings" in future_fields:

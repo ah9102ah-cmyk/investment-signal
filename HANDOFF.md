@@ -7,7 +7,7 @@
 
 > 2026-08-06 已完成 V2 影子系统的数据完整性修正（category_v2_shadow_v4），仍在 `dev` 分支，**未推送、未合并 main、未触发任何 workflow**；邮件任务保持关闭，不产生任何交易指令。下方所有旧章节（〇、〇·二、一~八）均保留作历史背景，其中旧观察期/旧口径已过时。
 
-- **严格 as_of=signal_date 截止**：宽度快照只选日期 <= 信号日的最近一份（`snapshot_asof`）；美元历史保留日期并截断到信号日（`dollar_asof`）；数据日期晚于信号日 -> future/invalid，引擎层在计算全部分项之前把未来字段等同缺失（置 None），不参与任何分数。
+- **严格 as_of=signal_date 截止**：宽度快照只选日期 <= 信号日的最近一份（`snapshot_asof`）；美元历史保留日期并截断到信号日（`dollar_asof`）；数据日期晚于信号日 -> future/invalid，引擎层在计算全部分项之前按字段精确清空（valuation 未来只清 PE、pb 只清 PB、erp 只清 ERP、us10y 只清美债、dollar 只清美元、宽度/盈利独立清空），其他有效分项必须保留。
 - **陈旧度别名统一**：pb/erp → valuation 阈值，us10y/dollar → macro 阈值（`cfg.FIELD_ALIASES`）；状态判断 `_status_for` 与降级说明 `_staleness_note` 共用同一 canonical 字段口径。
 - **PB/ERP 真实日期**：`build_data_meta` 分别接收 pb_date/erp_date，data_date 与 staleness_days 严格一致。
 - **收益回填重写**：每次运行遍历全部历史观察记录，1/4/12 周 = 5/20/60 个交易日（信号日当天不计），到期补写 `fwd_*/bh_*/common_v1_*`，只追加不覆盖历史信号；归档记录不参与。
@@ -15,7 +15,7 @@
 - **趋势周期差一天**：`trend_score_v2` 用 `close[-(h+1)]`（h 日涨幅），与 common_v1 口径一致。
 - **阶段回测口径**：`phase_metrics` 只累计该阶段选中的日收益。
 - **观察基线重建**：V3 批次（obs-2026-08-05）因污染整体归档 `archive/obs-2026-08-05/2026-08-05`（原文保留不删除），新基线 `obs-2026-08-06`（category_v2_shadow_v4）；**首个周五自动任务（2026-08-07 17:30 shadow_weekly）验证通过后才正式起算 8-12 周观察期**。
-- 测试：test_logic 16 + test_v2_logic 51 + test_backtest_timeline 11 + test_shadow_integrity 20 = **98/98 通过**；另新增未来字段等同缺失/宏观 15 天 severe/PB·ERP 日期一致性回归测试。
+- 测试：test_logic 16 + test_v2_logic 51 + test_backtest_timeline 11 + test_shadow_integrity 33 = **111/111 通过**；含未来字段等同缺失/交叉分字段清空（有效PE+ERP·未来PB 与仅PB缺失一致等 5 组）、宏观 15 天 severe、PB·ERP 日期一致性回归测试。v4.2 起未来字段按字段精确清空：valuation 未来只清 PE、pb 只清 PB、erp 只清 ERP、us10y 只清美债、dollar 只清美元，其他有效分项必须保留。
 - 常用命令：`py scripts/shadow_log.py`（周报+回填）、`py scripts/shadow_log.py rebuild_baseline`（一次性重建基线，不写周记录）、`py scripts/v2_daily.py`（页面信号，摘要只打印实际采用的 as-of 快照日期）。
 - 详细更正记录：`STRATEGY_V2_PLAN.md` §21；skill 参考 `v2-correction-2026-08.md` v4 节。
 

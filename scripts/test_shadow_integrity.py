@@ -502,5 +502,84 @@ class PbErpDateConsistencyTests(unittest.TestCase):
             self.assertEqual(src["status"], v2._status_for(field, src["staleness_days"]))
 
 
+class CrossFieldFutureTests(unittest.TestCase):
+    """v4.2: 分字段精确清空 — 未来字段只清自身, 其他有效分项必须保留。
+
+    交叉验证: 有效PE+ERP/未来PB == 仅PB缺失; 有效PE+PB/未来ERP == 仅ERP缺失;
+    有效PB+ERP/未来PE == 仅PE缺失; 有效美债/未来美元 == 仅美元缺失。"""
+
+    PE = [10.0] * 200
+    PB = [1.5] * 200
+    ERP = [5.0] * 200
+
+    def _hs300(self, future_field=None, pe=None, pb=None, erp=None):
+        close = list(np.linspace(100, 200, 300))
+        data_dates = {"price": "2026-07-31"}
+        if future_field:
+            data_dates[future_field] = "2026-08-05"
+        return v2.compute_signal(
+            "沪深300", close=close, spot=close[-1],
+            pe_history=pe, pe_now=pe[-1] if pe else None,
+            pb_history=pb, pb_now=pb[-1] if pb else None,
+            erp_history=erp, erp_now=erp[-1] if erp else None,
+            signal_date="2026-07-31", data_dates=data_dates)
+
+    def test_valid_pe_erp_future_pb_equals_pb_missing(self):
+        base = self._hs300(pe=self.PE, pb=None, erp=self.ERP)          # 仅PB缺失
+        fut = self._hs300("pb", pe=self.PE, pb=self.PB, erp=self.ERP)  # 未来PB
+        for k in ("valuation_score", "structural_score", "composite_score"):
+            self.assertEqual(base[k], fut[k], f"未来PB影响了有效分项 {k}")
+        self.assertIsNotNone(fut["valuation_score"])   # PE+ERP 有效 -> 估值分保留
+        self.assertEqual(fut["data_sources"]["pb"]["status"], "future")
+        self.assertTrue(any("未来数据已按缺失处理: pb" in d for d in fut["degraded_fields"]),
+                        fut["degraded_fields"])
+
+    def test_valid_pe_pb_future_erp_equals_erp_missing(self):
+        base = self._hs300(pe=self.PE, pb=self.PB, erp=None)           # 仅ERP缺失
+        fut = self._hs300("erp", pe=self.PE, pb=self.PB, erp=self.ERP) # 未来ERP
+        for k in ("valuation_score", "structural_score", "composite_score"):
+            self.assertEqual(base[k], fut[k], f"未来ERP影响了有效分项 {k}")
+        self.assertIsNotNone(fut["valuation_score"])
+        self.assertEqual(fut["data_sources"]["erp"]["status"], "future")
+
+    def test_valid_pb_erp_future_pe_equals_pe_missing(self):
+        base = self._hs300(pe=None, pb=self.PB, erp=self.ERP)          # 仅PE缺失
+        fut = self._hs300("valuation", pe=self.PE, pb=self.PB, erp=self.ERP)  # 未来PE
+        for k in ("valuation_score", "structural_score", "composite_score"):
+            self.assertEqual(base[k], fut[k], f"未来PE影响了有效分项 {k}")
+        self.assertIsNotNone(fut["valuation_score"])   # PB+ERP 有效 -> 估值分保留
+        self.assertEqual(fut["data_sources"]["valuation"]["status"], "future")
+        self.assertTrue(any("未来数据已按缺失处理: valuation" in d for d in fut["degraded_fields"]),
+                        fut["degraded_fields"])
+
+    def test_valid_us10y_future_dollar_equals_dollar_missing(self):
+        close = list(np.linspace(100, 200, 300))
+        base = v2.compute_signal("黄金", close=close, spot=close[-1],
+                                 us10y_history=[3.5] * 60, dollar_history=None,
+                                 signal_date="2026-07-31",
+                                 data_dates={"price": "2026-07-31"})      # 仅美元缺失
+        fut = v2.compute_signal("黄金", close=close, spot=close[-1],
+                                us10y_history=[3.5] * 60, dollar_history=[100.0] * 60,
+                                signal_date="2026-07-31",
+                                data_dates={"price": "2026-07-31", "dollar": "2026-08-05"})
+        for k in ("macro_score", "structural_score", "composite_score"):
+            self.assertEqual(base[k], fut[k], f"未来美元影响了有效分项 {k}")
+        self.assertIsNotNone(fut["macro_score"])       # 有效美债 -> 宏观分保留(利率方向)
+        self.assertEqual(fut["data_sources"]["dollar"]["status"], "future")
+        self.assertTrue(any("未来数据已按缺失处理: dollar" in d for d in fut["degraded_fields"]))
+
+    def test_other_valid_components_kept_with_future_warning(self):
+        # 除未来字段本身告警外, 其他有效分项必须保留: 与"仅PB缺失"基线完全一致
+        fut = self._hs300("pb", pe=self.PE, pb=self.PB, erp=self.ERP)
+        clean = self._hs300(pe=self.PE, pb=None, erp=self.ERP)
+        self.assertEqual(fut["valuation_score"], clean["valuation_score"])
+        self.assertEqual(fut["structural_score"], clean["structural_score"])
+        self.assertEqual(fut["composite_score"], clean["composite_score"])
+        self.assertIsNotNone(fut["valuation_score"])
+        # 未来告警存在, 但 PE/ERP 有效分项没有被误清
+        self.assertTrue(any("未来数据已按缺失处理: pb" in d for d in fut["degraded_fields"]))
+        self.assertTrue(any("pb数据日期晚于信号日" in d for d in fut["degraded_fields"]))
+
+
 if __name__ == "__main__":
     unittest.main()

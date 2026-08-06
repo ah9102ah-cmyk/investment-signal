@@ -459,7 +459,7 @@ signal_date / valuation_date / price_date
 ### 21.3 测试与验证
 
 - 新增 test_shadow_integrity.py 20 测试，覆盖：信号日后数据不入计算(快照/美元/估值 future)、未来数据返回 invalid、到期历史记录自动回填(含幂等/归档不回填/只补已到期)、研究候选落盘与重载保留(同数据同规则)、美元多日期解析与截断、阶段回测只累计选中日收益、观察期归档
-- test_v2_logic.py 51/51(趋势精确跨度新测试)、test_backtest_timeline.py 11/11、test_logic.py 16/16，合计 98/98
+- test_v2_logic.py 51/51(趋势精确跨度新测试)、test_backtest_timeline.py 11/11、test_logic.py 16/16、test_shadow_integrity.py 33/33(v4.2 起含交叉分字段清空测试), 合计 111/111
 - v2_signals.json 已用 v4 重新生成并双写(科创50/白酒/医疗不再混入 2026-08-05 未来快照；黄金美元诚实标注缺失；沪深300 pb/erp 日期进 data_sources)
 - 本批次仅在 dev；未合并 main、未推送、未触发 workflow；邮件任务保持关闭；不产生任何交易指令
 
@@ -476,7 +476,20 @@ signal_date / valuation_date / price_date
 | V4.1-3 | build_data_meta 的 pb/erp data_date 写死 valuation_date，与 data_sources 实际使用的日期可能不一致 | build_data_meta 分别接收 pb_date/erp_date，data_date 与 staleness_days 严格一致 |
 | V4.1-4 | v2_daily 摘要打印"宽度快照"用的是目录最新快照（可能是未来日期），非实际采用 | 摘要改为打印各指数实际采用的 as-of 快照日期（无则"无"） |
 
-回归测试（test_shadow_integrity.py 新增 8 个，全套 106/106）：
+回归测试（test_shadow_integrity.py 新增 8 个；后随 v4.2 交叉测试扩充至 33 个，全套 111/111）：
 - 未来字段各项分数与该字段缺失时完全一致（沪深300 PB/ERP、黄金美债/美元、宽度、行业盈利）
 - 15 天宏观数据必须 severe（us10y/dollar 走 macro 阈值 10/15）
 - PB/ERP 显示日期与陈旧天数一致（data_date ↔ staleness_days 动态核对）
+
+### 21.6 v4.2 分字段精确清空（2026-08-06，随 v4/v4.1 同在 dev，未推送未合并）
+
+| 编号 | 问题 | 修复 |
+|---|---|---|
+| V4.2-1 | v4.1 的未来过滤是粗粒度：valuation/pb/erp 任一未来会把 PE/PB/ERP 全部清空，误伤有效字段（如有效 PE+ERP、仅 PB 未来时 PE/ERP 分被清掉） | 改为按字段精确清空：valuation 未来只清 PE、pb 只清 PB、erp 只清 ERP、us10y 只清美债、dollar 只清美元、宽度/盈利独立清空；其他有效分项必须保留 |
+
+交叉回归测试（test_shadow_integrity.py 新增 5 个，全套 111/111）：
+- 有效 PE+ERP、未来 PB == 仅 PB 缺失（估值分保留且一致）
+- 有效 PE+PB、未来 ERP == 仅 ERP 缺失
+- 有效 PB+ERP、未来 PE == 仅 PE 缺失
+- 有效美债、未来美元 == 仅美元缺失（宏观分保留，利率方向仍在）
+- 除未来字段本身告警外，其他有效分项与无未来数据基线完全一致
