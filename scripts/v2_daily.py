@@ -84,15 +84,46 @@ def latest_snapshot():
         return None, latest[:-5]
 
 
+def snapshot_asof(day):
+    """选择日期不晚于信号日的最近宽度快照(v4 严格 as_of=signal_date 截止)。
+
+    快照只能选择日期 <= 信号日的数据; 只有晚于信号日的快照时返回 (None, None),
+    调用方按\"宽度缺失\"降级, 绝不允许把未来快照混入评分。"""
+    day_str = str(day)[:10]
+    if not os.path.isdir(SNAP_DIR):
+        return None, None
+    files = sorted(f for f in os.listdir(SNAP_DIR) if f.endswith(".json"))
+    best = None
+    for f in files:
+        d = f[:-5]
+        if d <= day_str:
+            best = f
+        else:
+            break
+    if best is None:
+        return None, None
+    try:
+        with open(os.path.join(SNAP_DIR, best), encoding="utf-8") as f:
+            snap = json.load(f)
+        return snap, best[:-5]
+    except Exception as e:
+        print(f"[v2_daily] 宽度快照读取失败({best}): {e}")
+        return None, best[:-5]
+
+
 def dollar_data():
-    """美元指数: 当前值 + 历史序列(尽力而为)。没有可靠历史时必须降级标注。"""
+    """美元指数: 当前值 + 历史序列(带日期, v4 保留日期供按信号日截断)。
+
+    返回 (dollar_now, dollar_hist): dollar_now=实时当前值(仅供展示/降级提示),
+    dollar_hist=带 DatetimeIndex 的收盘价 Series(尽力而为; 失败即 None ->
+    引擎标注\"美元指数缺失\", 不假装完整)。"""
     dollar_now = None
-    dollar_history = None
+    dollar_hist = None
     try:
         dollar_now = datahub.dollar_index()
     except Exception as e:
         print(f"[v2_daily] 美元指数获取失败: {e}")
-    # 尝试历史: akshare 美元指数历史接口(尽力; 失败即 None -> 引擎标注"仅当前值")
+    # 尝试历史: akshare 美元指数历史接口(尽力; 失败即 None -> 引擎标注\"仅当前值\")
     try:
         import akshare as ak
         if hasattr(ak, "index_investing_global"):
@@ -100,11 +131,29 @@ def dollar_data():
                                            period="每日", start_date="20240101", end_date=dt.date.today().strftime("%Y%m%d"))
             if df is not None and len(df) > 30:
                 df = df.rename(columns={"日期": "日期", "收盘": "收盘"})
-                df["日期"] = pd_timestamp(df["日期"] if "日期" in df.columns else df.iloc[:, 0])
-                dollar_history = [float(x) for x in df["收盘"].tolist()]
+                date_col = "日期" if "日期" in df.columns else df.columns[0]
+                val_col = "收盘" if "收盘" in df.columns else df.columns[1]
+                hist = pd.Series(pd.to_numeric(df[val_col], errors="coerce").to_numpy(),
+                                 index=pd.to_datetime(df[date_col]), dtype=float)
+                hist = hist[~hist.isna()].sort_index()
+                if len(hist) > 30:
+                    dollar_hist = hist
     except Exception as e:
         print(f"[v2_daily] 美元指数历史不可用(使用当前值): {e}")
-    return dollar_now, dollar_history
+    return dollar_now, dollar_hist
+
+
+def dollar_asof(dollar_hist, day):
+    """把美元历史截断到信号日(v4): 只保留日期 <= day 的值。
+
+    返回 (values, last_date): values=截断后的收盘价 list, last_date=<=day 的最近日期
+    (无数据时 (None, None))。未来日期一律排除, 绝不进入黄金宏观评分。"""
+    if dollar_hist is None or len(dollar_hist) == 0:
+        return None, None
+    upto = dollar_hist.loc[:pd_timestamp(day)]
+    if len(upto) == 0:
+        return None, None
+    return [float(x) for x in upto.tolist()], upto.index[-1].date().isoformat()
 
 
 def build_data_meta(signal_date, price_date, valuation_date, us10y_date, breadth_date, dollar_date, fetched_at):
@@ -124,11 +173,14 @@ def build_data_meta(signal_date, price_date, valuation_date, us10y_date, breadth
     return meta
 
 
-def build_signal_for(name, df, day, candidate, snap, snap_date,
-                     dollar_now, dollar_history, fetched_at):
+def build_signal_for(name, df, day, candidate, dollar_now, dollar_hist, fetched_at):
     """为单个资产构建完整 V2 信号(评估日 day, 候选 candidate)。
 
-    供 v2_daily.main() 与 shadow_log.py 共用, 保证口径一致。"""
+    供 v2_daily.main() 与 shadow_log.py 共用, 保证口径一致。
+    v4 严格 as_of=signal_date 截止:
+    - 宽度快照只选日期 <= day 的最近一份(snapshot_asof);
+    - 美元历史保留日期并截断到 day(dollar_asof), 未来日期不入评分;
+    - pb/erp(沪深300)携带各自真实数据日期进 data_dates/陈旧度协议。"""
     kwargs = dict(candidate=candidate, signal_date=str(day.date()))
     i = df.index.get_loc(day)
     close = df["close"].iloc[:i + 1]
@@ -141,11 +193,12 @@ def build_signal_for(name, df, day, candidate, snap, snap_date,
     if name == "黄金":
         us = df["us10y"].iloc[:i + 1].dropna()
         kwargs["us10y_history"] = us.tolist()
-        kwargs["dollar_now"] = dollar_now
-        kwargs["dollar_history"] = dollar_history
         us10y_date = us.index[-1].date() if len(us) else None
+        dollar_values, dollar_date = dollar_asof(dollar_hist, day)
+        kwargs["dollar_history"] = dollar_values
+        kwargs["dollar_now"] = float(dollar_values[-1]) if dollar_values else None
         data_dates = {"price": str(price_date), "us10y": str(us10y_date) if us10y_date else None,
-                      "dollar": str(dt.date.today())}
+                      "dollar": dollar_date}
     else:
         # 完整 PE 历史优先(红利低波等 ETF 帧: 估值分位用指数完整历史, 不只ETF窗口)
         pe_full = getattr(df, "attrs", {}).get("pe_full")
@@ -165,22 +218,30 @@ def build_signal_for(name, df, day, candidate, snap, snap_date,
             kwargs["pb_now"] = float(pb.iloc[-1]) if len(pb) else None
             kwargs["erp_history"] = erp.tolist()
             kwargs["erp_now"] = float(erp.iloc[-1]) if len(erp) else None
+            if len(pb):
+                data_dates["pb"] = str(pb.index[-1].date())
+            if len(erp):
+                data_dates["erp"] = str(erp.index[-1].date())
 
-    # 宽度(来自最新成分快照)
+    # 宽度(只选日期不晚于信号日的快照, v4)
     breadth_ratio = None
-    if name in BREADTH_INDEXES and snap is not None:
-        info = snap.get("indexes", {}).get(name)
-        if info and isinstance(info, dict) and info.get("above_ma250_ratio") is not None:
-            breadth_ratio = info["above_ma250_ratio"]
-    if breadth_ratio is not None:
-        kwargs["breadth_ratio"] = breadth_ratio
-        data_dates["breadth"] = snap_date or str(dt.date.today())
+    if name in BREADTH_INDEXES:
+        snap, snap_date = snapshot_asof(day.date())
+        if snap is not None:
+            info = snap.get("indexes", {}).get(name)
+            if info and isinstance(info, dict) and info.get("above_ma250_ratio") is not None:
+                breadth_ratio = info["above_ma250_ratio"]
+        if breadth_ratio is not None:
+            kwargs["breadth_ratio"] = breadth_ratio
+            data_dates["breadth"] = snap_date or str(day.date())
+        elif snap is not None:
+            data_dates["breadth"] = snap_date or str(day.date())
 
     # 盈利周期: 无可靠数据 -> 不传(引擎显式标"盈利周期缺失", 不按0)
     kwargs["data_dates"] = data_dates
     kwargs["data_meta"] = build_data_meta(
         day.date(), price_date, data_dates.get("valuation"), data_dates.get("us10y"),
-        data_dates.get("breadth"), str(dt.date.today()), fetched_at)
+        data_dates.get("breadth"), data_dates.get("dollar"), fetched_at)
     return v2.compute_signal(name, **kwargs)
 
 
@@ -188,7 +249,7 @@ def main():
     fetched_at = dt.datetime.now().isoformat(timespec="seconds")
     assets = bt.build_assets()
     snap, snap_date = latest_snapshot()
-    dollar_now, dollar_history = dollar_data()
+    dollar_now, dollar_hist = dollar_data()
 
     today = dt.date.today()
     signals = {}
@@ -200,17 +261,19 @@ def main():
         if global_eval_day is None or day > global_eval_day:
             global_eval_day = day
         candidate = cfg.CANDIDATE_MAP.get(name, "no_candidate")
-        sig = build_signal_for(name, df, day, candidate, snap, snap_date,
-                               dollar_now, dollar_history, fetched_at)
+        sig = build_signal_for(name, df, day, candidate, dollar_now, dollar_hist, fetched_at)
         if candidate == "no_candidate":
             # 无候选通过验收门槛 -> 影子观察沿用正式策略(common_v1)(P1-3)。
             # 同时记录三套候选动作作为研究数据, 但不得事后挑表现最好的一套当主候选。
+            # v4: 研究候选与正式影子信号使用完全相同的时点数据/陈旧度/类别规则
+            #     (同一 build_signal_for, 含 as_of 快照与美元截断)。
             formal = bt.common_v1_actions(df, name).get(day, "数据不足")
             sig["action"] = formal
             sig["candidate"] = "no_candidate"
             sig["action_reason"] = "无候选通过验收门槛，影子观察沿用正式策略(common_v1)"
             sig["candidates_research"] = {
-                c: bt.v2_signal_at(df, name, c, day)["action"] for c in ("value", "balanced", "trend")}
+                c: build_signal_for(name, df, day, c, dollar_now, dollar_hist, fetched_at)
+                for c in ("value", "balanced", "trend")}
         signals[name] = sig
         # 年化波动(供类内排名用): 用最近60日日收益年化
         close = df["close"].iloc[:df.index.get_loc(day) + 1]
@@ -236,7 +299,8 @@ def main():
         "candidate_map": dict(cfg.CANDIDATE_MAP),
         "assets": {name: sig for name, sig in signals.items()},
         "warnings": warnings,
-        "note": "V2 影子研究数据(影子观察, 不改变正式三态); 页面只读取展示, 不自行计算。",
+        "note": "V2 影子研究数据(影子观察, 不改变正式三态); 页面只读取展示, 不自行计算。"
+                "v4: 所有信号严格 as_of=signal_date 截止(快照/美元/字段日期), 未来数据标记 future 不入评分。",
     }
     for path in (OUT_MAIN, OUT_WEB):
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -245,7 +309,7 @@ def main():
 
     # 打印摘要
     print(f"已生成 {OUT_MAIN}")
-    print(f"信号评估日: {out['signal_date']}  宽度快照: {snap_date or '无'}")
+    print(f"信号评估日: {out['signal_date']}  宽度快照(as_of): {snap_date or '无'}")
     print(f"{'资产':<8}{'候选':<14}{'动作':<8}{'质量':<8}{'可用权重':>8}  说明")
     for name, sig in signals.items():
         print(f"{name:<8}{sig['candidate']:<14}{sig['action']:<8}{sig['data_quality']:<8}"

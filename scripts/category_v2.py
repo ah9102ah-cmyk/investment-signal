@@ -66,14 +66,78 @@ def weighted_combine(components: dict, weights: dict, min_weight=0.5):
     return max(-2.0, min(2.0, value))
 
 
-def available_weight_ratio(components: dict, weights: dict):
-    """可用权重/配置总权重。可用于判断数据覆盖率(P2-1 规则4/5)。"""
+def available_weight_ratio(raw, weights, name=None, category=None):
+    """可用权重/配置总权重。可用于判断数据覆盖率(P2-1 规则4/5)。
+
+    v4 修正(2026-08-06): 与 composite_score 使用同一张有效权重映射
+    (_component_map), 行业主题的盈利代理槽位(与宽度对半/全额)不再算 0 权重,
+    否则\"仅有盈利代理可用\"时可用权重会被低估。"""
     total = sum(weights.values())
     if total <= 0:
         return 0.0
-    usable = sum(weights.get(key, 0.0) for key, score in components.items()
-                 if score is not None and math.isfinite(float(score)))
+    if name is None:
+        usable = sum(weights.get(key, 0.0) for key, score in raw.items()
+                     if score is not None and math.isfinite(float(score)))
+    else:
+        comps, comp_w = _component_map(name, category, weights, raw)
+        usable = sum(comp_w.get(key, 0.0) for key in comps)
     return usable / total
+
+
+def _component_map(name, category, weights, raw):
+    """原始分项 -> (components, comp_weights): 综合分与可用权重共用的唯一映射。
+
+    黄金: 结构轮 G(=宏观+250线位置等权) 占 macro 权重槽; 250线只计一次。
+    行业主题: 盈利周期与市场宽度共用 breadth 权重槽(都可用时对半拆分)。"""
+    components = {}
+    comp_weights = {}
+    if name == "黄金":
+        macro = raw.get("macro")
+        position = raw.get("position")
+        g = None
+        if macro is not None:
+            g = weighted_combine({"macro": macro, "position": position},
+                                 {"macro": 1.0, "position": 1.0})
+        if g is not None:
+            components["macro"] = g
+            comp_weights["macro"] = weights.get("macro", 1.0)
+    else:
+        val = raw.get("valuation")
+        if val is not None:
+            components["valuation"] = val
+            comp_weights["valuation"] = weights.get("valuation", 1.0)
+        brd = raw.get("breadth")
+        earn = raw.get("earnings")
+        w_slot = weights.get("breadth", 0.0)
+        if brd is not None and earn is not None and category == "行业主题":
+            components["breadth"] = brd
+            comp_weights["breadth"] = w_slot / 2.0
+            components["earnings"] = earn
+            comp_weights["earnings"] = w_slot / 2.0
+        elif brd is not None:
+            components["breadth"] = brd
+            comp_weights["breadth"] = w_slot
+        elif earn is not None and category == "行业主题":
+            components["earnings"] = earn
+            comp_weights["earnings"] = w_slot
+    trend = raw.get("trend")
+    if trend is not None:
+        components["trend"] = trend
+        comp_weights["trend"] = weights.get("trend", 1.0)
+    momentum = raw.get("momentum")
+    if momentum is not None:
+        components["momentum"] = momentum
+        comp_weights["momentum"] = weights.get("momentum", 1.0)
+    return components, comp_weights
+
+
+# ---------------------------------------------------------------- 统一协议
+def composite_score(name, category, weights, raw):
+    """综合分(P2-1 更正): 直接基于原始分项 × 原始配置权重 / 可用权重。
+
+    v4: 分项->权重的映射统一走 _component_map, 与 available_weight_ratio 完全一致。"""
+    components, comp_weights = _component_map(name, category, weights, raw)
+    return weighted_combine(components, comp_weights, min_weight=cfg.COMPOSITE_MIN_WEIGHT)
 
 
 # ---------------------------------------------------------------- 分项(价格轮)
@@ -149,11 +213,15 @@ def momentum_score_v2(close, spot, rsi_value=None):
 
 
 def trend_score_v2(close, spot):
-    """中长期趋势分(-2..+2): 160/200/240 日涨幅共识(多数向上且平均正=强)。"""
+    """中长期趋势分(-2..+2): 160/200/240 日涨幅共识(多数向上且平均正=强)。
+
+    v4 修正(2026-08-06): 周期差一天。close 最后一项是评估日收盘(==spot),
+    h 日涨幅必须用 close[-(h+1)](h 个交易日前), 旧代码 close[-h] 实际是 (h-1) 日涨幅。
+    与 common_v1_actions 的 close.iloc[i-h] 口径一致。"""
     close = clean(close)
-    if len(close) < max(LONG_TREND_HORIZONS) or spot is None:
+    if len(close) < max(LONG_TREND_HORIZONS) + 1 or spot is None:
         return None, ["趋势历史不足"]
-    moves = [spot / close[-h] - 1 for h in LONG_TREND_HORIZONS]
+    moves = [spot / close[-(h + 1)] - 1 for h in LONG_TREND_HORIZONS]
     votes = sum(1 for value in moves if value > 0)
     average = sum(moves) / len(moves)
     if votes >= 2 and average > 0:
@@ -170,8 +238,8 @@ def trend_details(close, spot):
     score, degraded = trend_score_v2(close, spot)
     close = clean(close)
     details = {}
-    if len(close) >= max(LONG_TREND_HORIZONS) and spot is not None:
-        details["moves"] = {h: round(spot / close[-h] - 1, 4) for h in LONG_TREND_HORIZONS}
+    if len(close) >= max(LONG_TREND_HORIZONS) + 1 and spot is not None:
+        details["moves"] = {h: round(spot / close[-(h + 1)] - 1, 4) for h in LONG_TREND_HORIZONS}
     return score, degraded, details
 
 
@@ -385,14 +453,18 @@ def _date_of(value):
 
 
 def staleness_days(data_dates, signal_date):
-    """{字段: 日期} -> {字段: 自然日陈旧数}。缺日期/无法解析的字段不输出。"""
+    """{字段: 日期} -> {字段: 自然日陈旧数}。缺日期/无法解析的字段不输出。
+
+    v4 修正(2026-08-06): 数据日期晚于信号日时必须保留负值(future),
+    禁止用 max(0) 把未来数据伪装成新鲜数据; 未来字段由 _status_for 标 invalid,
+    调用方必须把 future 字段排除在评分之外。"""
     base = _date_of(signal_date) or dt.date.today()
     out = {}
     for field, d in (data_dates or {}).items():
         dd = _date_of(d)
         if dd is None:
             continue
-        out[field] = max(0, (base - dd).days)
+        out[field] = (base - dd).days
     return out
 
 
@@ -400,6 +472,8 @@ def _status_for(field, days):
     th = cfg.STALENESS_THRESHOLDS.get(field, {"stale": 10, "severe": 20})
     if days is None:
         return "unknown"
+    if days < 0:
+        return "future"
     if days >= th["severe"]:
         return "severe"
     if days >= th["stale"]:
@@ -408,53 +482,6 @@ def _status_for(field, days):
 
 
 # ---------------------------------------------------------------- 统一协议
-def composite_score(name, category, weights, raw):
-    """综合分(P2-1 更正): 直接基于原始分项 × 原始配置权重 / 可用权重。
-
-    raw = {valuation, macro, breadth, trend, momentum, earnings, position} 中可用项。
-    黄金: 结构轮 G(=宏观+250线位置等权) 占 macro 权重槽; 250线只计一次。"""
-    components = {}
-    comp_weights = {}
-    if name == "黄金":
-        macro = raw.get("macro")
-        position = raw.get("position")
-        g = None
-        if macro is not None:
-            g = weighted_combine({"macro": macro, "position": position},
-                                 {"macro": 1.0, "position": 1.0})
-        if g is not None:
-            components["macro"] = g
-            comp_weights["macro"] = weights.get("macro", 1.0)
-    else:
-        val = raw.get("valuation")
-        if val is not None:
-            components["valuation"] = val
-            comp_weights["valuation"] = weights.get("valuation", 1.0)
-        brd = raw.get("breadth")
-        if brd is not None:
-            components["breadth"] = brd
-            comp_weights["breadth"] = weights.get("breadth", 0.0)
-        earn = raw.get("earnings")
-        if earn is not None and category == "行业主题":
-            w_slot = weights.get("breadth", 0.0)
-            if brd is not None:
-                components["earnings"] = earn
-                comp_weights["earnings"] = w_slot / 2.0
-                comp_weights["breadth"] = w_slot / 2.0
-            else:
-                components["earnings"] = earn
-                comp_weights["earnings"] = w_slot
-    trend = raw.get("trend")
-    momentum = raw.get("momentum")
-    if trend is not None:
-        components["trend"] = trend
-        comp_weights["trend"] = weights.get("trend", 1.0)
-    if momentum is not None:
-        components["momentum"] = momentum
-        comp_weights["momentum"] = weights.get("momentum", 1.0)
-    return weighted_combine(components, comp_weights, min_weight=cfg.COMPOSITE_MIN_WEIGHT)
-
-
 def _asset_thresholds(name, candidate):
     t = dict(cfg.THRESHOLDS.get(candidate, cfg.THRESHOLDS["balanced"]))
     off = cfg.ASSET_ENTER_OFFSETS.get(name, {})
@@ -612,9 +639,9 @@ def compute_signal(name, *, close=None, spot=None, pe_history=None, pe_now=None,
            "trend": trend, "momentum": momentum, "earnings": earn,
            "position": position}
     composite = composite_score(name, category, weights, raw)
-    avail_ratio = available_weight_ratio(raw, weights)
+    avail_ratio = available_weight_ratio(raw, weights, name, category)
 
-    # 陈旧度协议(P2-2)
+    # 陈旧度协议(P2-2 + v4 future 标记)
     stale = staleness_days(data_dates, signal_date)
     sources = {}
     for field in ("price", "valuation", "pb", "erp", "us10y", "dollar", "breadth", "earnings"):
@@ -630,12 +657,17 @@ def compute_signal(name, *, close=None, spot=None, pe_history=None, pe_now=None,
             "status": _status_for(field, days),
             "fallback_source": meta.get("fallback_source"),
         }
-        if days is not None and days >= cfg.STALENESS_THRESHOLDS.get(field, {}).get("stale", 99):
+        if days is not None and days < 0:
+            # v4: 数据日期晚于信号日 = future/invalid, 不得进入评分
+            degraded.append(f"{field}数据日期晚于信号日(future)")
+        elif days is not None and days >= cfg.STALENESS_THRESHOLDS.get(field, {}).get("stale", 99):
             degraded.append(f"{field}数据陈旧({days}天)")
-    # 严重陈旧 -> 不得标记完整 / 不得输出买入强信号
+    # 严重陈旧/未来数据 -> 不得标记完整 / 不得输出买入强信号
     severe_fields = [f for f, s in sources.items()
-                     if s["status"] == "severe" and f in ("price", "valuation", "pb", "erp", "us10y", "dollar", "breadth")]
-    price_stale = sources.get("price", {}).get("status") == "severe"
+                     if s["status"] in ("severe", "future")
+                     and f in ("price", "valuation", "pb", "erp", "us10y", "dollar", "breadth")]
+    price_stale = sources.get("price", {}).get("status") in ("severe", "future")
+    future_fields = [f for f, s in sources.items() if s["status"] == "future"]
 
     # 数据质量
     if structural is None and "估值缺失" in degraded:
@@ -644,6 +676,8 @@ def compute_signal(name, *, close=None, spot=None, pe_history=None, pe_now=None,
         quality = "数据不足"
     elif price_stale:
         quality = "数据不足"
+    elif future_fields:
+        quality = "降级"
     elif degraded:
         quality = "降级"
     else:
@@ -658,16 +692,16 @@ def compute_signal(name, *, close=None, spot=None, pe_history=None, pe_now=None,
     if quality_tag:
         quality = quality_tag
 
-    # 严重陈旧封顶: 宏观/结构数据严重陈旧不得输出买入强信号(P2-2 规则3)
+    # 严重陈旧/未来数据封顶: 宏观/结构数据严重陈旧或晚于信号日不得输出买入强信号(P2-2 规则3 + v4)
     macro_or_struct_severe = any(f in severe_fields for f in ("us10y", "dollar", "valuation", "pb", "erp", "breadth"))
     if action == "买入" and macro_or_struct_severe:
         action = "持有"
-        reason = "估值或宏观数据严重陈旧，暂不出买入信号"
+        reason = "估值或宏观数据严重陈旧/日期晚于信号日，暂不出买入信号"
         if quality == "完整":
             quality = "降级"
     if action == "买入" and price_stale:
         action = "持有"
-        reason = "行情数据严重陈旧，暂不出买入信号"
+        reason = "行情数据严重陈旧/日期晚于信号日，暂不出买入信号"
         if quality == "完整":
             quality = "降级"
 

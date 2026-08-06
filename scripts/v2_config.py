@@ -14,7 +14,9 @@ common_v1 保持不变、可独立运行；本文件只定义 V2 候选策略的
 from __future__ import annotations
 
 # 引擎/规则版本: 更正版 = 修正动能窗口 + 原始权重综合分 + 类别规则落实 + 数据协议陈旧度
-STRATEGY_VERSION = "category_v2_shadow_v3"
+# v4(2026-08-06) = 数据完整性修正: as_of=signal_date 严格截止(快照/美元/字段日期),
+#   未来数据标记 future/invalid 禁入评分, 趋势周期差一天修复, 阶段回测口径, 收益回填重写
+STRATEGY_VERSION = "category_v2_shadow_v4"
 
 # 影子观察主候选(2026-08 更正版, 基于修正后回测标定; 阶段5冻结)。
 # 候选只能是 value / balanced / trend / no_candidate。

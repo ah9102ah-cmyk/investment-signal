@@ -380,6 +380,38 @@ def market_phase(df):
     return phase
 
 
+def phase_metrics(result, phase, p, min_days=60):
+    """阶段回测统计(v4 修正): 只累计该阶段选中的日收益。
+
+    旧实现把 result.loc[seg.index] 直接喂给 metrics(), 用绝对 strat_nav 归一化,
+    但阶段通常由多段不连续区间组成, 段间非阶段日的收益也被算进 nav 比值。
+    v4 改为: 只取该阶段日期的逐日收益, 阶段内净值 = 这些日收益的连乘
+    (与"只累计该阶段选中的日收益"口径一致), 再从 1 开始算年化/回撤/波动。
+    始终持有对照同样只累计该阶段日收益。
+    """
+    idx = phase[phase == p].index
+    seg = result.loc[idx]
+    if len(seg) < min_days:
+        return None
+    ret = seg["strat_ret"].fillna(0).to_numpy()
+    nav = (1 + ret).cumprod()
+    years = len(ret) / TRADING_DAYS
+    ann = nav[-1] ** (1 / years) - 1 if years > 0 else 0
+    mdd = (nav / np.maximum.accumulate(nav) - 1).min()
+    vol = ret.std() * math.sqrt(TRADING_DAYS)
+    down = ret[ret < 0]
+    down_vol = down.std() * math.sqrt(TRADING_DAYS) if len(down) > 1 else 0.0
+    sharpe = ret.mean() / ret.std() * math.sqrt(TRADING_DAYS) if ret.std() > 0 else float("nan")
+    # 始终持有对照: 全序列日收益 -> 只取该阶段选中的日
+    bh_ret_daily = result["bh_nav"].pct_change().fillna(0)
+    bh_sel = (1 + bh_ret_daily.loc[idx]).cumprod()
+    bh_ann = bh_sel.iloc[-1] ** (1 / years) - 1 if years > 0 else 0
+    bh_mdd = (bh_sel / np.maximum.accumulate(bh_sel) - 1).min()
+    return dict(days=len(seg), ann=ann, mdd=mdd, vol=vol, down_vol=down_vol,
+                sharpe=sharpe, bh_ann=bh_ann, bh_mdd=bh_mdd,
+                invested=float(seg["pos"].mean()) if "pos" in seg else 0.0)
+
+
 # ---------------------------------------------------------------- 主流程
 def run_full_report(exec_mode="close", cost=COST, delay=1, week_offset=0):
     """单组参数下完整报告: 各资产 5 方案对比 + 分年度 + 牛熊震荡。"""
@@ -429,16 +461,15 @@ def run_full_report(exec_mode="close", cost=COST, delay=1, week_offset=0):
                 line += f"{fmt(stat['ann'] if stat else None):>12}"
             print(line)
 
-        # 牛/熊/震荡阶段(只取该阶段的日子, 段内净值归一化)
+        # 牛/熊/震荡阶段(v4: 只累计该阶段选中的日收益, 段内净值从1起算)
         phase = market_phase(df)
         print("  市场阶段(200日线):", {k: int((phase == k).sum()) for k in ("bull", "bear", "range")})
         for p in ("bull", "bear", "range"):
-            seg = phase[phase == p]
-            if len(seg) < 60:
+            if int((phase == p).sum()) < 60:
                 continue
             parts = []
             for sname, result in schemes.items():
-                stat = metrics(result.loc[seg.index])
+                stat = phase_metrics(result, phase, p)
                 parts.append(f"{sname[:10]} {fmt(stat['ann'] if stat else None)}/{fmt(stat['mdd'] if stat else None)}")
             print(f"  {p}: " + " | ".join(parts))
     return rows

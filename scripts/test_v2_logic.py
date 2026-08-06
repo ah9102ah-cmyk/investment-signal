@@ -69,12 +69,25 @@ class ScoreTests(unittest.TestCase):
 
     def test_trend_disagreement(self):
         # 三周期分歧: 160日正、200日负、240日负 -> 多数向下
-        base = [100.0] * 240
-        base[-240] = 80.0
-        base[-200] = 120.0
-        base[-160] = 125.0
+        # (v4 口径: h 日涨幅用 close[-(h+1)], 需要 241 根)
+        base = [100.0] * 241
+        base[-241] = 80.0
+        base[-201] = 120.0
+        base[-161] = 125.0
         score, _ = v2.trend_score_v2(base, 100.0)
         self.assertLessEqual(score, -1)
+
+    def test_trend_horizon_exact_span(self):
+        # v4 修正: 160日涨幅 = spot/close[-161]-1(160 个交易日前), 不是 close[-160](159日)
+        close = [100.0] * 241
+        close[-161] = 90.0        # t-160 = 90 -> +11.11%
+        close[-201] = 95.0        # t-200 = 95 -> +5.26%
+        close[-241] = 100.0       # t-240 = 100 -> 0%
+        close[-160] = 110.0       # t-159(若错用 close[-160] 会得到 -9.09%)
+        score, _ = v2.trend_score_v2(close, 100.0)
+        self.assertEqual(score, 2)   # 160/200 日为正 -> 多数向上且平均正
+        # 对照错误实现: 100/110-1 = -9.09% 会让 160 日转负 -> 分数变差
+        self.assertAlmostEqual(100.0 / close[-160] - 1, -0.09091, places=4)
 
     def test_valuation_missing_not_zero(self):
         # PE 序列缺失 -> 估值分 None(不按 0 处理)
@@ -371,10 +384,10 @@ class CategoryRuleTests(unittest.TestCase):
         # 科创50: 高PE(估值-2) + 价格轮中性偏弱(趋势-1, 动能0 -> technical≈-0.8)
         # 旧逻辑 structural<=-1 且 technical<=0 会卖出; 更正后估值弱不直接触发卖出,
         # 综合弱项退出也要求价格面同步走弱(long_negative), 此处应为持有
-        close = [100.0] * 240
-        close[-240] = 90.0
-        close[-200] = 100.0
-        close[-160] = 100.0
+        close = [100.0] * 241
+        close[-241] = 90.0
+        close[-201] = 100.0
+        close[-161] = 100.0
         spot = 100.0
         sig = v2.compute_signal("科创50", close=close, spot=spot,
                                 pe_history=list(range(1, 101)), pe_now=98,
@@ -393,10 +406,10 @@ class CategoryRuleTests(unittest.TestCase):
 
     def test_kcb_high_pe_caps_buy_intensity(self):
         # 科创50 trend 候选: 高PE(-1) + 强趋势(technical≈1.6) -> 高PE只限制买入强度
-        close = [100.0] * 240
-        close[-240] = 80.0
-        close[-200] = 90.0
-        close[-160] = 92.0
+        close = [100.0] * 241
+        close[-241] = 80.0
+        close[-201] = 90.0
+        close[-161] = 92.0
         spot = 100.0
         sig = v2.compute_signal("科创50", close=close, spot=spot,
                                 pe_history=list(range(1, 101)), pe_now=90,
@@ -551,10 +564,10 @@ class GoldenFixtureTests(unittest.TestCase):
     def test_frozen_fixture_hs300_cheap_weak(self):
         # 冻结: 沪深300 便宜 + 价格中性偏弱(趋势-1/动能0 -> technical≈-0.8)
         # -> 持有(双轮未确认, 不因便宜买入, 也不因弱价格直接卖)
-        close = [100.0] * 240
-        close[-240] = 95.0
-        close[-200] = 100.0
-        close[-160] = 100.0
+        close = [100.0] * 241
+        close[-241] = 95.0
+        close[-201] = 100.0
+        close[-161] = 100.0
         sig = v2.compute_signal("沪深300", close=close, spot=100.0,
                                 pe_history=pe_seq(), pe_now=8,
                                 pb_history=[1.0] * 100, pb_now=1.1,
@@ -568,10 +581,10 @@ class GoldenFixtureTests(unittest.TestCase):
 
     def test_frozen_fixture_kcb_high_pe(self):
         # 冻结: 科创50 高PE + 中性价格 -> 持有(高PE不直接卖)
-        close = [100.0] * 240
-        close[-240] = 90.0
-        close[-200] = 100.0
-        close[-160] = 100.0
+        close = [100.0] * 241
+        close[-241] = 90.0
+        close[-201] = 100.0
+        close[-161] = 100.0
         sig = v2.compute_signal("科创50", close=close, spot=100.0,
                                 pe_history=list(range(1, 101)), pe_now=98,
                                 rsi_value=50, candidate="balanced")

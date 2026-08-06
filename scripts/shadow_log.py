@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
-"""影子观察日志(阶段 C, 2026-08 更正版): 每周记录 common_v1 vs category_v2_shadow 对比。
+"""影子观察日志(阶段 C, 2026-08 更正版 + v4 数据完整性修正): 每周记录 common_v1 vs category_v2_shadow 对比。
 
-P2-3 更正: 每周每个指数保存:
+v4(2026-08-06)关键变更:
+- 严格 as_of=signal_date 截止: 宽度快照只选日期 <= 信号日的最近一份; 美元历史保留日期并截断到
+  信号日; 数据日期晚于信号日标记 future/invalid 不得进入评分(引擎层 enforcement)。
+- 收益回填重写: 每次运行遍历全部历史观察记录, 到达 1/4/12 周(定义为 5/20/60 个交易日,
+  自信号日后第 w*5 个交易日, 信号日当天不计)后补写对应旧记录; 只追加 fwd_*/bh_*/common_v1_* 字段,
+  绝不重新计算或覆盖当时保存的历史信号(formal/shadow/分项/陈旧度)。
+- 完整研究候选落盘: 每个 no_candidate 指数的 value/balanced/trend 三套候选信号(完整 dict)写入
+  candidates_research; 候选策略与正式影子信号使用完全相同的时点数据/陈旧度/类别规则
+  (同一 vd.build_signal_for)。8-12 周后可据此比较候选策略。
+- 观察期归档: 候选/核心规则变更(STRATEGY_VERSION 升级)或显式重建基线时, 旧观察期全部记录
+  移动到 archive/<observation_id>/<date>, 不混入新观察期; 旧记录保留原文不删除。
+
+每周每个指数保存:
 - strategy_version / candidate(主候选, 冻结) / signal_date / price_date / 当时价格
 - 正式结果 / 影子结果 / 是否一致 / 差异原因
 - 全部原始分项(valuation/macro/breadth/trend/momentum) + 结构轮/价格轮/综合分 + 可用权重占比
 - 数据源及日期(data_sources) / 数据质量与降级字段
-- 是否与正式结果一致 / 差异原因 / 信号是否反复(与上周影子结果对比)
+- 研究候选(三套完整信号, 同数据同规则)
 - 后续 1/4/12 周收益 + 同期始终持有收益 + 同期 common_v1 收益(日期到达后补写, 不用未来数据生成当期信号)
-
-P1-3 更正: 候选来自 cfg.CANDIDATE_MAP(每个指数显式主候选), 不再全部固定 balanced;
-no_candidate 资产沿用 common_v1 并记录三套候选研究数据。
-P1-5 更正: 宽度来自最新成分快照; 快照缺失/陈旧时降级标注, 不得静默用旧数据标记完整。
-旧日志(2026-08-05, 阶段B原版)保留并标记为旧版本, 不计入新的观察期。
 """
 import json, os, sys, datetime as dt
 import pandas as pd
@@ -28,6 +35,12 @@ LOG_FILE = os.path.join(ROOT, "data", "shadow_log.json")
 SNAP_DIR = os.path.join(ROOT, "data", "cons_snapshots")
 
 FWD_WEEKS = (1, 4, 12)
+TRADING_DAYS_PER_WEEK = 5   # 1/4/12 周 = 5/20/60 个交易日(信号日当天不计)
+
+# V3 批次(2026-08-05)污染说明: 该批次由旧代码生成, 宽度快照/美元当前值晚于信号日混入评分
+V3_CONTAMINATION_NOTE = ("V3批次(obs-2026-08-05)数据截止污染: 宽度快照(2026-08-05)与美元当前值"
+                         "晚于信号日(2026-07-31)混入评分, 已整体归档作废; 重建观察基线后, "
+                         "首个周五自动任务验证通过才正式起算8-12周观察期")
 
 
 def diff_reason(asset, formal, shadow, shadow_sig):
@@ -55,14 +68,21 @@ def load_log():
     if not os.path.exists(LOG_FILE):
         return {}
     try:
-        return json.load(open(LOG_FILE, encoding="utf-8"))
+        with open(LOG_FILE, encoding="utf-8") as f:
+            return json.load(f)
     except Exception as e:
         print(f"[shadow_log] 旧日志读取失败, 重建: {e}")
         return {}
 
 
+def save_log(log):
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    with open(LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(log, f, ensure_ascii=False, indent=1)
+
+
 def ensure_meta(log, today):
-    """初始化/校验 meta; 候选或核心规则变化时必须升级观察期(P1-3.8)。"""
+    """初始化/校验 meta; 候选或核心规则变化时必须升级观察期(P1-3.8 + v4 重建基线)。"""
     meta = log.get("meta")
     new_obs = False
     if not meta:
@@ -70,19 +90,27 @@ def ensure_meta(log, today):
                 "observation_start": today, "candidate_map": dict(cfg.CANDIDATE_MAP)}
         new_obs = True
     else:
-        if meta.get("strategy_version") != cfg.STRATEGY_VERSION or \
+        old_version = meta.get("strategy_version")
+        if old_version != cfg.STRATEGY_VERSION or \
            meta.get("candidate_map") != cfg.CANDIDATE_MAP:
             old_id = meta.get("observation_id", "?")
+            if old_version == "category_v2_shadow_v3":
+                note = V3_CONTAMINATION_NOTE
+            else:
+                note = "候选或核心规则变更, 按 P1-3.8 升级策略版本并重新开始观察期"
             meta = {"observation_id": f"obs-{today}", "strategy_version": cfg.STRATEGY_VERSION,
                     "observation_start": today, "candidate_map": dict(cfg.CANDIDATE_MAP),
                     "superseded_observation": old_id,
-                    "superseded_note": "候选或核心规则变更, 按 P1-3.8 升级策略版本并重新开始观察期"}
+                    "superseded_note": note}
+            if "legacy_dates" in log.get("meta", {}):
+                meta["legacy_dates"] = log["meta"]["legacy_dates"]
+                meta["legacy_note"] = log["meta"].get("legacy_note", "")
             new_obs = True
     # 标记旧版本记录(阶段B原版: 无 strategy_version/candidate 字段)
     if "legacy_dates" not in meta:
         legacy = []
         for k, v in log.items():
-            if k == "meta":
+            if k == "meta" or k.startswith(("legacy/", "archive/", "invalid/")):
                 continue
             entries = v.get("entries", {}) if isinstance(v, dict) else {}
             if entries and "candidate" not in next(iter(entries.values())):
@@ -93,9 +121,45 @@ def ensure_meta(log, today):
     return new_obs
 
 
+def active_record_keys(log, meta):
+    """当前观察期的日期键(meta/legacy/archive 与早于 observation_start 的记录除外)。"""
+    start = meta.get("observation_start", "")
+    for k in sorted(log.keys()):
+        if k == "meta" or k.startswith(("legacy/", "archive/", "invalid/")):
+            continue
+        if k < start:
+            continue
+        yield k
+
+
+def archive_superseded(log):
+    """把不属于当前观察期的日期记录移动到 archive/<observation_id>/<date>。
+
+    触发: STRATEGY_VERSION 升级或显式重建基线后, observation_start 后移;
+    旧观察期记录(日期 < observation_start)一律归档, 不混入新观察期。
+    旧记录保留原文(只改存储位置), 不删除。返回移动条数。"""
+    meta = log.get("meta", {})
+    start = meta.get("observation_start", "")
+    if not start:
+        return 0
+    moved = 0
+    for k in [k for k in list(log.keys()) if k != "meta"]:
+        if k.startswith(("legacy/", "archive/", "invalid/")):
+            continue
+        if k >= start:
+            continue
+        obs_id = meta.get("superseded_observation") or f"obs-archive-{k}"
+        dest = f"archive/{obs_id}/{k}"
+        log[dest] = log.pop(k)
+        moved += 1
+    return moved
+
+
+# ---------------------------------------------------------------- 收益回填
 def _fwd_returns(df, actions, signal_day, weeks=FWD_WEEKS):
     """从 signal_day 起 N 周后: 策略收益(按给定 actions 模拟) 与 始终持有收益。
 
+    v4 定义: N 周 = N*5 个交易日(信号日之后第 N*5 个交易日, 信号日当天不计)。
     日期未到(数据不足)时返回 None; 不用未来数据生成当期信号(信号只由当日及之前数据决定)。"""
     if signal_day not in df.index:
         return None, None
@@ -105,7 +169,7 @@ def _fwd_returns(df, actions, signal_day, weeks=FWD_WEEKS):
     bh0 = float(res["bh_nav"].iloc[i0])
     out_s, out_b = {}, {}
     for w in weeks:
-        target = i0 + w * 5   # 约 N 周后的交易日(按5交易日/周取近似位置)
+        target = i0 + w * TRADING_DAYS_PER_WEEK
         if target >= len(df.index):
             continue
         out_s[f"fwd_{w}w"] = float(res["strat_nav"].iloc[target]) / nav0 - 1
@@ -113,24 +177,97 @@ def _fwd_returns(df, actions, signal_day, weeks=FWD_WEEKS):
     return out_s, out_b
 
 
+def shadow_actions_from_log(log, meta, name):
+    """从当前观察期记录构建影子动作序列(当时保存的 shadow, 绝不重算)。"""
+    acts = {}
+    for k in active_record_keys(log, meta):
+        e = (log.get(k, {}).get("entries", {}) or {}).get(name)
+        if not e or not e.get("candidate"):
+            continue
+        sd = e.get("signal_date")
+        if not sd or e.get("shadow") is None:
+            continue
+        try:
+            acts[pd.Timestamp(sd)] = e["shadow"]
+        except Exception:
+            pass
+    return acts
+
+
+def backfill_entry(entry, name, df, acts_shadow):
+    """给单条记录补写到期收益(只追加 fwd_*/bh_*/common_v1_* 字段)。
+
+    绝不修改历史信号字段(formal/shadow/分项/陈旧度等); 已存在的字段不覆盖。"""
+    if df is None:
+        return
+    sd = entry.get("signal_date")
+    if not sd or not entry.get("candidate"):
+        return
+    try:
+        day = pd.Timestamp(sd)
+    except Exception:
+        return
+    if day not in df.index:
+        return
+    need_s = any(f"fwd_{w}w" not in entry for w in FWD_WEEKS)
+    need_b = any(f"bh_{w}w" not in entry for w in FWD_WEEKS)
+    need_c = any(f"common_v1_{w}w" not in entry for w in FWD_WEEKS)
+    if not (need_s or need_b or need_c):
+        return
+    fwd_s, fwd_b = _fwd_returns(df, acts_shadow, day)
+    if need_s and fwd_s:
+        for k, v in fwd_s.items():
+            entry.setdefault(k, v)
+    if need_b and fwd_b:
+        for k, v in fwd_b.items():
+            entry.setdefault(k, v)
+    if need_c:
+        fwd_c, _ = _fwd_returns(df, bt.common_v1_actions(df, name), day)
+        if fwd_c:
+            for w in FWD_WEEKS:
+                k = f"fwd_{w}w"
+                if k in fwd_c:
+                    entry.setdefault(f"common_v1_{w}w", fwd_c[k])
+
+
+def backfill_log(log, assets):
+    """每次运行遍历全部历史观察记录, 到期(1/4/12 周)后回填对应旧记录。
+
+    返回 (回填条数, 新增收益字段数)。"""
+    meta = log.get("meta", {})
+    filled = 0
+    added = 0
+    for k in active_record_keys(log, meta):
+        record = log.get(k, {})
+        entries = record.get("entries", {}) or {}
+        for name, entry in entries.items():
+            before = len(entry)
+            acts = shadow_actions_from_log(log, meta, name)
+            backfill_entry(entry, name, assets.get(name), acts)
+            if len(entry) > before:
+                filled += 1
+                added += len(entry) - before
+    return filled, added
+
+
+# ---------------------------------------------------------------- 主流程
 def main():
     assets = bt.build_assets()
     today = dt.date.today().isoformat()
-    snap, snap_date = vd.latest_snapshot()
-    dollar_now, dollar_history = vd.dollar_data()
+    dollar_now, dollar_hist = vd.dollar_data()
     fetched_at = dt.datetime.now().isoformat(timespec="seconds")
 
     log = load_log()
     new_obs = ensure_meta(log, today)
+    moved = archive_superseded(log)
+    meta = log["meta"]
     entries = {}
     health = {}
     signals = {}
-    prev_actions = {}
 
-    # 上一周影子结果(用于"信号反复"判断)
-    for k in sorted(log.keys()):
-        if k == "meta":
-            continue
+    # 上一周影子结果(仅当前观察期, 用于"信号反复"判断; 归档记录不参与)
+    prev_actions = {}
+    for k in active_record_keys(log, meta):
         for name, e in (log.get(k, {}).get("entries", {}) or {}).items():
             if e.get("candidate") and "shadow" in e:
                 prev_actions.setdefault(name, []).append(e["shadow"])
@@ -143,13 +280,15 @@ def main():
         day = vd.last_eval_day(df, dt.date.today())
         candidate = cfg.CANDIDATE_MAP.get(name, "no_candidate")
         formal = bt.common_v1_actions(df, name).get(day, "数据不足")
-        sig = vd.build_signal_for(name, df, day, candidate, snap, snap_date,
-                                  dollar_now, dollar_history, fetched_at)
+        sig = vd.build_signal_for(name, df, day, candidate, dollar_now, dollar_hist, fetched_at)
+        # 完整研究候选(与正式影子信号同一时点数据/陈旧度/类别规则; 落盘后 8-12 周可比较)
+        candidates_research = {
+            c: vd.build_signal_for(name, df, day, c, dollar_now, dollar_hist, fetched_at)
+            for c in ("value", "balanced", "trend")}
         if candidate == "no_candidate":
             sig["action"] = formal
             sig["action_reason"] = "无候选通过验收门槛，影子观察沿用正式策略(common_v1)"
-            sig["candidates_research"] = {
-                c: bt.v2_signal_at(df, name, c, day)["action"] for c in ("value", "balanced", "trend")}
+        sig["candidates_research"] = candidates_research
         shadow = sig["action"]
         signals[name] = sig
         flapping = bool(prev_actions.get(name) and prev_actions[name][-1] not in ("数据不足",) and prev_actions[name][-1] != shadow)
@@ -180,28 +319,8 @@ def main():
             "data_sources": sig.get("data_sources"),
             "class_rank": sig.get("class_rank"),
             "risk_cluster": sig.get("risk_cluster"),
+            "candidates_research": candidates_research,
         }
-        # 补写后续收益(日期到达后才算, 用当时已记录的信号序列)
-        acts_shadow = {}
-        for k in sorted(log.keys()):
-            if k == "meta":
-                continue
-            e = log[k]["entries"].get(name)
-            if e and e.get("candidate"):
-                try:
-                    acts_shadow[pd.Timestamp(e["signal_date"])] = e["shadow"]
-                except Exception:
-                    pass
-        acts_shadow[day] = shadow
-        fwd_s, fwd_b = _fwd_returns(df, acts_shadow, day)
-        if fwd_s:
-            entry.update(fwd_s)
-        if fwd_b:
-            entry.update(fwd_b)
-        # 同期 common_v1 策略收益
-        fwd_c, _ = _fwd_returns(df, bt.common_v1_actions(df, name), day)
-        if fwd_c:
-            entry.update({f"common_v1_{k}": v for k, v in fwd_c.items()})
         entries[name] = entry
 
     # 组合层: 类内排名 + 风险提示
@@ -222,18 +341,23 @@ def main():
         first = next(iter(old_today["entries"].values()))
         if "candidate" not in first:
             log[f"legacy/{today}"] = old_today
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
-    with open(LOG_FILE, "w", encoding="utf-8") as f:
-        json.dump(log, f, ensure_ascii=False, indent=1)
+
+    # 收益回填: 遍历全部历史观察记录, 到期补写(只追加, 不覆盖历史信号)
+    filled, added = backfill_log(log, assets)
+    save_log(log)
 
     # 周报
-    meta = log["meta"]
     print("=" * 82)
-    print(f"影子观察周报  {today}  观察期 {meta.get('observation_id')} (共 {len([k for k in log if k != 'meta'])} 周记录)")
+    print(f"影子观察周报  {today}  观察期 {meta.get('observation_id')} "
+          f"(共 {len(list(active_record_keys(log, meta)))} 周记录)")
     if new_obs:
-        print(f"⚠ 新观察期开始: 原观察期 {meta.get('superseded_observation', '—')} 作废(候选/规则变更)")
+        print(f"⚠ 新观察期开始: 原观察期 {meta.get('superseded_observation', '—')} 作废({meta.get('superseded_note', '')})")
+    if moved:
+        print(f"⚠ 已归档 {moved} 条旧观察期记录 -> archive/{meta.get('superseded_observation', '')}/")
     if meta.get("legacy_dates"):
         print(f"⚠ 旧版本记录已标记(不计入新观察期): {', '.join(meta['legacy_dates'])}")
+    if filled:
+        print(f"✅ 收益回填: {filled} 条历史记录补写 {added} 个到期收益字段(1/4/12周=5/20/60交易日)")
     print("=" * 82)
     print(f"{'资产':<8}{'候选':<14}{'正式':<6}{'影子':<6}{'反复':<4}{'一致':<4}{'质量':<6} 说明")
     for name, e in entries.items():
@@ -251,5 +375,31 @@ def main():
     print(f"已追加到 {LOG_FILE}")
 
 
+def rebuild_baseline():
+    """一次性: 归档当前观察期全部记录并重建基线(不写新周记录)。
+
+    供数据完整性修复后重建观察基线用: 标记旧批次(如 obs-2026-08-05 V3)作废归档,
+    建立新 observation_id; 首个周五自动任务(云端 shadow_weekly)从零积累新观察期。"""
+    log = load_log()
+    today = dt.date.today().isoformat()
+    new_obs = ensure_meta(log, today)
+    moved = archive_superseded(log)
+    save_log(log)
+    meta = log["meta"]
+    print("=" * 82)
+    print(f"观察基线重建  {today}")
+    if new_obs:
+        print(f"⚠ 新观察期: {meta.get('observation_id')}")
+        print(f"  原观察期 {meta.get('superseded_observation', '—')} 作废: {meta.get('superseded_note', '')}")
+    if moved:
+        print(f"⚠ 已归档 {moved} 条旧观察期记录 -> archive/{meta.get('superseded_observation', '')}/")
+    print(f"  当前活动记录: {len(list(active_record_keys(log, meta)))} 条")
+    print("=" * 82)
+    print("下次周五云端自动任务(shadow_weekly)将从新观察期零积累开始, 验证通过后才正式起算8-12周观察期")
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "rebuild_baseline":
+        rebuild_baseline()
+    else:
+        main()

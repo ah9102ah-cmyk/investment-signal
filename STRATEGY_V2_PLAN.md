@@ -430,3 +430,39 @@ signal_date / valuation_date / price_date
 - 影子观察新观察期 obs-2026-08-05（category_v2_shadow_v3）已启动；旧 2026-08-05 记录归档 legacy/ 不计入
 - 云端 shadow_weekly workflow 待合并 main 后手动 workflow_dispatch 验证（东财/腾讯/akshare 在 Actions 的可达性）
 - verify_after_launch.py（P2-5）修改方案已交用户，未获准未动
+
+---
+
+## 21. 2026-08-06 数据完整性修正（v4, category_v2_shadow_v4, 未合并 main）
+
+### 21.1 复审发现的问题与修复（对应 v4 验收清单）
+
+| 编号 | 问题 | 修复 |
+|---|---|---|
+| V4-1 | 信号数据未严格 as_of=signal_date 截止：V3 批次(2026-08-05)把 2026-08-05 的宽度快照混进 2026-07-31 信号的评分；美元当前值/历史取运行日数据，晚于信号日 | ① 快照只选日期 <= 信号日的最近一份(snapshot_asof)，只有未来快照时按宽度缺失降级；② 美元历史保留日期并截断到信号日(dollar_asof)，未来值绝不进入黄金宏观评分；③ 数据日期晚于信号日 -> staleness 为负、status=future/invalid，禁入评分 |
+| V4-2 | 陈旧度用 max(0, 天数) 把未来数据伪装成 0 天新鲜 | 去掉 max(0)，未来日期保留负值；future 字段不得标记完整、不得输出买入强信号 |
+| V4-3 | 影子收益回填只算当天记录，旧记录永不补写；1/4/12 周用"约 w*5 日"且无明确定义 | 重写：每次运行遍历全部历史观察记录，到达 1/4/12 周(明确定义=5/20/60 个交易日，信号日当天不计)后回填对应旧记录；只追加 fwd_*/bh_*/common_v1_* 字段，绝不重新计算或覆盖当时保存的历史信号(formal/shadow/分项/陈旧度) |
+| V4-4 | no_candidate 研究候选只存 action，且用 bt.v2_signal_at(不含快照/美元/陈旧度)，与正式影子信号数据不同，"8-12 周后比较候选"不成立 | 候选改为与正式影子信号同一 build_signal_for(同时点数据/陈旧度/类别规则)，完整信号 dict 落盘 candidates_research(每指数 value/balanced/trend 三套)；8-12 周后可据此比较 |
+| V4-5 | 字段映射不完整：沪深300 的 pb/erp 未进 data_dates/data_sources(陈旧度协议缺项)；美元日期写死运行日 | pb/erp 携带各自真实数据日期；美元日期=截断后的 as-of 日期 |
+| V4-6 | 行业盈利代理可用权重统计错误：available_weight_ratio 与 composite_score 映射不一致，盈利代理槽位被算 0 权重 | 统一走 _component_map(与综合分同一张映射)，行业主题盈利/宽度槽位对半/全额一致 |
+| V4-7 | 趋势周期差一天：trend_score_v2 用 close[-h] 实为 (h-1) 日涨幅，与 common_v1(close.iloc[i-h]) 不一致 | 改用 close[-(h+1)]，与 5 日收益 close[-(days+1)] 口径统一；新增精确跨度测试 |
+| V4-8 | 牛熊阶段回测口径错误：result.loc[seg.index] 用绝对 strat_nav 归一化，段间非阶段日收益也被算进 nav | 新增 phase_metrics：只累计该阶段选中的日收益(阶段内净值=选中日收益连乘)；始终持有对照同样只取选中日 |
+| V4-9 | 当前 V3 观察批次(obs-2026-08-05)记录被污染(未来快照/美元混入) | 修复后整体归档到 archive/obs-2026-08-05/2026-08-05(原文保留不删除)，重建新观察基线 obs-2026-08-06(category_v2_shadow_v4)；首个周五自动任务验证通过后才正式起算 8-12 周观察期 |
+
+### 21.2 观察基线重建说明
+
+- 原 obs-2026-08-05 的 2026-08-05 记录已移到 `archive/obs-2026-08-05/2026-08-05`(原文保留不删除)，不再参与任何回填/信号反复比较
+- 新 meta：observation_id=obs-2026-08-06，strategy_version=category_v2_shadow_v4，observation_start=2026-08-06
+- 新观察期从首个周五云端任务(2026-08-07 17:30)开始积累记录；验证通过后才正式计算 8-12 周观察期
+- 旧日志(legacy/2026-08-05 阶段B原版)继续保留，不计入新观察期
+
+### 21.3 测试与验证
+
+- 新增 test_shadow_integrity.py 20 测试，覆盖：信号日后数据不入计算(快照/美元/估值 future)、未来数据返回 invalid、到期历史记录自动回填(含幂等/归档不回填/只补已到期)、研究候选落盘与重载保留(同数据同规则)、美元多日期解析与截断、阶段回测只累计选中日收益、观察期归档
+- test_v2_logic.py 51/51(趋势精确跨度新测试)、test_backtest_timeline.py 11/11、test_logic.py 16/16，合计 98/98
+- v2_signals.json 已用 v4 重新生成并双写(科创50/白酒/医疗不再混入 2026-08-05 未来快照；黄金美元诚实标注缺失；沪深300 pb/erp 日期进 data_sources)
+- 本批次仅在 dev；未合并 main、未推送、未触发 workflow；邮件任务保持关闭；不产生任何交易指令
+
+### 21.4 之后需要做的事（取代旧报告的"之后无需做任何事"）
+
+修完上述问题、重建观察基线(obs-2026-08-06)并验证第一次周五自动任务(2026-08-07 17:30 shadow_weekly)后，才正式开始计算 8-12 周观察期。中途想查看影子对比，随时让 Hermes 读 data/shadow_log.json。
