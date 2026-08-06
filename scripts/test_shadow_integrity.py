@@ -385,5 +385,122 @@ class ObservationArchiveTests(unittest.TestCase):
                          ["2026-01-10", "2026-01-17"])
 
 
+class FutureEqualsMissingTests(unittest.TestCase):
+    """v4.1: 未来字段在计算所有分项之前等同缺失, 各项分数与该字段缺失时完全一致。"""
+
+    def test_hs300_future_pb_erp_equals_missing(self):
+        close = list(np.linspace(100, 200, 300))
+        base = v2.compute_signal("沪深300", close=close, spot=close[-1],
+                                 pe_history=[10.0] * 200, pe_now=10,
+                                 signal_date="2026-07-31",
+                                 data_dates={"price": "2026-07-31"})
+        fut = v2.compute_signal("沪深300", close=close, spot=close[-1],
+                                pe_history=[10.0] * 200, pe_now=10,
+                                pb_history=[1.5] * 200, pb_now=3.0,
+                                erp_history=[5.0] * 200, erp_now=0.5,
+                                signal_date="2026-07-31",
+                                data_dates={"price": "2026-07-31",
+                                            "pb": "2026-08-05", "erp": "2026-08-05"})
+        for k in ("valuation_score", "structural_score", "composite_score",
+                  "action", "data_quality"):
+            self.assertEqual(base[k], fut[k], f"未来 PB/ERP 影响了 {k}")
+        # 沪深300 估值需至少两项 -> 未来 PB/ERP 等同缺失后只剩 PE -> 估值分 None
+        self.assertIsNone(fut["valuation_score"])
+        self.assertIn("pb", fut["data_sources"])
+        self.assertEqual(fut["data_sources"]["pb"]["status"], "future")
+
+    def test_gold_future_macro_equals_missing(self):
+        close = list(np.linspace(100, 200, 300))
+        base = v2.compute_signal("黄金", close=close, spot=close[-1],
+                                 signal_date="2026-07-31",
+                                 data_dates={"price": "2026-07-31"})
+        fut = v2.compute_signal("黄金", close=close, spot=close[-1],
+                                us10y_history=[3.5] * 60,
+                                dollar_history=[100.0] * 60, dollar_now=102.0,
+                                signal_date="2026-07-31",
+                                data_dates={"price": "2026-07-31",
+                                            "us10y": "2026-08-05", "dollar": "2026-08-05"})
+        for k in ("macro_score", "structural_score", "composite_score", "action"):
+            self.assertEqual(base[k], fut[k], f"未来美债/美元影响了 {k}")
+        self.assertIsNone(fut["macro_score"])
+
+    def test_breadth_future_equals_missing(self):
+        close = list(np.linspace(100, 200, 300))
+        base = v2.compute_signal("中证500", close=close, spot=close[-1],
+                                 pe_history=[10.0] * 200, pe_now=10,
+                                 signal_date="2026-07-31",
+                                 data_dates={"price": "2026-07-31"})
+        fut = v2.compute_signal("中证500", close=close, spot=close[-1],
+                                pe_history=[10.0] * 200, pe_now=10, breadth_ratio=0.8,
+                                signal_date="2026-07-31",
+                                data_dates={"price": "2026-07-31", "breadth": "2026-08-05"})
+        for k in ("breadth_score", "structural_score", "composite_score", "available_weight_ratio"):
+            self.assertEqual(base[k], fut[k], f"未来宽度影响了 {k}")
+        self.assertIsNone(fut["breadth_score"])
+        self.assertIn("宽度缺失", fut["degraded_fields"])
+
+    def test_industry_earnings_future_equals_missing(self):
+        close = list(np.linspace(100, 200, 300))
+        base = v2.compute_signal("中证白酒", close=close, spot=close[-1],
+                                 pe_history=[10.0] * 200, pe_now=10,
+                                 signal_date="2026-07-31",
+                                 data_dates={"price": "2026-07-31"})
+        fut = v2.compute_signal("中证白酒", close=close, spot=close[-1],
+                                pe_history=[10.0] * 200, pe_now=10, earnings_cycle=0.9,
+                                signal_date="2026-07-31",
+                                data_dates={"price": "2026-07-31", "earnings": "2026-08-05"})
+        for k in ("earnings_score", "structural_score", "composite_score"):
+            self.assertEqual(base[k], fut[k], f"未来盈利影响了 {k}")
+        self.assertIsNone(fut["earnings_score"])
+
+
+class StalenessAliasTests(unittest.TestCase):
+    """v4.1: pb/erp→valuation、us10y/dollar→macro 共用阈值, 15 天宏观必须 severe。"""
+
+    def test_macro_15_days_severe(self):
+        # macro 阈值 stale=10/severe=15
+        self.assertEqual(v2._status_for("us10y", 15), "severe")
+        self.assertEqual(v2._status_for("dollar", 15), "severe")
+        self.assertEqual(v2._status_for("us10y", 12), "stale")
+        self.assertEqual(v2._status_for("dollar", 10), "stale")
+
+    def test_valuation_alias_thresholds(self):
+        # valuation 阈值 stale=10/severe=20: pb/erp 共用, 不落默认阈值(10/20)
+        self.assertEqual(v2._status_for("pb", 19), "stale")
+        self.assertEqual(v2._status_for("pb", 20), "severe")
+        self.assertEqual(v2._status_for("erp", 25), "severe")
+        self.assertEqual(v2._status_for("erp", 5), "ok")
+
+    def test_macro_15_days_no_buy_gold(self):
+        close = list(np.linspace(100, 200, 300))
+        sig = v2.compute_signal("黄金", close=close, spot=close[-1],
+                                us10y_history=[3.5] * 60,
+                                signal_date="2026-07-31",
+                                data_dates={"us10y": "2026-07-16", "price": "2026-07-31"})
+        self.assertEqual(sig["data_sources"]["us10y"]["staleness_days"], 15)
+        self.assertEqual(sig["data_sources"]["us10y"]["status"], "severe")
+        self.assertNotEqual(sig["action"], "买入")
+
+
+class PbErpDateConsistencyTests(unittest.TestCase):
+    """v4.1: PB/ERP 显示日期与陈旧天数一致(build_data_meta 分别接收真实日期)。"""
+
+    def test_pb_erp_data_date_matches_staleness(self):
+        df = synthetic_df()
+        day = df.index[250]
+        # 让 PB/ERP 最后 3 个交易日缺失 -> 最近有效日期 = 信号日前 3 个交易日
+        df.loc[df.index[248]:, "pb"] = np.nan
+        df.loc[df.index[248]:, "erp"] = np.nan
+        sig = vd.build_signal_for("沪深300", df, day, "balanced", None, None, "t")
+        for field in ("pb", "erp"):
+            src = sig["data_sources"][field]
+            src_date = pd.Timestamp(src["data_date"]).date()
+            expect_days = (day.date() - src_date).days
+            self.assertEqual(src["staleness_days"], expect_days,
+                             f"{field} 的 data_date 与 staleness_days 不一致")
+            self.assertGreater(src["staleness_days"], 0, f"{field} 应早于信号日")
+            self.assertEqual(src["status"], v2._status_for(field, src["staleness_days"]))
+
+
 if __name__ == "__main__":
     unittest.main()

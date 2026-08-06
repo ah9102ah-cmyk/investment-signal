@@ -156,13 +156,15 @@ def dollar_asof(dollar_hist, day):
     return [float(x) for x in upto.tolist()], upto.index[-1].date().isoformat()
 
 
-def build_data_meta(signal_date, price_date, valuation_date, us10y_date, breadth_date, dollar_date, fetched_at):
+def build_data_meta(signal_date, price_date, valuation_date, pb_date, erp_date,
+                    us10y_date, breadth_date, dollar_date, fetched_at):
+    """数据元数据(v4.1): pb/erp 分别接收真实数据日期, 保证 data_date 与 staleness_days 一致。"""
     meta = {}
     base = {
         "price": {"data_date": str(price_date) if price_date else None, "fetched_at": fetched_at},
         "valuation": {"data_date": str(valuation_date) if valuation_date else None, "fetched_at": fetched_at},
-        "pb": {"data_date": str(valuation_date) if valuation_date else None, "fetched_at": fetched_at},
-        "erp": {"data_date": str(valuation_date) if valuation_date else None, "fetched_at": fetched_at},
+        "pb": {"data_date": str(pb_date) if pb_date else None, "fetched_at": fetched_at},
+        "erp": {"data_date": str(erp_date) if erp_date else None, "fetched_at": fetched_at},
         "us10y": {"data_date": str(us10y_date) if us10y_date else None, "fetched_at": fetched_at},
         "dollar": {"data_date": str(dollar_date) if dollar_date else None, "fetched_at": fetched_at},
         "breadth": {"data_date": str(breadth_date) if breadth_date else None, "fetched_at": fetched_at},
@@ -240,26 +242,29 @@ def build_signal_for(name, df, day, candidate, dollar_now, dollar_hist, fetched_
     # 盈利周期: 无可靠数据 -> 不传(引擎显式标"盈利周期缺失", 不按0)
     kwargs["data_dates"] = data_dates
     kwargs["data_meta"] = build_data_meta(
-        day.date(), price_date, data_dates.get("valuation"), data_dates.get("us10y"),
-        data_dates.get("breadth"), data_dates.get("dollar"), fetched_at)
+        day.date(), price_date, data_dates.get("valuation"), data_dates.get("pb"), data_dates.get("erp"),
+        data_dates.get("us10y"), data_dates.get("breadth"), data_dates.get("dollar"), fetched_at)
     return v2.compute_signal(name, **kwargs)
 
 
 def main():
     fetched_at = dt.datetime.now().isoformat(timespec="seconds")
     assets = bt.build_assets()
-    snap, snap_date = latest_snapshot()
     dollar_now, dollar_hist = dollar_data()
 
     today = dt.date.today()
     signals = {}
     vol_map = {}
     global_eval_day = None
+    asof_snaps = {}     # 各指数实际采用的 as-of 快照日期(不是目录最新)
 
     for name, df in assets.items():
         day = last_eval_day(df, today)
         if global_eval_day is None or day > global_eval_day:
             global_eval_day = day
+        if name in BREADTH_INDEXES:
+            _, sd = snapshot_asof(day.date())
+            asof_snaps[name] = sd
         candidate = cfg.CANDIDATE_MAP.get(name, "no_candidate")
         sig = build_signal_for(name, df, day, candidate, dollar_now, dollar_hist, fetched_at)
         if candidate == "no_candidate":
@@ -308,8 +313,10 @@ def main():
             json.dump(out, f, ensure_ascii=False, indent=1)
 
     # 打印摘要
+    used = sorted({d for d in asof_snaps.values() if d})
+    snap_disp = "、".join(used) if used else "无"
     print(f"已生成 {OUT_MAIN}")
-    print(f"信号评估日: {out['signal_date']}  宽度快照(as_of): {snap_date or '无'}")
+    print(f"信号评估日: {out['signal_date']}  宽度快照(实际采用 as_of): {snap_disp}")
     print(f"{'资产':<8}{'候选':<14}{'动作':<8}{'质量':<8}{'可用权重':>8}  说明")
     for name, sig in signals.items():
         print(f"{name:<8}{sig['candidate']:<14}{sig['action']:<8}{sig['data_quality']:<8}"

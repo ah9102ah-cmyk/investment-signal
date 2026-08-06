@@ -3,7 +3,25 @@
 > 交接时间: 2026-08-03 | 由 Hermes Agent 交接给 Codex CLI
 > 交接人注意: 本文件是唯一完整的状态快照, 动手前先读 AGENTS.md 铁律。
 
-## 〇、Codex 复审后的当前状态（最新，以本节为准）
+## 〇·三、v4 数据完整性修正（2026-08-06，最新，以本节为准）
+
+> 2026-08-06 已完成 V2 影子系统的数据完整性修正（category_v2_shadow_v4），仍在 `dev` 分支，**未推送、未合并 main、未触发任何 workflow**；邮件任务保持关闭，不产生任何交易指令。下方所有旧章节（〇、〇·二、一~八）均保留作历史背景，其中旧观察期/旧口径已过时。
+
+- **严格 as_of=signal_date 截止**：宽度快照只选日期 <= 信号日的最近一份（`snapshot_asof`）；美元历史保留日期并截断到信号日（`dollar_asof`）；数据日期晚于信号日 -> future/invalid，引擎层在计算全部分项之前把未来字段等同缺失（置 None），不参与任何分数。
+- **陈旧度别名统一**：pb/erp → valuation 阈值，us10y/dollar → macro 阈值（`cfg.FIELD_ALIASES`）；状态判断 `_status_for` 与降级说明 `_staleness_note` 共用同一 canonical 字段口径。
+- **PB/ERP 真实日期**：`build_data_meta` 分别接收 pb_date/erp_date，data_date 与 staleness_days 严格一致。
+- **收益回填重写**：每次运行遍历全部历史观察记录，1/4/12 周 = 5/20/60 个交易日（信号日当天不计），到期补写 `fwd_*/bh_*/common_v1_*`，只追加不覆盖历史信号；归档记录不参与。
+- **完整研究候选落盘**：no_candidate 指数的 value/balanced/trend 三套候选以完整信号 dict 写入 `candidates_research`，与正式影子信号同一 `build_signal_for`（同时点数据/陈旧度/类别规则），8-12 周后可按 §16 比较。
+- **趋势周期差一天**：`trend_score_v2` 用 `close[-(h+1)]`（h 日涨幅），与 common_v1 口径一致。
+- **阶段回测口径**：`phase_metrics` 只累计该阶段选中的日收益。
+- **观察基线重建**：V3 批次（obs-2026-08-05）因污染整体归档 `archive/obs-2026-08-05/2026-08-05`（原文保留不删除），新基线 `obs-2026-08-06`（category_v2_shadow_v4）；**首个周五自动任务（2026-08-07 17:30 shadow_weekly）验证通过后才正式起算 8-12 周观察期**。
+- 测试：test_logic 16 + test_v2_logic 51 + test_backtest_timeline 11 + test_shadow_integrity 20 = **98/98 通过**；另新增未来字段等同缺失/宏观 15 天 severe/PB·ERP 日期一致性回归测试。
+- 常用命令：`py scripts/shadow_log.py`（周报+回填）、`py scripts/shadow_log.py rebuild_baseline`（一次性重建基线，不写周记录）、`py scripts/v2_daily.py`（页面信号，摘要只打印实际采用的 as-of 快照日期）。
+- 详细更正记录：`STRATEGY_V2_PLAN.md` §21；skill 参考 `v2-correction-2026-08.md` v4 节。
+
+---
+
+## 〇、Codex 复审后的当前状态（历史：2026-08-04，已被 〇·三 取代）
 
 > 2026-08-04 已完成基金策略第二轮本地复审和改造，仍在 `dev` 分支，**本轮没有推送 GitHub、没有合并 main、没有触发云端 workflow**。下方旧交接内容保留作历史背景，其中旧目标价公式、旧估值口径和旧回测数字已经过时。
 
@@ -30,7 +48,7 @@
 
 用户已明确“先不上线，继续优化”。正式上线仍需：用户过目并再次明确同意 → 合并回 `main` → 手动触发一次 `update-fundamentals` workflow → 再确认次日 09:00 自动更新。当前线上版本不能视为已验证。
 
-## 〇·二、V2 基金分类策略（2026-08-05 阶段 A/B/C 完成，仍在 dev，未上线）
+## 〇·二、V2 基金分类策略（历史：2026-08-05 阶段 A/B/C 完成，已被 〇·三 取代，仍在 dev 未上线）
 
 > 依据 HERMES_TASK.md（任务书，已入库）分阶段执行。以下为最新状态，替代旧"基金策略"章节的过时口径（旧回测数字保留作历史）。
 

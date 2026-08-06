@@ -147,6 +147,15 @@ STALENESS_THRESHOLDS = {
     "earnings":  {"stale": 30, "severe": 60},    # 盈利周期(季频)
 }
 
+# 字段 -> 陈旧度阈值别名(v4.1): pb/erp 共用 valuation 阈值, us10y/dollar 共用 macro 阈值。
+# 状态判断与降级说明必须走同一 canonical 字段, 避免字段落到默认阈值(10/20)造成不一致。
+FIELD_ALIASES = {
+    "pb": "valuation",
+    "erp": "valuation",
+    "us10y": "macro",
+    "dollar": "macro",
+}
+
 # 类别特有禁止条件(任务书 §5)
 CATEGORY_RULES = {
     "行业主题": {

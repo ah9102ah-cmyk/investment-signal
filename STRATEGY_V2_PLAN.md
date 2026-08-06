@@ -466,3 +466,17 @@ signal_date / valuation_date / price_date
 ### 21.4 之后需要做的事（取代旧报告的"之后无需做任何事"）
 
 修完上述问题、重建观察基线(obs-2026-08-06)并验证第一次周五自动任务(2026-08-07 17:30 shadow_weekly)后，才正式开始计算 8-12 周观察期。中途想查看影子对比，随时让 Hermes 读 data/shadow_log.json。
+
+### 21.5 v4.1 补充修正（2026-08-06 深夜，随 v4 同在 dev，未推送未合并）
+
+| 编号 | 问题 | 修复 |
+|---|---|---|
+| V4.1-1 | 未来输入只在陈旧度报告层拦截，未在分项计算前过滤；直接调用 compute_signal 混入未来数据时仍会进分数 | compute_signal 在计算所有分项之前按字段日期过滤：未来估值/PB/ERP/宽度/美债/美元/盈利一律置 None 等同缺失，不参与任何分项/结构轮/综合分；degraded 显式标注"未来数据已按缺失处理" |
+| V4.1-2 | 陈旧度阈值未走别名：us10y/dollar 落默认阈值(10/20)而非 macro(10/15)，pb/erp 同理，状态判断与降级说明不一致 | 新增 cfg.FIELD_ALIASES(pb/erp→valuation, us10y/dollar→macro)；_status_for 与 _staleness_note 共用同一 canonical 字段口径 |
+| V4.1-3 | build_data_meta 的 pb/erp data_date 写死 valuation_date，与 data_sources 实际使用的日期可能不一致 | build_data_meta 分别接收 pb_date/erp_date，data_date 与 staleness_days 严格一致 |
+| V4.1-4 | v2_daily 摘要打印"宽度快照"用的是目录最新快照（可能是未来日期），非实际采用 | 摘要改为打印各指数实际采用的 as-of 快照日期（无则"无"） |
+
+回归测试（test_shadow_integrity.py 新增 8 个，全套 106/106）：
+- 未来字段各项分数与该字段缺失时完全一致（沪深300 PB/ERP、黄金美债/美元、宽度、行业盈利）
+- 15 天宏观数据必须 severe（us10y/dollar 走 macro 阈值 10/15）
+- PB/ERP 显示日期与陈旧天数一致（data_date ↔ staleness_days 动态核对）

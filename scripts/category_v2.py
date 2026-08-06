@@ -468,8 +468,14 @@ def staleness_days(data_dates, signal_date):
     return out
 
 
+def _canonical_field(field):
+    """字段 -> 陈旧度阈值别名(v4.1): pb/erp→valuation, us10y/dollar→macro。"""
+    return cfg.FIELD_ALIASES.get(field, field)
+
+
 def _status_for(field, days):
-    th = cfg.STALENESS_THRESHOLDS.get(field, {"stale": 10, "severe": 20})
+    """状态判断(v4.1): 阈值统一走 canonical 字段(别名共用同一函数)。"""
+    th = cfg.STALENESS_THRESHOLDS.get(_canonical_field(field), {"stale": 10, "severe": 20})
     if days is None:
         return "unknown"
     if days < 0:
@@ -479,6 +485,17 @@ def _status_for(field, days):
     if days >= th["stale"]:
         return "stale"
     return "ok"
+
+
+def _staleness_note(field, days, status):
+    """降级说明(v4.1): 与 _status_for 共用同一 canonical 字段口径。"""
+    if status == "future":
+        return f"{field}数据日期晚于信号日(future)"
+    if status == "severe":
+        return f"{field}数据严重陈旧({days}天)"
+    if status == "stale":
+        return f"{field}数据陈旧({days}天)"
+    return None
 
 
 # ---------------------------------------------------------------- 统一协议
@@ -591,6 +608,27 @@ def compute_signal(name, *, close=None, spot=None, pe_history=None, pe_now=None,
         degraded.append("估值缺失")
         degraded.append("行情历史不足")
 
+    # v4.1: 计算所有分项之前, 按字段日期过滤未来输入。
+    # 未来估值/PB/ERP/宽度/美债/美元/盈利 必须等同于缺失: 置 None 后不参与任何分项/结构轮/综合分。
+    # 生产路径(build_signal_for)已按信号日截断, 此处是引擎层硬保障, 防止直接调用方混入未来数据。
+    future_fields = sorted(f for f, d in (staleness_days(data_dates, signal_date) or {}).items()
+                           if d is not None and d < 0)
+    if future_fields:
+        degraded.append("未来数据已按缺失处理: " + ",".join(future_fields))
+        if any(f in future_fields for f in ("valuation", "pb", "erp")):
+            pe_history = pe_now = None
+            pb_history = pb_now = None
+            erp_history = erp_now = None
+            div_history = div_now = None
+        if "breadth" in future_fields:
+            breadth_ratio = None
+        if any(f in future_fields for f in ("us10y", "dollar")):
+            us10y_history = None
+            dollar_history = None
+            dollar_now = None
+        if "earnings" in future_fields:
+            earnings_cycle = None
+
     # 原始分项
     val = vd = None
     if name != "黄金":
@@ -657,11 +695,9 @@ def compute_signal(name, *, close=None, spot=None, pe_history=None, pe_now=None,
             "status": _status_for(field, days),
             "fallback_source": meta.get("fallback_source"),
         }
-        if days is not None and days < 0:
-            # v4: 数据日期晚于信号日 = future/invalid, 不得进入评分
-            degraded.append(f"{field}数据日期晚于信号日(future)")
-        elif days is not None and days >= cfg.STALENESS_THRESHOLDS.get(field, {}).get("stale", 99):
-            degraded.append(f"{field}数据陈旧({days}天)")
+        note = _staleness_note(field, days, sources[field]["status"])
+        if note:
+            degraded.append(note)
     # 严重陈旧/未来数据 -> 不得标记完整 / 不得输出买入强信号
     severe_fields = [f for f, s in sources.items()
                      if s["status"] in ("severe", "future")
