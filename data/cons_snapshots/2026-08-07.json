@@ -1,0 +1,41 @@
+{
+ "date": "2026-08-07",
+ "indexes": {
+  "中证500": {
+   "cons": 500,
+   "valid": 495,
+   "above_ma250_ratio": 0.366,
+   "up20_ratio": 0.608,
+   "eq_ret20": -0.0039,
+   "index_ret20": -0.0616,
+   "direction": 0
+  },
+  "中证白酒": {
+   "cons": 17,
+   "valid": 17,
+   "above_ma250_ratio": 0.0,
+   "up20_ratio": 1.0,
+   "eq_ret20": 0.1084,
+   "index_ret20": 0.0869,
+   "direction": 1
+  },
+  "中证医疗": {
+   "cons": 50,
+   "valid": 49,
+   "above_ma250_ratio": 0.224,
+   "up20_ratio": 0.816,
+   "eq_ret20": 0.0668,
+   "index_ret20": 0.0984,
+   "direction": 1
+  },
+  "科创50": {
+   "cons": 50,
+   "valid": 48,
+   "above_ma250_ratio": 0.521,
+   "up20_ratio": 0.271,
+   "eq_ret20": -0.0873,
+   "index_ret20": -0.1554,
+   "direction": 0
+  }
+ }
+}
