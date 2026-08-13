@@ -30,10 +30,11 @@
   .asset .name { font-weight:600; font-size:15px; }
   .asset .price { font-size:15px; font-variant-numeric:tabular-nums; }
   .asset .meta { font-size:12px; color:#64748b; margin-top:2px; }
-  .asset .news { font-size:12px; color:#334155; margin-top:4px; line-height:1.5; text-align:left; }
-  .asset .news a { color:#0f766e; text-decoration:none; }
-  .asset .news a:hover { text-decoration:underline; }
-  .asset .news .news-sep { color:#cbd5e1; margin:0 8px; }
+  .asset .news { font-size:12px; color:#334155; margin-top:4px; line-height:1.6; text-align:left; }
+  .asset .news .news-item { display:block; margin:1px 0; }
+  .asset .news .news-item a { color:#0f766e; text-decoration:none; }
+  .asset .news .news-item a:hover { text-decoration:underline; }
+  .asset .news .news-src { color:#94a3b8; font-size:11px; }
   .asset .news.news-empty { color:#94a3b8; }
   .arrow { display:inline-block; width:16px; font-size:12px; color:#94a3b8; }
   .eval { display:none; padding:8px 12px; margin:0 4px 8px; background:#f8fafc; border-left:3px solid #cbd5e1; border-radius:0 6px 6px 0; font-size:12px; color:#334155; line-height:1.9; text-align:left; }
@@ -837,10 +838,10 @@ function renderFundamentals() {
     // 最新资讯（可核实来源链接；显式空数组 = 近期无已核实公告，缺失 = 不显示）
     var newsHtml = '';
     if (NEWS[code] && NEWS[code].length) {
-      newsHtml = '<div class="news">📰 ' +
+      newsHtml = '<div class="news">📰 最新资讯' +
         NEWS[code].slice(0, 2).map(function(n){
-          return '<a href="' + n.url + '" target="_blank" rel="noopener" title="' + n.source + '·' + n.date + '">' + n.title + '</a>';
-        }).join('<span class="news-sep">|</span>') + '</div>';
+          return '<div class="news-item"><a href="' + n.url + '" target="_blank" rel="noopener">' + n.title + '</a><span class="news-src"> · ' + n.source + '·' + n.date + '</span></div>';
+        }).join('') + '</div>';
     } else if (NEWS[code] && NEWS[code].length === 0) {
       newsHtml = '<div class="news news-empty">📰 近期暂无已核实官方公告</div>';
     }
