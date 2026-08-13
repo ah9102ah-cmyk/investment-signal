@@ -208,6 +208,35 @@ def market_hist_pe_median(code, days=730):
         print(f"  市场历史PE失败 {code}: {e}")
         return None
 
+
+def market_hist_pe_pctl(code, days=730):
+    """当前TTM PE(序列末值)在近约2年历史TTM PE序列中的分位(0-100)。
+
+    用于估值双轮交叉的第二只眼(第二期 v1.2): 与目标价空间分互相独立,
+    防止单一目标价模型算错时连带把买卖信号带偏。返回 0-100 或 None。
+    """
+    import akshare as ak
+    try:
+        df = ak.stock_zh_valuation_baidu(
+            symbol=str(code), indicator="市盈率(TTM)", period="近三年")
+        if "date" not in df.columns or "value" not in df.columns:
+            return None
+        cutoff = dt.date.today() - dt.timedelta(days=days)
+        vals = []
+        for _, row in df.iterrows():
+            d = _iso_date(row.get("date"))
+            v = num(row.get("value"))
+            if d and d >= cutoff and v is not None and math.isfinite(v) and 0 < v < 150:
+                vals.append(v)
+        if len(vals) < 150:
+            return None
+        cur = vals[-1]
+        below = sum(1 for x in vals if x <= cur)
+        return round(below / len(vals) * 100.0, 1)
+    except Exception as e:
+        print(f"  历史PE分位失败 {code}: {e}")
+        return None
+
 def valuation_range_score(price, low, mid, high):
     if not price or not low or not mid or not high:
         return None
@@ -523,6 +552,7 @@ def main():
             print(f"  {name} 历史PE中位数≈{hist}, 平滑增速≈{round(g,1) if g is not None else '—'}%")
         result[code] = compute(latest, annual, prev_year, price, fair_pe_hist=hist, g_override=g)
         result[code]["name"] = name
+        result[code]["pe_pctl"] = market_hist_pe_pctl(code)  # 第二期: 估值双轮第二只眼(当前PE历史分位)
         time.sleep(1)
     # 指数估值 V 分(akshare, 失败不影响股票数据)
     try:

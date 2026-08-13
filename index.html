@@ -30,6 +30,11 @@
   .asset .name { font-weight:600; font-size:15px; }
   .asset .price { font-size:15px; font-variant-numeric:tabular-nums; }
   .asset .meta { font-size:12px; color:#64748b; margin-top:2px; }
+  .asset .news { font-size:12px; color:#334155; margin-top:4px; line-height:1.5; text-align:left; }
+  .asset .news a { color:#0f766e; text-decoration:none; }
+  .asset .news a:hover { text-decoration:underline; }
+  .asset .news .news-sep { color:#cbd5e1; margin:0 8px; }
+  .asset .news.news-empty { color:#94a3b8; }
   .arrow { display:inline-block; width:16px; font-size:12px; color:#94a3b8; }
   .eval { display:none; padding:8px 12px; margin:0 4px 8px; background:#f8fafc; border-left:3px solid #cbd5e1; border-radius:0 6px 6px 0; font-size:12px; color:#334155; line-height:1.9; text-align:left; }
   .eval .row b { color:#0f172a; }
@@ -236,6 +241,17 @@ function actionForAsset(a, v, r, useCurrentValuation) {
   return action;
 }
 
+function stockRiskTag(a, r) {
+  // 个股风险提示（只对股票 Tab 生效；不改判定，只做警示）
+  if (a.g !== 'stock') return '';
+  var risks = [];
+  if (r.vol60 && r.vol60 > 0.40) risks.push('波动大');
+  var f = FUND[a.symbol] || FUND[a.symbol.replace(/^(sh|sz|hk)/, '')];
+  if (a.hk && f && !f.pe && f.pb) risks.push('亏损(看PB)');
+  if (!risks.length) return '';
+  return '<span class="tag down" style="margin-left:4px;">' + risks.join('·') + '</span>';
+}
+
 // ---------- category_v2_shadow(影子, 阶段B 更正版 2026-08) ----------
 // 更正原则(P1-2): Python 是 V2 信号唯一计算源(scripts/v2_daily.py -> data/v2_signals.json)。
 // 页面只读取展示结果, 不再自行计算买入/持有/卖出。
@@ -397,6 +413,10 @@ function fundVScore(a, r, useCurrentValuation) {
   var f = FUND[a.symbol] || FUND[a.symbol.replace(/^(sh|sz|hk)/, '')];
   if (!f) return null;
   var rangeScore = valuationRangeScore(f, r && r.close);
+  // A股: 目标价空间分 + 当前PE历史分位 双轮交叉(第二期), 防单一目标价模型带偏
+  if (a.g === 'stock' && !a.hk) {
+    return crossValuationScore(rangeScore, pePctlScore(f));
+  }
   if (rangeScore !== null) return rangeScore;
   if (a.g === 'stock' && a.hk && f.pe && f.pe > 0) { // 港股个股: 实时 PE -> V
     if (f.pe <= 12) return 2;
@@ -412,6 +432,27 @@ function fundVScore(a, r, useCurrentValuation) {
   }
   if (f.v_score !== undefined && f.v_score !== null) return f.v_score;
   return null;
+}
+
+function pePctlScore(f) {
+  // 当前PE在近2年历史分位 -> -2~+2 (第二期第二只眼)
+  if (!f || f.pe_pctl === undefined || f.pe_pctl === null) return null;
+  var p = f.pe_pctl;
+  if (p < 20) return 2;
+  if (p < 40) return 1;
+  if (p <= 60) return 0;
+  if (p <= 80) return -1;
+  return -2;
+}
+
+function crossValuationScore(rangeScore, pctlScore) {
+  // 双轮交叉: 同号取强, 异号或一方为0取0(不下结论), 一方缺失用另一方
+  if (rangeScore === null && pctlScore === null) return null;
+  if (rangeScore === null) return pctlScore;
+  if (pctlScore === null) return rangeScore;
+  var sameSign = (rangeScore > 0 && pctlScore > 0) || (rangeScore < 0 && pctlScore < 0);
+  if (sameSign) return Math.abs(rangeScore) >= Math.abs(pctlScore) ? rangeScore : pctlScore;
+  return 0;  // 异号或一方为0: 双轮未同时确认, 判中性
 }
 
 function loadHKQuotes() {
@@ -490,6 +531,7 @@ function renderDay(day, useCurrentValuation) {
     var action = actionForAsset(a, v, r, useCurrentValuation);
     var actionQuality = action.quality ? '<span class="tag mid">' + action.quality + '</span>' : '';
     var assetName = a.name + ((!a.validated && a.g === 'fund') ? '<span class="tag mid">观察</span>' : '');
+    var riskTag = stockRiskTag(a, r);
     var shadow = shadowResult(a.name, useCurrentValuation);
     var shTxt = shadow.label === '数据不足' ? '—' : shadow.label;
     var shQuality = (shadow.quality && shadow.quality !== '完整' && shadow.quality !== '—') ? '<span class="tag mid">' + shadow.quality + '</span>' : '';
@@ -498,7 +540,7 @@ function renderDay(day, useCurrentValuation) {
           '<td style="text-align:center">' + tTxt + '</td>' +
           '<td style="text-align:center">' + mTxt + '</td>' +
           '<td style="text-align:center" class="' + sCls + '">' + sTxt + '</td>' +
-          '<td style="text-align:center" class="' + action.cls + '" title="' + action.reason + '"><b>' + action.label + '</b>' + actionQuality + '</td>' +
+          '<td style="text-align:center" class="' + action.cls + '" title="' + action.reason + '"><b>' + action.label + '</b>' + actionQuality + riskTag + '</td>' +
           '<td style="text-align:center" class="' + shadow.cls + '" title="' + shadowColumnTitle(a, shadow) + '"><b>' + shTxt + '</b>' + shQuality + '</td></tr>';
   });
   document.getElementById('sigBody').innerHTML = sh;
@@ -655,6 +697,7 @@ function loadCustomStocks() {
 }
 
 var FUND = {};
+var NEWS = {};
 
 function loadFundamentals() {
   var urls = [
@@ -662,6 +705,11 @@ function loadFundamentals() {
     'https://raw.githubusercontent.com/ah9102ah-cmyk/investment-signal/main/data/fund.json?t=' + Date.now()
   ];
   tryFetchFund(urls, 0);
+  // 资讯为增强功能：加载失败静默，不影响页面
+  fetch('data/stock_news.json?t=' + Date.now())
+    .then(function(r){ if (!r.ok) throw new Error('bad'); return r.json(); })
+    .then(function(j){ NEWS = (j && j.stocks) ? j.stocks : {}; if (Object.keys(FUND).length) renderFundamentals(); })
+    .catch(function(){ NEWS = {}; });
 }
 
 function tryFetchFund(urls, i) {
@@ -786,12 +834,22 @@ function renderFundamentals() {
     var tag = '<span class="tag ' + vc + '">' + vtxt + '</span>';
     var fnum = function(x){ return (x !== null && x !== undefined) ? x : '—'; };
     var peShow = (f.eps_ttm && f.eps_ttm > 0 && livePrice) ? (Math.round(livePrice / f.eps_ttm * 10) / 10) : f.pe;
+    // 最新资讯（可核实来源链接；显式空数组 = 近期无已核实公告，缺失 = 不显示）
+    var newsHtml = '';
+    if (NEWS[code] && NEWS[code].length) {
+      newsHtml = '<div class="news">📰 ' +
+        NEWS[code].slice(0, 2).map(function(n){
+          return '<a href="' + n.url + '" target="_blank" rel="noopener" title="' + n.source + '·' + n.date + '">' + n.title + '</a>';
+        }).join('<span class="news-sep">|</span>') + '</div>';
+    } else if (NEWS[code] && NEWS[code].length === 0) {
+      newsHtml = '<div class="news news-empty">📰 近期暂无已核实官方公告</div>';
+    }
     html += '<div class="asset" style="cursor:pointer" onclick="toggleEval(\'' + code + '\')">' +
       '<div><span class="arrow" id="arr_' + code + '">▸</span><span class="name">' + a.name + '</span> ' + tag +
       ' <span style="font-size:12px;color:#64748b;">评分' + stxt + '</span></div>' +
       '<div style="text-align:right"><span class="' + sc + '" style="font-weight:600;">12个月区间 ' + rangeTxt + ' · 中枢 ' + tgt + ' (' + spaceTxt + ')</span>' +
       '<div class="meta">ROE ' + fnum(f.roe) + '% · 营收 ' + fnum(f.rev_g) + '%' +
-      ' · 负债 ' + fnum(f.debt) + '% · PE ' + fnum(peShow) + '</div></div></div>' +
+      ' · 负债 ' + fnum(f.debt) + '% · PE ' + fnum(peShow) + '</div></div>' + newsHtml +
       '<div class="eval" id="eval_' + code + '">' + stockEval(a, f, livePrice) + '</div>';
   });
   document.getElementById('fundBody').innerHTML = html;
