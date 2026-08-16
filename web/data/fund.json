@@ -23,7 +23,7 @@
     "growth_mid": -2.0,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 41.4
+    "pe_pctl": 50.7
   },
   "300124": {
     "name": "汇川技术",
@@ -101,7 +101,7 @@
     "growth_mid": 30.0,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 94.7
+    "pe_pctl": 89.2
   },
   "600111": {
     "name": "北方稀土",
@@ -153,7 +153,7 @@
     "growth_mid": 23.2,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 66.7
+    "pe_pctl": 66.8
   },
   "002371": {
     "name": "北方华创",
@@ -180,56 +180,6 @@
     "target_method": "model_12m_range",
     "v_score": -2,
     "pe_pctl": 94.8
-  },
-  "sh000300": {
-    "name": "沪深300",
-    "pe": 14.73,
-    "div_yield": 2.52,
-    "v_score": -2,
-    "v_method": "自身5年PE/PB/股债利差分位",
-    "v_quality": "完整",
-    "v_components": {
-      "pe": -2,
-      "pb": -1,
-      "erp": -2
-    },
-    "valuation_date": "2026-08-14"
-  },
-  "sh000905": {
-    "name": "中证500",
-    "pe": 29.57,
-    "div_yield": 1.31,
-    "v_score": -2,
-    "v_method": "自身5年PE分位",
-    "v_quality": "完整",
-    "v_components": {
-      "pe": -2
-    },
-    "valuation_date": "2026-08-14"
-  },
-  "sh000688": {
-    "name": "科创50",
-    "pe": 97.27,
-    "div_yield": 0.27,
-    "v_score": -2,
-    "v_method": "自身5年PE分位",
-    "v_quality": "完整",
-    "v_components": {
-      "pe": -2
-    },
-    "valuation_date": "2026-08-14"
-  },
-  "sz399989": {
-    "name": "中证医疗",
-    "pe": 29.6,
-    "div_yield": 1.32,
-    "v_score": -1,
-    "v_method": "自身5年PE分位",
-    "v_quality": "完整",
-    "v_components": {
-      "pe": -1
-    },
-    "valuation_date": "2026-08-14"
   },
   "00700": {
     "name": "腾讯控股",
