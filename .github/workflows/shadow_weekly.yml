@@ -61,5 +61,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/shadow_log.json data/v2_signals.json web/data/v2_signals.json data/cons_snapshots
-          git commit -m "每周影子观察更新(周五17:30)" || echo "无变化"
+          git diff --cached --quiet || git commit -m "每周影子观察更新(周五17:30)"
+          # 推送前 rebase, 防与其他 workflow/人工推送竞态(fetch first 被拒)
+          git pull --rebase origin main
           git push
