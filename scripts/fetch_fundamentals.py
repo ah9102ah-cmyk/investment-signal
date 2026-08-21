@@ -76,13 +76,16 @@ def fetch_f10(code):
     return latest, annual, prev_year, rows
 
 def smooth_g(rows):
-    """最近3个报告期累计归母净利同比的中位数,限幅[-20,30]; 无数据返回 None。"""
+    """最近3个报告期累计归母净利同比的中位数,限幅[-30,50]; 无数据返回 None。
+
+    2026-08 复审: 限幅与 HANDOFF 口径对齐(原 [-20,30] 会把高成长股增速压到30%,
+    使 compute 里 g>60 的防御分支永远不可达)。"""
     vals = [num(r.get("PARENTNETPROFITTZ")) for r in rows[:3]]
     vals = [v for v in vals if v is not None]
     if not vals:
         return None
     g = statistics.median(vals)
-    return max(-20.0, min(30.0, g))
+    return max(-30.0, min(50.0, g))
 
 
 def _iso_date(v):
@@ -321,6 +324,10 @@ def compute(latest, annual, prev_year, price, fair_pe_hist=None, g_override=None
     space = (target / price - 1) * 100 if (target and price) else None
     space_low = (target_low / price - 1) * 100 if (target_low and price) else None
     space_high = (target_high / price - 1) * 100 if (target_high and price) else None
+    # 护栏(HANDOFF): 目标价空间 >100% 或 < -90% 时模型假设失真, 不展示目标价
+    if space is not None and (space > 100.0 or space < -90.0):
+        target = target_low = target_high = None
+        space = space_low = space_high = None
     v_score = valuation_range_score(price, target_low, target, target_high)
     s, verdict = quality_score(roe_a, rev_g, debt, gm, v_score)
 
@@ -480,22 +487,26 @@ def fetch_hk_vals():
                               fair_pe_hist=hist_pe_median(ttm_eps_series(rows), get_price_hist(sym)),
                               g_override=smooth_g(rows))
                 fin["mcap"] = round(mcap, 0) if mcap else None
-                # 券商一致预期目标价(12个月)优先于模型推导
+                # 券商一致预期目标价(12个月)优先于模型推导; 空间超护栏时不展示(HANDOFF)
                 at = hk_analyst_target(sym)
                 if at and price:
-                    fin["target_low"] = round(at["low"], 2)
-                    fin["target"] = round(at["mid"], 2)
-                    fin["target_high"] = round(at["high"], 2)
-                    fin["space_low"] = round((at["low"] / price - 1) * 100, 1)
-                    fin["space"] = round((at["mid"] / price - 1) * 100, 1)
-                    fin["space_high"] = round((at["high"] / price - 1) * 100, 1)
-                    fin["v_score"] = valuation_range_score(price, at["low"], at["mid"], at["high"])
-                    fin["analyst"] = True
-                    fin["analyst_count"] = at["count"]
-                    fin["target_method"] = "analyst_12m_range"
-                    fin["score"], fin["verdict"] = quality_score(
-                        fin.get("roe"), fin.get("rev_g"), fin.get("debt"), fin.get("gm"), fin.get("v_score"))
-                    print(f"  港股券商预期 {name}: 目标价≈{fin['target']} 空间{fin['space']}%")
+                    sp_mid = (at["mid"] / price - 1) * 100
+                    if sp_mid > 100 or sp_mid < -90:
+                        print(f"  港股券商预期 {name}: 空间{sp_mid:.0f}% 超护栏, 保留模型口径")
+                    else:
+                        fin["target_low"] = round(at["low"], 2)
+                        fin["target"] = round(at["mid"], 2)
+                        fin["target_high"] = round(at["high"], 2)
+                        fin["space_low"] = round((at["low"] / price - 1) * 100, 1)
+                        fin["space"] = round((at["mid"] / price - 1) * 100, 1)
+                        fin["space_high"] = round((at["high"] / price - 1) * 100, 1)
+                        fin["v_score"] = valuation_range_score(price, at["low"], at["mid"], at["high"])
+                        fin["analyst"] = True
+                        fin["analyst_count"] = at["count"]
+                        fin["target_method"] = "analyst_12m_range"
+                        fin["score"], fin["verdict"] = quality_score(
+                            fin.get("roe"), fin.get("rev_g"), fin.get("debt"), fin.get("gm"), fin.get("v_score"))
+                        print(f"  港股券商预期 {name}: 目标价≈{fin['target']} 空间{fin['space']}%")
                 out[sym.replace("hk", "")] = fin
                 print(f"  港股财务OK {name}({sym}): 评分{fin.get('score')}({fin.get('verdict')}) 目标价≈{fin.get('target')}")
                 continue

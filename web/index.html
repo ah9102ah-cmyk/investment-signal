@@ -113,7 +113,8 @@
       M 动能分: +2 = 短期上涨有延续,-2 = 下跌动能较强；过热/超跌另作风险提示<br>
       中长期趋势: 看160/200/240日是否多数同向；60日波动越高,过程可能越颠簸<br>
       S 总分: 仅在 V/T/M 都有数据时计算；正数偏强,负数偏弱,只作双轮解释<br>
-      基本面: 五维评分(ROE/成长/负债/估值/毛利)+ 12个月估值区间,数据每日云端更新<br>
+      基本面: 五维评分(ROE/成长/负债/估值/毛利)+ 12个月估值区间,数据每日云端更新；五维评分按统一阈值,跨行业分数不宜直接比较<br>
+      个股估值: A股看"目标价区间 × 近2年PE分位"双轮、港股看"券商目标价 × 绝对PE/PB分档"双轮；两轮不一致时如实展示并按中性处理<br>
       选择历史日期时,无历史估值的数据会把 V/S 显示为 —,不会拿今天的估值冒充历史值<br>
       标有“观察”的指数尚未纳入三资产策略回测,但仍按同一套规则输出当前结果；标签只提示回测成熟度
     </div>
@@ -418,6 +419,10 @@ function fundVScore(a, r, useCurrentValuation) {
   if (a.g === 'stock' && !a.hk) {
     return crossValuationScore(rangeScore, pePctlScore(f));
   }
+  // 港股: 券商目标价空间分 + 实时绝对估值分档 双轮交叉(2026-08 复审, 原港股只有单轮)
+  if (a.g === 'stock' && a.hk) {
+    return crossValuationScore(rangeScore, hkAbsScore(f));
+  }
   if (rangeScore !== null) return rangeScore;
   if (a.g === 'stock' && a.hk && f.pe && f.pe > 0) { // 港股个股: 实时 PE -> V
     if (f.pe <= 12) return 2;
@@ -444,6 +449,33 @@ function pePctlScore(f) {
   if (p <= 60) return 0;
   if (p <= 80) return -1;
   return -2;
+}
+
+function hkAbsScore(f) {
+  // 港股第二只眼: 实时绝对估值分档(与券商目标价空间分互相独立, 2026-08 复审新增)
+  if (!f) return null;
+  if (f.pe && f.pe > 0) {
+    if (f.pe <= 12) return 2;
+    if (f.pe <= 15) return 1;
+    if (f.pe <= 20) return 0;
+    return -1;
+  }
+  if (f.pb) {
+    if (f.pb <= 3) return 2;
+    if (f.pb <= 5) return 1;
+    if (f.pb <= 8) return 0;
+    return -1;
+  }
+  return null;
+}
+
+function scoreWord(s) {
+  if (s === null || s === undefined) return '';
+  if (s >= 2) return '偏便宜';
+  if (s === 1) return '略便宜';
+  if (s === 0) return '合理';
+  if (s === -1) return '略贵';
+  return '偏贵';
 }
 
 function crossValuationScore(rangeScore, pctlScore) {
@@ -746,20 +778,29 @@ function stockEval(a, f, livePrice) {
   else if (t === '反弹中') tTxt = '最近在反弹 —— 短期价格回升了,但中期(近3个月)还没完全走稳,先当反弹看。';
   else if (t === '回调中') tTxt = '最近在回调 —— 中期还是涨的,但短期价格在回落,像涨多了歇口气。';
   else tTxt = '最近在下跌 —— 现价比近1个月均价低,近1个月均价也比近3个月均价低,走势偏弱。';
-  rows.push('📈 涨跌趋势:' + tTxt);
+  // 中长期方向(2026-08 复审新增: 原来只看20/60日两根短线,补半年/200日/一年投票)
+  var longTxt = '';
+  if (r.longMom !== null && r.longVotes !== null) {
+    longTxt = '；中长期看,近半年/200日/近一年三个周期里有 ' + r.longVotes + ' 个还是涨的,方向' +
+      (r.longMom > 0 ? '整体偏上。' : '整体偏下。');
+  } else {
+    longTxt = '；历史数据还不满一年,中长期方向参考有限。';
+  }
+  rows.push('📈 涨跌趋势:' + tTxt + longTxt);
   // 动能(大白话)
   var rs = Math.round(r.rsi);
   var momPct = r.mom * 100;
   var mTxt;
-  if (rs >= 70) mTxt = '短期有点过热 —— 短线强弱指标到了 ' + rs + '(超过70算过热,涨太猛容易回调)';
-  else if (rs >= 55) mTxt = '短期挺有劲 —— 短线强弱指标 ' + rs + '(55~70 属于偏强)';
-  else if (rs >= 45) mTxt = '短期不温不火 —— 短线强弱指标 ' + rs + '(45~55 属于中性)';
-  else if (rs >= 30) mTxt = '短期偏弱 —— 短线强弱指标 ' + rs + '(30~45 属于偏弱)';
+  if (rs >= 80) mTxt = '短期明显过热 —— 短线强弱指标到了 ' + rs + '(80以上才算过热,涨太猛容易回调)';
+  else if (rs >= 70) mTxt = '短期偏强 —— 短线强弱指标 ' + rs + '(70~80 属于偏强)';
+  else if (rs >= 50) mTxt = '短期不温不火 —— 短线强弱指标 ' + rs + '(50~70 属于中性)';
+  else if (rs >= 30) mTxt = '短期偏弱 —— 短线强弱指标 ' + rs + '(30~50 属于偏弱)';
   else mTxt = '短期跌过头了 —— 短线强弱指标 ' + rs + '(30以下算超卖,可能反弹)';
+  if (rs >= 99) mTxt += '(连续单边行情时该指标会顶格,参考意义下降)';
   rows.push('⚡ 短期动能:' + mTxt + ';近40个交易日累计' + (momPct >= 0 ? '涨了' : '跌了') + ' ' + Math.abs(momPct).toFixed(1) + '%。');
   // 估值(大白话)
   var v = fundVScore(a, r, true);
-  var vTxt = v === null ? '暂无' : v >= 2 ? '偏便宜' : v === 1 ? '略便宜' : v === 0 ? '合理' : v === -1 ? '略贵' : '偏贵';
+  var vTxt = v === null ? '暂无' : (v >= 2 ? '偏便宜' : v === 1 ? '略便宜' : v === 0 ? '合理' : v === -1 ? '略贵' : '偏贵') + '(相对自身历史)';
   var sp = (f.target && livePrice) ? (f.target / livePrice - 1) * 100 : f.space;
   var estTxt = '';
   if (f.target && livePrice) {
@@ -771,6 +812,17 @@ function stockEval(a, f, livePrice) {
     estTxt = head + tgt0 + (lo && hi ? ',情景区间 ' + lo + '～' + hi : '') +
       (sp >= 0 ? ',相对现价约 +' + spR + '%。' : ',相对现价约 ' + spR + '%。');
   }
+  // 双轮明细(2026-08 复审新增): 两轮打分不一致时如实展示, 不再只显示抹平后的"合理"
+  var wheelTxt = '';
+  if (a.g === 'stock') {
+    var w1 = valuationRangeScore(f, livePrice);
+    var w2 = a.hk ? hkAbsScore(f) : pePctlScore(f);
+    if (w1 !== null && w2 !== null && (w1 > 0) !== (w2 > 0)) {
+      var w1n = a.hk ? '券商目标价看' : '目标价区间看';
+      var w2n = a.hk ? '绝对估值(PE/PB)看' : '近2年PE分位看';
+      wheelTxt = w1n + scoreWord(w1) + '、' + w2n + scoreWord(w2) + ',两轮看法不一致,暂按中性处理。';
+    }
+  }
   var peTxt = '';
   if (f.eps_ttm && f.eps_ttm > 0 && livePrice) {
     var peL = Math.round(livePrice / f.eps_ttm * 10) / 10;
@@ -781,27 +833,35 @@ function stockEval(a, f, livePrice) {
     peTxt = '股价约为净资产的 ' + f.pb + ' 倍(PB);公司近期整体亏损,看盈利倍数没意义,按净资产看';
   }
   var estLead = vTxt === '暂无' ? '' : '估值' + vTxt + ' —— ';
-  rows.push('💰 贵还是便宜:' + estLead + estTxt + (peTxt ? peTxt + '。' : ''));
+  rows.push('💰 贵还是便宜:' + estLead + estTxt + wheelTxt + (peTxt ? peTxt + '。' : ''));
   // 一句话
   rows.push('📝 一句话:' + stockOneLiner(f, t, v));
   return rows.map(function(x){ return '<div class="row">' + x + '</div>'; }).join('');
 }
 
 function stockOneLiner(f, trend, v) {
+  // 2026-08 复审: 一句话加入估值(原来只看基本面×趋势, 贵贱信息丢失)
+  var vp = '';
+  if (v !== null && v !== undefined) {
+    if (v >= 2) vp = '、估值相对自身历史偏便宜';
+    else if (v === 1) vp = '、估值略便宜';
+    else if (v === -1) vp = '、但估值略贵';
+    else if (v <= -2) vp = '、但估值偏贵';
+  }
   if (f.verdict === '好') {
-    if (trend === '上涨中') return '基本面评分较好(' + f.score + ')、趋势向上；估值区间仍需结合风险承受能力判断。';
-    if (trend === '反弹中') return '基本面评分较好(' + f.score + ')、短期反弹；中期趋势尚未完全确认。';
-    if (trend === '回调中') return '基本面评分较好(' + f.score + ')、中期仍偏强,短期处于回调。';
-    return '基本面评分较好(' + f.score + ')但近期趋势偏弱,两类信息暂不一致。';
+    if (trend === '上涨中') return '基本面评分较好(' + f.score + ')、趋势向上' + vp + '。';
+    if (trend === '反弹中') return '基本面评分较好(' + f.score + ')、短期反弹' + vp + '；中期趋势尚未完全确认。';
+    if (trend === '回调中') return '基本面评分较好(' + f.score + ')、中期仍偏强,短期处于回调' + vp + '。';
+    return '基本面评分较好(' + f.score + ')但近期趋势偏弱' + vp + ',两类信息暂不一致。';
   }
   if (f.verdict === '中') {
-    if (trend === '上涨中') return '基本面评分中性(' + f.score + ')、趋势向上；优势主要来自价格趋势。';
-    if (trend === '下跌中') return '基本面评分中性(' + f.score + ')、趋势向下；当前两方面都没有明显优势。';
-    return '基本面评分中性(' + f.score + '),趋势尚不明确。';
+    if (trend === '上涨中') return '基本面评分中性(' + f.score + ')、趋势向上,优势主要来自价格趋势' + vp + '。';
+    if (trend === '下跌中') return '基本面评分中性(' + f.score + ')、趋势向下' + vp + ',当前两方面都没有明显优势。';
+    return '基本面评分中性(' + f.score + ')' + vp + ',趋势尚不明确。';
   }
   if (f.verdict === '差') {
-    if (trend === '上涨中') return '基本面评分偏弱(' + f.score + ')但趋势向上,两类信息互相矛盾。';
-    return '基本面评分偏弱(' + f.score + ')、趋势也偏弱,风险信号较多。';
+    if (trend === '上涨中') return '基本面评分偏弱(' + f.score + ')但趋势向上' + vp + ',两类信息互相矛盾。';
+    return '基本面评分偏弱(' + f.score + ')、趋势也偏弱' + vp + ',风险信号较多。';
   }
   var tTxt = trend === '上涨中' ? '向上' : trend === '下跌中' ? '向下' : '不明朗';
   if (v === null) return '基本面数据不足,当前只确认走势' + tTxt + '。';
@@ -832,7 +892,7 @@ function renderFundamentals() {
       f.target_high.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : tgt;
     var vtxt = (f.verdict !== undefined && f.verdict !== null) ? f.verdict : '—';
     var stxt = (f.score !== undefined && f.score !== null) ? f.score : '—';
-    var tag = '<span class="tag ' + vc + '">' + vtxt + '</span>';
+    var tag = '<span class="tag ' + vc + '" title="五维评分按统一阈值计算,跨行业分数不宜直接比较">' + vtxt + '</span>';
     var fnum = function(x){ return (x !== null && x !== undefined) ? x : '—'; };
     var peShow = (f.eps_ttm && f.eps_ttm > 0 && livePrice) ? (Math.round(livePrice / f.eps_ttm * 10) / 10) : f.pe;
     // 最新资讯（可核实来源链接；显式空数组 = 近期无已核实公告，缺失 = 不显示）
