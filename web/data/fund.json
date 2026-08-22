@@ -49,7 +49,7 @@
     "growth_mid": 17.8,
     "target_method": "model_12m_range",
     "v_score": 2,
-    "pe_pctl": 14.2
+    "pe_pctl": 14.1
   },
   "000823": {
     "name": "超声电子",
@@ -89,15 +89,15 @@
     "eps_ttm": 2.16,
     "pe": 61.5,
     "pb": 17.44,
-    "target": 151.31,
-    "target_low": 120.04,
-    "target_high": 174.0,
-    "space": 13.9,
-    "space_low": -9.6,
-    "space_high": 31.0,
+    "target": 151.63,
+    "target_low": 120.29,
+    "target_high": 174.38,
+    "space": 14.2,
+    "space_low": -9.4,
+    "space_high": 31.3,
     "score": 6,
     "verdict": "好",
-    "fair_pe": 46.7,
+    "fair_pe": 46.8,
     "growth_mid": 50.0,
     "target_method": "model_12m_range",
     "v_score": 1,
@@ -127,7 +127,7 @@
     "growth_mid": 50.0,
     "target_method": null,
     "v_score": null,
-    "pe_pctl": 2.3
+    "pe_pctl": 2.2
   },
   "002028": {
     "name": "思源电气",
@@ -153,7 +153,7 @@
     "growth_mid": 23.2,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 70.9
+    "pe_pctl": 70.8
   },
   "002371": {
     "name": "北方华创",
@@ -341,8 +341,8 @@
     "analyst_count": 16
   },
   "us10y": {
-    "now": 4.7,
-    "prev20": 4.699,
-    "date": "2026-08-20"
+    "now": 4.734,
+    "prev20": 4.683,
+    "date": "2026-08-21"
   }
 }
