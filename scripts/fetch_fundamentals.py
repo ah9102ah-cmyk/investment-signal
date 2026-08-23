@@ -253,6 +253,7 @@ def valuation_range_score(price, low, mid, high):
 
 
 def quality_score(roe, rev_g, debt, gm, v_score):
+    """旧版绝对阈值评分(2026-08 起弃用, 保留供回退/对照)。"""
     s = 0
     s += 2 if (roe is not None and roe >= 15) else (1 if (roe is not None and roe >= 10) else (0 if (roe is not None and roe >= 5) else (-2 if roe is not None else 0)))
     s += 2 if (rev_g is not None and rev_g >= 20) else (1 if (rev_g is not None and rev_g >= 10) else (0 if (rev_g is not None and rev_g >= 0) else (-2 if rev_g is not None else 0)))
@@ -260,6 +261,136 @@ def quality_score(roe, rev_g, debt, gm, v_score):
     s += v_score if v_score is not None else 0
     s += 1 if (gm is not None and gm >= 60) else (0 if (gm is not None and gm >= 30) else (-1 if gm is not None else 0))
     return s, "好" if s >= 5 else ("中" if s >= 2 else "差")
+
+
+# ------------------------------------------------------------------
+# 2026-08 行业相对化评分(三档): 一般行业=vs同行中位数 / 周期股=vs自身历史 / 港股=绝对档位
+# 数据源统一 akshare(财务指标), 东财F10 仅作回退。
+# ------------------------------------------------------------------
+
+def ak_financial_rows(code):
+    """akshare 财务指标(主源) -> 与东财F10对齐的行列表。失败返回 []。
+
+    列名(实测): 日期/加权净资产收益率(%)/销售毛利率(%)/资产负债率(%)/
+    主营业务收入增长率(%)/净利润增长率(%) 等。"""
+    try:
+        import akshare as ak
+        year = dt.date.today().year - 6
+        df = ak.stock_financial_analysis_indicator(symbol=str(code), start_year=str(year))
+        if df is None or df.empty:
+            return []
+        rows = []
+        date_col = df.columns[0]
+        for _, r in df.iterrows():
+            d = r.get(date_col)
+            rd = d.strftime("%Y-%m-%d") if hasattr(d, "strftime") else str(d)[:10]
+            rows.append(dict(
+                REPORT_DATE=rd,
+                REPORT_DATE_NAME=rd,
+                SECURITY_NAME_ABBR=None,
+                ROEJQ=_ak_num(r.get("加权净资产收益率(%)")),
+                XSMLL=_ak_num(r.get("销售毛利率(%)")),
+                ZCFZL=_ak_num(r.get("资产负债率(%)")),
+                TOTALOPERATEREVETZ=_ak_num(r.get("主营业务收入增长率(%)")),
+                PARENTNETPROFITTZ=_ak_num(r.get("净利润增长率(%)")),
+                BPS=None, EPSJB=None, EPS_TTM=None,
+            ))
+        rows.sort(key=lambda x: x["REPORT_DATE"], reverse=True)
+        return rows
+    except Exception as e:
+        print(f"  akshare 财务失败({code}): {e}")
+        return []
+
+def _ak_num(v):
+    if v is None:
+        return None
+    try:
+        f = float(v)
+        return f if math.isfinite(f) else None
+    except Exception:
+        return None
+
+def fetch_f10_any(code):
+    """财务行获取: akshare 主源, 空则回退东财F10。返回 (rows, source)。"""
+    rows = ak_financial_rows(code)
+    if rows:
+        return rows, "akshare"
+    latest, annual, prev_year, rows = fetch_f10(code)
+    if latest is not None:
+        # 东财行首即最新期, 统一为倒序列表
+        return rows if rows else [], "eastmoney"
+    return [], "none"
+
+def rel_pos(x, med):
+    """恒正指标比值法(vs行业中位): >=+50%->2, +25%->1, ±25%内->0, -25%->-1, -50%->-2"""
+    if x is None or not med:
+        return None
+    r = x / med - 1
+    if r >= 0.5: return 2
+    if r >= 0.25: return 1
+    if r > -0.25: return 0
+    if r > -0.5: return -1
+    return -2
+
+def rel_growth(x, med):
+    """增速类差值法(百分点; 中位数可为负): >=+10pp->2, +5pp->1, ±5pp->0, -5pp->-1, -10pp->-2"""
+    if x is None or med is None:
+        return None
+    d = x - med
+    if d >= 10: return 2
+    if d >= 5: return 1
+    if d > -5: return 0
+    if d > -10: return -1
+    return -2
+
+def rel_debt(x, med):
+    """负债率低于行业中位为稳健: <85%中位->2, <95%->1, <=115%->0, 否则-1"""
+    if x is None or med is None:
+        return None
+    if x < med * 0.85: return 2
+    if x < med * 0.95: return 1
+    if x <= med * 1.15: return 0
+    return -1
+
+def industry_relative_score(roe, rev_g, debt, gm, median):
+    """一般行业: 四项 vs 同行中位。估值不参与(单列 v_score)。"""
+    rr = rel_pos(roe, median.get("roe"))
+    rg = rel_growth(rev_g, median.get("rev_g"))
+    rd_ = rel_debt(debt, median.get("debt"))
+    rm = rel_pos(gm, median.get("gm"))
+    parts = [x for x in (rr, rg, rd_, rm) if x is not None]
+    s = sum(parts)
+    verdict = "好" if s >= 4 else ("中" if s >= -1 else "差")
+    detail = {"rel_roe": rr, "rel_rev": rg, "rel_debt": rd_, "rel_gm": rm}
+    return s, verdict, detail
+
+def cyclical_position(annual_roes):
+    """周期股: 当前ROE在自身年报ROE区间的分位。
+
+    annual_roes: [(year, roe)] 按年升序或乱序均可, 至少3期。
+    返回 (分位%, 提示分, 标签); 分位>=80 偏顶(-1), <=20 偏底(+1)。"""
+    pts = sorted([(y, r) for y, r in annual_roes if r is not None])
+    if len(pts) < 3:
+        return None, None, "历史年报不足"
+    years = [y for y, _ in pts]
+    roes = [r for _, r in pts]
+    cur_y, cur = years[-1], roes[-1]
+    his = roes[:-1] if len(roes) > 3 else roes
+    lo, hi = min(his), max(his)
+    pct = (cur - lo) / (hi - lo) * 100.0 if hi > lo else 50.0
+    if pct >= 80:
+        return round(pct), -1, f"盈利处在自己近{len(pts)}年高位(周期可能偏顶)"
+    if pct <= 20:
+        return round(pct), 1, f"盈利处在自己近{len(pts)}年低位(周期可能偏底)"
+    return round(pct), 0, f"盈利处在自己近{len(pts)}年中段"
+
+def hk_absolute_score(pe, pb):
+    """港股绝对档位(维持现状口径, 单独成函数便于标注)。"""
+    if pe and pe > 0:
+        return 2 if pe <= 12 else (1 if pe <= 15 else (0 if pe <= 20 else -1))
+    if pb:
+        return 2 if pb <= 3 else (1 if pb <= 5 else (0 if pb <= 8 else -1))
+    return None
 
 
 def compute(latest, annual, prev_year, price, fair_pe_hist=None, g_override=None):
@@ -538,7 +669,52 @@ HK_SYMS = {
     "hk00700": "腾讯控股",
     "hk09992": "泡泡玛特",
     "hk03690": "美团",
+    "hk01810": "小米集团-W",
 }
+
+def load_industry_config():
+    """行业相对化配置(industry_peers.json); 不存在返回空配置。"""
+    path = os.path.join(BASE, "industry_peers.json")
+    if not os.path.exists(path):
+        return {"groups": {}, "cyclical": {}}
+    return json.load(open(path, encoding="utf-8"))
+
+def peer_median(codes):
+    """拉同行财务 -> 各指标中位数。akshare 主源; 毛利率列在 akshare 指标表常缺,
+    缺失时仅对该字段回退东财F10(与成员评分同口径补齐)。"""
+    vals = {k: [] for k in ("roe", "rev_g", "debt", "gm")}
+    gm_missing = []
+    for c in codes:
+        rows, src = fetch_f10_any(c)
+        if not rows:
+            continue
+        latest = rows[0]
+        annual = next((r for r in rows if str(r.get("REPORT_DATE", "")).endswith("12-31")), None)
+        roe = _ak_num(annual.get("ROEJQ")) if annual else _ak_num(latest.get("ROEJQ"))
+        for key, field, row in (("rev_g", "TOTALOPERATEREVETZ", latest),
+                                ("debt", "ZCFZL", latest), ("gm", "XSMLL", latest)):
+            v = _ak_num(row.get(field)) if row else None
+            if v is not None:
+                vals[key].append(v)
+        if roe is not None:
+            vals["roe"].append(roe)
+        if not vals["gm"] or (_ak_num(latest.get("XSMLL")) is None and src == "akshare"):
+            gm_missing.append(c)
+    # akshare 毛利率缺失的同行, 用东财F10补齐这一个字段
+    seen_gm = set()
+    for c in gm_missing:
+        if c in seen_gm:
+            continue
+        seen_gm.add(c)
+        try:
+            latest_e, _, _, _ = fetch_f10(c)
+            gmv = num(latest_e.get("XSMLL")) if latest_e else None
+            if gmv is not None:
+                vals["gm"].append(gmv)
+        except Exception:
+            pass
+        time.sleep(0.5)
+    return {k: (sorted(v)[len(v) // 2] if v else None) for k, v in vals.items()}, len(codes)
 
 def main():
     os.makedirs(os.path.dirname(OUT_FILE), exist_ok=True)
@@ -547,9 +723,42 @@ def main():
             json.dump({"600519": "贵州茅台"}, f, ensure_ascii=False, indent=2)
     stocks = json.load(open(STOCKS_FILE, encoding="utf-8"))
     result = {}
+    # 行业相对化配置: 组中位数缓存 + 周期股年报序列
+    ind_cfg = load_industry_config()
+    group_medians = {}   # 组名 -> (median dict, n_peers)
+    cyc_annuals = {}     # code -> [(year, roe)]
+    for gname, gcfg in ind_cfg.get("groups", {}).items():
+        med, n = peer_median(gcfg["peers"])
+        group_medians[gname] = (med, n)
+        print(f"行业[{gname}] 同行n={n} 中位: { {k: (round(v,1) if v is not None else None) for k,v in med.items()} }")
+    for code in ind_cfg.get("cyclical", {}):
+        rows, src = fetch_f10_any(code)
+        ann = []
+        seen = set()
+        for r in rows:
+            rd = str(r.get("REPORT_DATE", ""))
+            y = rd[:4]
+            if rd.endswith("12-31") and y not in seen:
+                roe = _ak_num(r.get("ROEJQ"))
+                if roe is not None:
+                    try:
+                        ann.append((int(y), roe))
+                        seen.add(y)
+                    except ValueError:
+                        pass
+        cyc_annuals[code] = sorted(ann)
     for code, name in stocks.items():
         print(f"抓取 {name}({code}) ...")
+        # 财务行: akshare 主源, 失败回退东财F10(目标价模型仍需 EPS/BPS 字段)
+        rows_ak, src_ak = fetch_f10_any(code)
         latest, annual, prev_year, rows = fetch_f10(code)
+        if latest is None and rows_ak:
+            # 东财F10整体失败时用 akshare 行兜底(EPS/BPS 缺失 -> 目标价可能不出)
+            latest = rows_ak[0]
+            annual = next((r for r in rows_ak if str(r.get("REPORT_DATE", "")).endswith("12-31")), None)
+            prev_year = None
+            rows = rows_ak
+            print(f"  {name}: 东财F10失败, 使用 akshare 财务行(EPS/BPS受限)")
         if latest is None:
             result[code] = {"name": name, "error": "数据获取失败"}
             continue
@@ -564,6 +773,35 @@ def main():
         result[code] = compute(latest, annual, prev_year, price, fair_pe_hist=hist, g_override=g)
         result[code]["name"] = name
         result[code]["pe_pctl"] = market_hist_pe_pctl(code)  # 第二期: 估值双轮第二只眼(当前PE历史分位)
+        # ---- 2026-08 三档评分覆盖(估值已拆出, 不再计入总分) ----
+        score_method = "absolute_legacy"
+        if code in ind_cfg.get("cyclical", {}):
+            pct, hint, label = cyclical_position(cyc_annuals.get(code, []))
+            base_s, _v = quality_score(result[code].get("roe"), result[code].get("rev_g"),
+                                       result[code].get("debt"), result[code].get("gm"), None)
+            result[code]["cyclical"] = {"percentile": pct, "hint_score": hint, "label": label,
+                                        "annuals": cyc_annuals.get(code, [])}
+            if hint is not None:
+                result[code]["score"] = base_s + hint
+                result[code]["verdict"] = "好" if result[code]["score"] >= 5 else ("中" if result[code]["score"] >= 2 else "差")
+            score_method = "cyclical_position"
+        else:
+            gname_hit = None
+            for gname, gcfg in ind_cfg.get("groups", {}).items():
+                if code in gcfg.get("members", []):
+                    gname_hit = gname
+                    break
+            if gname_hit:
+                med, n_peers = group_medians.get(gname_hit, ({}, 0))
+                s_new, v_new, detail = industry_relative_score(
+                    result[code].get("roe"), result[code].get("rev_g"),
+                    result[code].get("debt"), result[code].get("gm"), med)
+                result[code]["score"], result[code]["verdict"] = s_new, v_new
+                result[code]["peer_detail"] = detail
+                result[code]["peer_median"] = {k: (round(v, 1) if v is not None else None) for k, v in med.items()}
+                result[code]["peer_n"] = n_peers
+                score_method = "industry_relative"
+        result[code]["score_method"] = score_method
         time.sleep(1)
     # 指数估值 V 分(akshare, 失败不影响股票数据)
     try:

@@ -53,6 +53,11 @@ assert.equal(longTrend.longConsensus, true, '至少两个周期向上且平均�
 assert.ok(longTrend.vol60 < 1e-10, '恒定日涨幅的波动率应接近0');
 assert.equal(context.finalAction(0, longTrend).label, '买入');
 assert.equal(context.finalAction(-2, longTrend).label, '持有', '估值过贵时不应显示买入');
+// 基本面软闸门: 评分"差"不允许买入, 降级为持有(基本面弱)
+assert.equal(context.finalAction(0, longTrend, { verdict: '差', score: -3 }).label, '持有', '基本面差时技术达标也不应买入');
+assert.equal(context.finalAction(0, longTrend, { verdict: '差', score: -3 }).quality, '基本面弱', '降级必须标注基本面弱');
+assert.equal(context.finalAction(0, longTrend, { verdict: '好', score: 6 }).label, '买入', '基本面好不拦截');
+assert.equal(context.finalAction(0, longTrend, null).label, '买入', '无基本面数据(指数)不拦截');
 assert.equal(
   context.actionForAsset({ g: 'fund' }, 0, longTrend, true).label,
   '买入',

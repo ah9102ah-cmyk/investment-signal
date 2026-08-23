@@ -7,7 +7,7 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; background:#f1f5f9; color:#1f2937; padding:12px; }
-  .wrap { max-width:640px; margin:0 auto; }
+  .wrap { max-width:880px; margin:0 auto; }
   h1 { text-align:center; font-size:20px; margin:8px 0 2px; }
   .date { text-align:center; color:#64748b; font-size:12px; margin-bottom:8px; }
   .picker { text-align:center; margin-bottom:12px; }
@@ -38,6 +38,25 @@
   .asset .news.news-empty { color:#94a3b8; }
   .arrow { display:inline-block; width:16px; font-size:12px; color:#94a3b8; }
   .eval { flex:0 0 100%; min-width:0; max-width:100%; display:none; padding:8px 12px; margin:6px 0 0; background:#f8fafc; border-left:3px solid #cbd5e1; border-radius:0 6px 6px 0; font-size:12px; color:#334155; line-height:1.9; text-align:left; }
+  /* 股票Tab 密表(2026-08): 一行一股 */
+  .shead,.srow { display:grid; grid-template-columns:minmax(0,108px) minmax(0,96px) minmax(0,88px) minmax(0,50px) minmax(0,56px) minmax(0,56px) minmax(0,56px) minmax(0,142px) minmax(70px,1fr) 14px; gap:4px; align-items:center; }
+  .srow > div { min-width:0; overflow:hidden; }
+  .shead { font-size:11px; color:#64748b; padding:2px 4px 6px; position:sticky; top:0; background:#fff; border-bottom:1px solid #e2e8f0; z-index:1; }
+  .srow { font-size:12.5px; padding:5px 4px; border-bottom:1px solid #f1f5f9; cursor:pointer; }
+  .srow:last-child { border-bottom:none; }
+  .srow:hover { background:#f8fafc; }
+  .srow .nm { font-weight:600; font-size:13px; }
+  .srow .sub { display:block; font-size:10.5px; color:#94a3b8; font-weight:400; margin-top:1px; }
+  .cellnum { font-variant-numeric:tabular-nums; }
+  .nline { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
+  .nline a { color:#0f766e; text-decoration:none; }
+  .nline a:hover { text-decoration:underline; }
+  .srow > .eval { grid-column:1 / -1; }
+  @media (max-width:760px) {
+    .shead,.srow { grid-template-columns:minmax(88px,1fr) 74px 116px 40px minmax(70px,1.2fr) 12px; }
+    .shead>:nth-child(5),.shead>:nth-child(6),.shead>:nth-child(7),.shead>:nth-child(9),
+    .srow>div:nth-child(5),.srow>div:nth-child(6),.srow>div:nth-child(7),.srow>div:nth-child(9) { display:none; }
+  }
   .eval .row b { color:#0f172a; }
   .tag { display:inline-block; font-size:11px; padding:1px 6px; border-radius:4px; margin-left:6px; }
   .tag.up { background:#fee2e2; color:#b91c1c; }
@@ -59,20 +78,11 @@
   </div>
 
   <div class="tabs">
-    <button id="tabFund" class="tabbtn active" onclick="switchTab('fund')">基金</button>
-    <button id="tabStock" class="tabbtn" onclick="switchTab('stock')">股票</button>
+    <button id="tabFund" class="tabbtn" onclick="switchTab('fund')">基金</button>
+    <button id="tabStock" class="tabbtn active" onclick="switchTab('stock')">股票</button>
   </div>
 
-  <div class="card" id="customCard" style="display:none;">
-    <h2>＋ 自选股票</h2>
-    <div class="picker" style="margin-bottom:8px;">
-      <input type="text" id="stockCode" placeholder="输入代码,如 600519 / 00700">
-      <button onclick="addStock()">添加</button>
-    </div>
-    <div id="customList" style="font-size:12px;color:#64748b;">没有自选,在下方输入代码添加</div>
-  </div>
-
-  <div class="card">
+  <div class="card" id="momCard" style="display:none;">
     <h2>■ 中长期趋势共识(研究观察)</h2>
     <table>
       <tr><th>排名</th><th>资产</th><th class="num">平均趋势</th><th class="num">周期共识</th><th class="num">60日波动</th></tr>
@@ -82,22 +92,21 @@
   </div>
 
   <div class="card">
-    <h2>■ 三维度信号 & 最终结果</h2>
+    <h2>■ 四维信号 & 最终结果</h2>
     <table>
-      <tr><th>资产</th><th style="text-align:center">V</th><th style="text-align:center">T</th><th style="text-align:center">M</th><th style="text-align:center">S</th><th style="text-align:center">结果</th><th style="text-align:center">影子</th></tr>
+      <tr><th>资产</th><th style="text-align:center">V</th><th style="text-align:center">T</th><th style="text-align:center">M</th><th style="text-align:center">长期</th><th style="text-align:center">S</th><th style="text-align:center">结果</th></tr>
       <tbody id="sigBody"><tr><td colspan="7" class="loading">加载中...</td></tr></tbody>
     </table>
-    <div class="note" id="sigNote">最终结果由中长期趋势 + V/T/M 双轮共同确认；“持有”在未持有时理解为继续观望。影子列 = 分类策略 V2 的并列观察结果(均衡参数)，不改变正式结果</div>
-    <div id="shadowPortfolio"></div>
+    <div class="note" id="sigNote">最终结果由中长期趋势 + V/T/M 双轮共同确认；“持有”在未持有时理解为继续观望</div>
   </div>
 
-  <div class="card" id="fundCard" style="display:none;">
+  <div class="card" id="fundCard">
     <h2>■ 基本面 & 12个月估值区间</h2>
     <div id="fundBody" class="loading">加载中...</div>
     <div class="note" id="fundNote">估值区间 = 可获得时点一致的历史PE区间 × 未来12个月情景EPS；区间不是承诺价格</div>
   </div>
 
-  <div class="card" id="assetCard">
+  <div class="card" id="assetCard" style="display:none;">
     <h2>■ 资产明细</h2>
     <div id="assetBody" class="loading">加载中...</div>
   </div>
@@ -111,10 +120,11 @@
       V 估值分: +2 = 相对自身历史偏便宜,-2 = 相对自身历史偏贵；红利低波看自身PE分位(股息率作背景),沪深300看PE/PB/股债利差,其他指数看自身PE分位,黄金看年线位置<br>
       T 趋势分: +2 = 上涨趋势,-2 = 下跌趋势<br>
       M 动能分: +2 = 短期上涨有延续,-2 = 下跌动能较强；过热/超跌另作风险提示<br>
+      长期共识: 近半年/200日/近一年三个周期投票(如 2/3↑)；≥2票且动量为正才允许买入——它是买入的第一道闸门,也是卖出的独立出口<br>
       中长期趋势: 看160/200/240日是否多数同向；60日波动越高,过程可能越颠簸<br>
       S 总分: 仅在 V/T/M 都有数据时计算；正数偏强,负数偏弱,只作双轮解释<br>
-      基本面: 五维评分(ROE/成长/负债/估值/毛利)+ 12个月估值区间,数据每日云端更新；五维评分按统一阈值,跨行业分数不宜直接比较<br>
-      个股估值: A股看"目标价区间 × 近2年PE分位"双轮、港股看"券商目标价 × 绝对PE/PB分档"双轮；两轮不一致时如实展示并按中性处理<br>
+      基本面: 评分口径分三类 — A股一般行业=与同行业中位数比较(卡片标"vs N家同行",估值已单列不计入总分); 周期资源股=当前ROE在自己近5年年报区间的位置(标"周期XX%",偏顶提示风险/偏底提示机会); 港股暂用绝对档位；**评分"差"的公司不给出买入**(技术面达标也只显示"持有·基本面弱")<br>
+      个股估值: A股看"目标价区间 × 近2年PE分位"双轮、港股看"券商目标价 × 绝对PE/PB分档"双轮；两轮不一致时如实展示并按中性处理
       选择历史日期时,无历史估值的数据会把 V/S 显示为 —,不会拿今天的估值冒充历史值<br>
       标有“观察”的指数尚未纳入三资产策略回测,但仍按同一套规则输出当前结果；标签只提示回测成熟度
     </div>
@@ -145,7 +155,8 @@ var ASSETS = [
   { name:"思源电气", symbol:"sz002028", digits:2, g:"stock" },
   { name:"北方华创", symbol:"sz002371", digits:2, g:"stock" },
   { name:"泡泡玛特", symbol:"hk09992", digits:2, hk:true, g:"stock" },
-  { name:"美团", symbol:"hk03690", digits:2, hk:true, g:"stock" }
+  { name:"美团", symbol:"hk03690", digits:2, hk:true, g:"stock" },
+  { name:"小米集团-W", symbol:"hk01810", digits:2, hk:true, g:"stock" }
 ];
 var INITIAL_COUNT = ASSETS.length;
 var UP = "#dc2626", DOWN = "#16a34a";
@@ -210,14 +221,17 @@ function annualizedVol(arr, i, window) {
   return Math.sqrt(variance) * Math.sqrt(244);
 }
 
-function finalAction(v, r) {
+function finalAction(v, r, f) {
   if (v === null || r.t === null || r.m === null || r.longMom === null || r.longVotes === null) {
     return { label:'数据不足', reason:'估值或中长期趋势数据不完整，暂不下结论', cls:'mid' };
   }
   var total = v + r.t + r.m;
   var longPositive = r.longVotes >= 2 && r.longMom > 0;
   var longNegative = r.longVotes <= 1 && r.longMom < 0;
-  var enter = longPositive && v >= -1 && r.t >= 0 && r.m >= -1;
+  // 基本面软闸门(2026-08-21): 行业对比评分"差"的公司不允许出买入——
+  // 技术信号再好, 同行中垫底的质量不构成买入理由; 降级为"持有(基本面弱)"。
+  var weakFundamental = (f && f.verdict === '差');
+  var enter = longPositive && v >= -1 && r.t >= 0 && r.m >= -1 && !weakFundamental;
   var exitNow = total <= -4 || (r.t <= -2 && v <= -1) || (longNegative && r.t <= -1);
   if (exitNow) return {
     label:'卖出',
@@ -225,12 +239,14 @@ function finalAction(v, r) {
     cls:'down'
   };
   if (enter) return { label:'买入', reason:'中长期多数周期向上，估值不过分贵，短期走势没有拖后腿', cls:'up' };
+  if (longPositive && weakFundamental) return { label:'持有', reason:'中长期方向向上、技术面达标，但基本面评分在同行中偏弱，暂不给出买入；已有仓位按持有理解，未持有则继续观望', quality:'基本面弱', cls:'mid' };
   if (longPositive) return { label:'持有', reason:'中长期方向仍向上，但估值或短期走势尚未同时确认', cls:'mid' };
   return { label:'持有', reason:'中长期方向尚未形成明确反转，继续等待双轮确认', cls:'mid' };
 }
 
 function actionForAsset(a, v, r, useCurrentValuation) {
-  var action = finalAction(v, r);
+  var code = (a.symbol || '').replace(/^(sh|sz|hk)/, '');
+  var action = finalAction(v, r, FUND[code]);
   if (!a.validated && a.g === 'fund' && useCurrentValuation && v === null &&
       r.t !== null && r.m !== null && r.longMom !== null && r.longVotes !== null) {
     return {
@@ -244,7 +260,7 @@ function actionForAsset(a, v, r, useCurrentValuation) {
 }
 
 function stockRiskTag(a, r) {
-  // 个股风险提示（只对股票 Tab 生效；不改判定，只做警示）
+  // 个股风险提示(只对股票Tab生效; 不改判定, 只做警示)
   if (a.g !== 'stock') return '';
   var risks = [];
   if (r.vol60 && r.vol60 > 0.40) risks.push('波动大');
@@ -254,79 +270,8 @@ function stockRiskTag(a, r) {
   return '<span class="tag down" style="margin-left:4px;">' + risks.join('·') + '</span>';
 }
 
-// ---------- category_v2_shadow(影子, 阶段B 更正版 2026-08) ----------
-// 更正原则(P1-2): Python 是 V2 信号唯一计算源(scripts/v2_daily.py -> data/v2_signals.json)。
-// 页面只读取展示结果, 不再自行计算买入/持有/卖出。
-var V2_SIGNALS = null;
-var V2_SIGNALS_LOADED = false;
-function loadV2Signals() {
-  var urls = [
-    'data/v2_signals.json?t=' + Date.now(),
-    'https://raw.githubusercontent.com/ah9102ah-cmyk/investment-signal/main/data/v2_signals.json?t=' + Date.now()
-  ];
-  tryFetchV2(urls, 0);
-}
-function tryFetchV2(urls, i) {
-  if (i >= urls.length) { V2_SIGNALS = null; V2_SIGNALS_LOADED = true; return; }
-  fetch(urls[i])
-    .then(function(r){ if (!r.ok) throw new Error('bad'); return r.json(); })
-    .then(function(j){ V2_SIGNALS = j || null; V2_SIGNALS_LOADED = true; if (loaded >= INITIAL_COUNT) showLatest(); })
-    .catch(function(){ tryFetchV2(urls, i + 1); });
-}
-function shadowResult(name, useCurrentValuation) {
-  // 只读: 从 v2_signals.json 取该资产的影子结果(Python 已算好)
-  if (!useCurrentValuation) {
-    return { label:'数据不足', reason:'历史回看：影子信号只记录最近一次周频评估，不拿今天的数据冒充历史', cls:'mid', quality:'—', candidate:'' };
-  }
-  if (!V2_SIGNALS || !V2_SIGNALS.assets || !V2_SIGNALS.assets[name]) {
-    return { label:'—', reason:'影子数据未生成(等 Python 生成 v2_signals.json)', cls:'mid', quality:'', candidate:'' };
-  }
-  var s = V2_SIGNALS.assets[name];
-  var label = s.action === '数据不足' ? '—' : s.action;
-  var cand = s.candidate || '';
-  var ver = (V2_SIGNALS.strategy_version || '').replace('category_v2_shadow_', '');
-  var reason = (s.action_reason || '');
-  if (s.degraded_fields && s.degraded_fields.length) reason += '（' + s.degraded_fields.join('、') + '）';
-  var cls = s.action === '买入' ? 'up' : s.action === '卖出' ? 'down' : 'mid';
-  var quality = (s.data_quality && s.data_quality !== '完整') ? s.data_quality : '';
-  return { label:label, reason:reason, cls:cls, quality:quality, candidate:cand, version:ver, sig:s };
-}
-function shadowColumnTitle(a, sh) {
-  var meta = (sh.candidate ? '候选:' + sh.candidate : '') + (sh.version ? ' v' + sh.version : '');
-  if (sh.sig && sh.sig.signal_date) meta += ' 评估日:' + sh.sig.signal_date;
-  return '影子(' + meta + (sh.reason ? ' ' + sh.reason : '') + ')';
-}
-
-// ---------- 组合层(阶段C, 更正版): 类内排名 + 风险集中提示 ----------
-// 组合层结果由 Python(portfolio_v2.py)在 v2_signals.json 里算好, 页面只渲染。
-function renderShadowPortfolio() {
-  var el = document.getElementById('shadowPortfolio');
-  if (!el) return;
-  if (!V2_SIGNALS || !V2_SIGNALS.assets) { el.innerHTML = ''; return; }
-  var warnings = V2_SIGNALS.warnings || [];
-  var assets = V2_SIGNALS.assets;
-  var html = '';
-  if (warnings.length) {
-    html += '<div style="margin-top:8px;padding:8px 10px;background:#fef3c7;border-left:3px solid #d97706;border-radius:6px;font-size:12.5px;line-height:1.8;color:#78350f;">' +
-            '<b>组合提示(影子观察):</b><br>' + warnings.join('<br>') + '</div>';
-  }
-  // 类内优先顺序(买入且同簇>=2): 用 Python 已给的 class_rank
-  var clusterBuys = {};
-  Object.keys(assets).forEach(function(n){
-    var s = assets[n];
-    if (s && s.action === '买入' && s.risk_cluster) {
-      (clusterBuys[s.risk_cluster] = clusterBuys[s.risk_cluster] || []).push({name:n, rank:s.class_rank || 99});
-    }
-  });
-  Object.keys(clusterBuys).forEach(function(c){
-    var arr = clusterBuys[c];
-    if (arr.length < 2) return;
-    arr.sort(function(a,b){ return a.rank - b.rank; });
-    html += '<div style="margin-top:6px;padding:6px 10px;background:#ecfdf5;border-left:3px solid #059669;border-radius:6px;font-size:12.5px;color:#064e3b;">' +
-            '<b>' + c + ' 类内优先顺序(影子):</b> ' + arr.map(function(x){ return x.name; }).join(' → ') + '</div>';
-  });
-  el.innerHTML = html;
-}
+// ---------- category_v2_shadow(影子) 已于 2026-08-21 按用户决定移除 ----------
+// V2 分类策略停止页面展示; 云端 shadow_weekly 数据管线保留在 scripts/ 供研究, 不再上页面。
 
 function calcAt(name, i) {
   var c = DATA[name].close;
@@ -374,7 +319,7 @@ function calcAt(name, i) {
            chg:chg, chg5:chg5, rsi:rs, trend:tr, close:last, v:vScore, t:tScore, m:mScore, s:sScore, risk:risk };
 }
 
-var CUR = "fund";
+var CUR = "stock";  // 2026-08-21 股票设为默认Tab
 
 function curAssets() {
   return ASSETS.filter(function(a){ return a.g === CUR; });
@@ -384,8 +329,13 @@ function switchTab(g) {
   CUR = g;
   document.getElementById('tabFund').className = g === 'fund' ? 'tabbtn active' : 'tabbtn';
   document.getElementById('tabStock').className = g === 'stock' ? 'tabbtn active' : 'tabbtn';
-  document.getElementById('customCard').style.display = g === 'stock' ? '' : 'none';
   document.getElementById('fundCard').style.display = g === 'stock' ? '' : 'none';
+  // 中长期趋势共识: 基金Tab研究排序; 股票Tab不参与决策故隐藏
+  var mc = document.getElementById('momCard');
+  if (mc) mc.style.display = g === 'fund' ? '' : 'none';
+  // 资产明细仅基金Tab展示(股票信息已在密表, 重复)
+  var ac = document.getElementById('assetCard');
+  if (ac) ac.style.display = g === 'fund' ? '' : 'none';
   updatePickerRange();
   showLatest();
   if (g === 'stock') renderFundamentals();
@@ -565,25 +515,29 @@ function renderDay(day, useCurrentValuation) {
     var actionQuality = action.quality ? '<span class="tag mid">' + action.quality + '</span>' : '';
     var assetName = a.name + ((!a.validated && a.g === 'fund') ? '<span class="tag mid">观察</span>' : '');
     var riskTag = stockRiskTag(a, r);
-    var shadow = shadowResult(a.name, useCurrentValuation);
-    var shTxt = shadow.label === '数据不足' ? '—' : shadow.label;
-    var shQuality = (shadow.quality && shadow.quality !== '完整' && shadow.quality !== '—') ? '<span class="tag mid">' + shadow.quality + '</span>' : '';
+    // 第四维: 中长期共识(买入第一闸门/卖出独立出口, 2026-08-21 补上展示消除歧义)
+    var longTxt = r.longVotes === null ? '—' : (r.longVotes + '/3') + (r.longMom > 0 ? '↑' : '↓');
+    var longCls = r.longConsensus ? 'up' : ((r.longVotes !== null && r.longMom < 0) ? 'down' : '');
+    var longTitle = r.longVotes === null ? '历史数据不足一年' :
+      '近半年/200日/近一年有' + r.longVotes + '个周期向上, 平均动量' + (r.longMom * 100 >= 0 ? '+' : '') + (r.longMom * 100).toFixed(1) + '%' +
+      (r.longConsensus ? '; 多头共识成立(买入必要条件)' : '; 未形成多头共识');
     sh += '<tr><td>' + assetName + '</td>' +
           '<td style="text-align:center" class="' + vCls + '">' + vTxt + '</td>' +
           '<td style="text-align:center">' + tTxt + '</td>' +
           '<td style="text-align:center">' + mTxt + '</td>' +
+          '<td style="text-align:center" class="' + longCls + '" title="' + longTitle + '">' + longTxt + '</td>' +
           '<td style="text-align:center" class="' + sCls + '">' + sTxt + '</td>' +
-          '<td style="text-align:center" class="' + action.cls + '" title="' + action.reason + '"><b>' + action.label + '</b>' + actionQuality + riskTag + '</td>' +
-          '<td style="text-align:center" class="' + shadow.cls + '" title="' + shadowColumnTitle(a, shadow) + '"><b>' + shTxt + '</b>' + shQuality + '</td></tr>';
+          '<td style="text-align:center" class="' + action.cls + '" title="' + action.reason + '"><b>' + action.label + '</b>' + actionQuality + riskTag + '</td></tr>';
   });
   document.getElementById('sigBody').innerHTML = sh;
-  renderShadowPortfolio();
   document.getElementById('sigNote').textContent = useCurrentValuation ?
     '结果 = 中长期趋势 + V/T/M 双轮确认；所有观察指数也输出结果；缺可靠估值时保守显示“持有 / 继续观望”，并明确标注' :
     '历史回看: 缺少当时估值时 V/S/结果显示数据不足，不会拿今天的估值冒充历史值';
 
+  // 资产明细(2026-08-21 股票Tab改密表后信息重复, 仅基金Tab保留)
   var ah = "";
   assets.forEach(function(a){
+    if (a.g === 'stock') return;   // 股票已在基本面密表, 不再重复展示
     var r = rows[assets.indexOf(a)].r;
     var chgCls = r.chg >= 0 ? "up" : "down";
     var tag = '<span class="tag ' + r.trend.cls + '">' + r.trend.t + '</span>';
@@ -624,110 +578,7 @@ function updatePickerRange() {
   picker.max = latestDayFor(assets);
 }
 
-// ---------- 自选股票 ----------
-function parseStock(input) {
-  input = input.trim();
-  if (!input) return null;
-  var name = input, code = input.toLowerCase(), userNamed = false;
-  var m = input.match(/^(.+?)\s+([0-9]{5,6})$/);
-  if (m) { name = m[1]; code = m[2]; userNamed = true; }
-  var symbol = code, hk = false;
-  if (/^sh\d{6}$/.test(code) || /^sz\d{6}$/.test(code)) symbol = code;
-  else if (/^hk\d{5}$/.test(code)) { symbol = code; hk = true; }
-  else if (/^\d{6}$/.test(code)) symbol = (code[0] === '6' ? 'sh' : 'sz') + code;
-  else if (/^\d{5}$/.test(code)) { symbol = 'hk' + code; hk = true; }
-  else return null;
-  return { name: name, symbol: symbol, digits: 2, hk: hk, g: 'stock', custom: true, userNamed: userNamed };
-}
-
-function getStockName(symbol, cb) {
-  // 腾讯行情接口返回股票中文名(qt[1])
-  fetch('https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + symbol + ',day,,,1,qfq')
-    .then(function(r){ return r.json(); })
-    .then(function(j){
-      var k = j.data && j.data[symbol];
-      var q = k && k.qt && k.qt[symbol];
-      cb(q ? q[1] : null);
-    })
-    .catch(function(){ cb(null); });
-}
-
-function getCustoms() {
-  try { return JSON.parse(localStorage.getItem('customStocks') || '[]'); }
-  catch (e) { return []; }
-}
-
-function saveCustoms(list) {
-  localStorage.setItem('customStocks', JSON.stringify(list));
-}
-
-function addStock() {
-  var inp = document.getElementById('stockCode');
-  var a = parseStock(inp.value);
-  if (!a) { alert('代码格式不对,示例: 600519(沪) / 000001(深) / 00700(港股)'); return; }
-  var exists = ASSETS.some(function(x){ return x.symbol === a.symbol; });
-  if (exists) { alert('这个已经在列表里了'); return; }
-  getStockName(a.symbol, function(cn){
-    if (!a.userNamed && cn) a.name = cn;
-    ASSETS.push(a);
-    var list = getCustoms(); list.push({ name: a.name, symbol: a.symbol, hk: a.hk }); saveCustoms(list);
-    inp.value = '';
-    var vn = 'k' + ASSETS.length;
-    loaded++;
-    loadK(a, vn, function(data){
-      if (data && data.length > 60) {
-        DATA[a.name] = { close: data.map(function(d){ return parseFloat(d.close); }),
-                         days: data.map(function(d){ return d.day; }), digits: a.digits };
-      } else {
-        alert('加载失败,可能代码不对或暂不支持');
-        removeStock(a.symbol);
-        return;
-      }
-      drawCustomList();
-      showLatest();
-    });
-  });
-}
-
-function removeStock(symbol) {
-  ASSETS = ASSETS.filter(function(x){ return x.symbol !== symbol; });
-  saveCustoms(getCustoms().filter(function(x){ return x.symbol !== symbol; }));
-  drawCustomList();
-  showLatest();
-}
-
-function drawCustomList() {
-  var customs = ASSETS.filter(function(x){ return x.custom; });
-  var el = document.getElementById('customList');
-  if (!customs.length) { el.innerHTML = '没有自选,在下方输入代码添加'; return; }
-  el.innerHTML = customs.map(function(x){
-    return '<span style="margin-right:10px;">' + x.name + ' <a href="javascript:void(0)" onclick="removeStock(\'' + x.symbol + '\')" style="color:#dc2626;text-decoration:none;">✕</a></span>';
-  }).join('');
-}
-
-function loadCustomStocks() {
-  var list = getCustoms();
-  list.forEach(function(c){
-    if (ASSETS.some(function(x){ return x.symbol === c.symbol; })) return;
-    var a = { name: c.name, symbol: c.symbol, digits: 2, hk: c.hk, g: 'stock', custom: true };
-    ASSETS.push(a);
-    var isCodeName = /^\d{5,6}$/.test(c.name);
-    var vn = 'k' + ASSETS.length;
-    getStockName(c.symbol, function(cn){
-      if (isCodeName && cn) { a.name = cn; }
-      loadK(a, vn, function(data){
-        if (data && data.length > 60) {
-          DATA[a.name] = { close: data.map(function(d){ return parseFloat(d.close); }),
-                           days: data.map(function(d){ return d.day; }), digits: a.digits };
-          drawCustomList();
-          showLatest();
-        } else {
-          removeStock(a.symbol);
-        }
-      });
-    });
-  });
-}
+// ---------- 自选股票功能已于 2026-08-21 移除(股票清单固定在 ASSETS, 由 stocks.json 管道维护) ----------
 
 var FUND = {};
 var NEWS = {};
@@ -848,20 +699,29 @@ function stockOneLiner(f, trend, v) {
     else if (v === -1) vp = '、但估值略贵';
     else if (v <= -2) vp = '、但估值偏贵';
   }
+  // 口径后缀(2026-08 行业相对化)
+  var mp = '';
+  if (f.score_method === 'cyclical_position' && f.cyclical && f.cyclical.label) {
+    mp = '；' + f.cyclical.label;
+  } else if (f.score_method === 'industry_relative') {
+    var s = f.score;
+    mp = '；与' + (f.peer_n || '') + '家同行的中位数比较，' +
+      (s >= 4 ? '多项指标领先同行' : s >= -1 ? '整体处于同行中游' : '多项指标落后于同行');
+  }
   if (f.verdict === '好') {
-    if (trend === '上涨中') return '基本面评分较好(' + f.score + ')、趋势向上' + vp + '。';
-    if (trend === '反弹中') return '基本面评分较好(' + f.score + ')、短期反弹' + vp + '；中期趋势尚未完全确认。';
-    if (trend === '回调中') return '基本面评分较好(' + f.score + ')、中期仍偏强,短期处于回调' + vp + '。';
-    return '基本面评分较好(' + f.score + ')但近期趋势偏弱' + vp + ',两类信息暂不一致。';
+    if (trend === '上涨中') return '基本面评分较好(' + f.score + ')、趋势向上' + vp + mp + '。';
+    if (trend === '反弹中') return '基本面评分较好(' + f.score + ')、短期反弹' + vp + mp + '；中期趋势尚未完全确认。';
+    if (trend === '回调中') return '基本面评分较好(' + f.score + ')、中期仍偏强,短期处于回调' + vp + mp + '。';
+    return '基本面评分较好(' + f.score + ')但近期趋势偏弱' + vp + mp + ',两类信息暂不一致。';
   }
   if (f.verdict === '中') {
-    if (trend === '上涨中') return '基本面评分中性(' + f.score + ')、趋势向上,优势主要来自价格趋势' + vp + '。';
-    if (trend === '下跌中') return '基本面评分中性(' + f.score + ')、趋势向下' + vp + ',当前两方面都没有明显优势。';
-    return '基本面评分中性(' + f.score + ')' + vp + ',趋势尚不明确。';
+    if (trend === '上涨中') return '基本面评分中性(' + f.score + ')、趋势向上,优势主要来自价格趋势' + vp + mp + '。';
+    if (trend === '下跌中') return '基本面评分中性(' + f.score + ')、趋势向下' + vp + mp + ',当前两方面都没有明显优势。';
+    return '基本面评分中性(' + f.score + ')' + vp + mp + ',趋势尚不明确。';
   }
   if (f.verdict === '差') {
-    if (trend === '上涨中') return '基本面评分偏弱(' + f.score + ')但趋势向上' + vp + ',两类信息互相矛盾。';
-    return '基本面评分偏弱(' + f.score + ')、趋势也偏弱' + vp + ',风险信号较多。';
+    if (trend === '上涨中') return '基本面评分偏弱(' + f.score + ')但趋势向上' + vp + mp + ',两类信息互相矛盾。';
+    return '基本面评分偏弱(' + f.score + ')、趋势也偏弱' + vp + mp + ',风险信号较多。';
   }
   var tTxt = trend === '上涨中' ? '向上' : trend === '下跌中' ? '向下' : '不明朗';
   if (v === null) return '基本面数据不足,当前只确认走势' + tTxt + '。';
@@ -872,45 +732,76 @@ function stockOneLiner(f, trend, v) {
 
 function renderFundamentals() {
   var assets = curAssets().filter(function(a){ return a.g === 'stock'; });
-  var html = "";
+  // 密表(2026-08): 表头 + 一行一股, 点击行展开评价面板
+  var html = '<div class="shead">' +
+    '<div>股票</div><div>评分(判定+分)</div><div>12个月区间(空间)</div><div style="text-align:right">PE</div>' +
+    '<div style="text-align:right">ROE%</div><div style="text-align:right">营收%</div><div style="text-align:right">负债%</div>' +
+    '<div>趋势</div><div>最新资讯</div><div></div></div>';
   assets.forEach(function(a){
     var code = a.symbol.replace(/^(sh|sz|hk)/, '');
     var f = FUND[code];
     if (!f || f.error) {
-      html += '<div class="asset"><div><span class="name">' + a.name + '</span></div>' +
-              '<div style="text-align:right"><span style="color:#94a3b8;font-size:12px;">基本面暂缺(未收录/港股)</span></div></div>';
+      html += '<div class="srow"><div class="nm">' + a.name + '</div>' +
+              '<div colspan="8" style="grid-column:2/-1;color:#94a3b8;font-size:12px;">基本面暂缺(未收录/港股财务失败)</div>' +
+              '<div class="arrow" id="arr_' + code + '">▸</div></div>';
       return;
     }
     var vc = f.verdict === '好' ? 'up' : f.verdict === '差' ? 'down' : '';
     var livePrice = (DATA[a.name] && DATA[a.name].close.length) ? DATA[a.name].close[DATA[a.name].close.length - 1] : null;
+    var prevClose = (DATA[a.name] && DATA[a.name].close.length > 1) ? DATA[a.name].close[DATA[a.name].close.length - 2] : null;
+    var dayChg = (livePrice && prevClose) ? (livePrice / prevClose - 1) * 100 : null;
     var sp = (f.target && livePrice) ? (f.target / livePrice - 1) * 100 : f.space;
     var sc = (sp !== null && sp !== undefined) ? (sp >= 0 ? 'up' : 'down') : '';
     var spaceTxt = (sp === null || sp === undefined) ? '—' : (sp >= 0 ? '+' : '') + (Math.round(sp * 10) / 10) + '%';
     var tgt = f.target ? f.target.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : '—';
     var rangeTxt = (f.target_low && f.target_high) ?
-      f.target_low.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) + '～' +
+      f.target_low.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) + '~' +
       f.target_high.toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : tgt;
     var vtxt = (f.verdict !== undefined && f.verdict !== null) ? f.verdict : '—';
     var stxt = (f.score !== undefined && f.score !== null) ? f.score : '—';
-    var tag = '<span class="tag ' + vc + '" title="五维评分按统一阈值计算,跨行业分数不宜直接比较">' + vtxt + '</span>';
+    // 评分口径标注(2026-08 行业相对化): 细节全部放悬停, 不占行内空间
+    var methodTitle = '评分口径: 绝对阈值(未配置行业分组)';
+    if (f.score_method === 'industry_relative') {
+      methodTitle = '评分口径: 与' + (f.peer_n || '?') + '家同行的中位数比较(' + JSON.stringify(f.peer_median || {}) + '); 估值已单列, 不计入总分';
+    } else if (f.score_method === 'cyclical_position') {
+      var cycPct = f.cyclical && f.cyclical.percentile;
+      methodTitle = '评分口径: 周期股自身历史定位(当前分位' + (cycPct !== null && cycPct !== undefined ? cycPct + '%' : '?') + ') — ' + (f.cyclical && f.cyclical.label || '');
+    } else if (a.hk) {
+      methodTitle = '评分口径: 绝对档位(港股暂用)';
+    }
+    var tag = '<span class="tag ' + vc + '" title="' + methodTitle + '">' + vtxt + '</span>';
     var fnum = function(x){ return (x !== null && x !== undefined) ? x : '—'; };
     var peShow = (f.eps_ttm && f.eps_ttm > 0 && livePrice) ? (Math.round(livePrice / f.eps_ttm * 10) / 10) : f.pe;
-    // 最新资讯（可核实来源链接；显式空数组 = 近期无已核实公告，缺失 = 不显示）
-    var newsHtml = '';
+    // 趋势/动能摘要(calcAt 最新一根K线)
+    var r = (DATA[a.name] && DATA[a.name].close.length > 60) ? calcAt(a.name, DATA[a.name].close.length - 1) : null;
+    var trendTxt = r ? r.trend.t : '—';
+    var trendCls = r ? (r.trend.cls === 'up' ? 'up' : r.trend.cls === 'down' ? 'down' : '') : '';
+    // 风险标签只在上方信号表显示(避免同页重复)
+    // 资讯首条
+    var newsFirst = '';
     if (NEWS[code] && NEWS[code].length) {
-      newsHtml = '<div class="news">📰 最新资讯' +
-        NEWS[code].slice(0, 2).map(function(n){
-          return '<div class="news-item"><a href="' + n.url + '" target="_blank" rel="noopener">' + n.title + '</a><span class="news-src"> · ' + n.source + ' · ' + n.date + '</span></div>';
-        }).join('') + '</div>';
+      newsFirst = '<a href="' + NEWS[code][0].url + '" target="_blank" rel="noopener" title="' +
+        NEWS[code][0].title.replace(/"/g, '&quot;') + '">' + NEWS[code][0].title + '</a>';
     } else if (NEWS[code] && NEWS[code].length === 0) {
-      newsHtml = '<div class="news news-empty">📰 近期暂无已核实官方公告</div>';
+      newsFirst = '<span style="color:#94a3b8;">无已核实公告</span>';
     }
-    html += '<div class="asset" style="cursor:pointer" onclick="toggleEval(\'' + code + '\')">' +
-      '<div><span class="arrow" id="arr_' + code + '">▸</span><span class="name">' + a.name + '</span> ' + tag +
-      ' <span style="font-size:12px;color:#64748b;">评分' + stxt + '</span></div>' +
-      '<div style="text-align:right"><span class="' + sc + '" style="font-weight:600;">12个月区间 ' + rangeTxt + ' · 中枢 ' + tgt + ' (' + spaceTxt + ')</span>' +
-      '<div class="meta">ROE ' + fnum(f.roe) + '% · 营收 ' + fnum(f.rev_g) + '%' +
-      ' · 负债 ' + fnum(f.debt) + '% · PE ' + fnum(peShow) + '</div></div>' + newsHtml +
+    var dayCls = dayChg === null ? '' : (dayChg >= 0 ? 'up' : 'down');
+    // 标签合并(2026-08-21 去重): 判定+分数一个标签; 口径细节全在悬停
+    var tagAll = '<span class="tag ' + vc + '" title="' + methodTitle + '">' + vtxt + ' ' + stxt + '</span>';
+    // 名字下小字只保留当日涨跌(现价本身无信息量; 2026-08-21 用户移除)
+    html += '<div class="srow" onclick="toggleEval(\'' + code + '\')">' +
+      '<div><span class="nm">' + a.name + '</span>' +
+      '<span class="sub">' +
+      (dayChg !== null ? '<span class="' + dayCls + ' cellnum">' + (dayChg >= 0 ? '+' : '') + dayChg.toFixed(1) + '%</span>' : '') + '</span></div>' +
+      '<div>' + tagAll + '</div>' +
+      '<div class="cellnum" title="中枢 ' + tgt + ',相对现价' + spaceTxt + '">' + rangeTxt + ' <span class="' + sc + '">(' + spaceTxt + ')</span></div>' +
+      '<div class="cellnum" style="text-align:right;">' + fnum(peShow) + '</div>' +
+      '<div class="cellnum" style="text-align:right;">' + fnum(f.roe) + '</div>' +
+      '<div class="cellnum" style="text-align:right;">' + fnum(f.rev_g) + '</div>' +
+      '<div class="cellnum" style="text-align:right;">' + fnum(f.debt) + '</div>' +
+      '<div><span class="' + trendCls + '">' + trendTxt + '</span></div>' +
+      '<div class="nline">' + (newsFirst || '—') + '</div>' +
+      '<div class="arrow" id="arr_' + code + '">▸</div>' +
       '<div class="eval" id="eval_' + code + '">' + stockEval(a, f, livePrice) + '</div></div>';
   });
   document.getElementById('fundBody').innerHTML = html;
@@ -940,8 +831,6 @@ ASSETS.forEach(function(a, i){
     onAll();
   });
 });
-loadCustomStocks();
-loadV2Signals();
 loadFundamentals();
 </script>
 </body>
