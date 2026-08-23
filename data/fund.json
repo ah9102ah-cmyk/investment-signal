@@ -23,7 +23,21 @@
     "growth_mid": -2.0,
     "target_method": "model_12m_range",
     "v_score": 1,
-    "pe_pctl": 12.9
+    "pe_pctl": 13.1,
+    "peer_detail": {
+      "rel_roe": 2,
+      "rel_rev": 2,
+      "rel_debt": 2,
+      "rel_gm": 0
+    },
+    "peer_median": {
+      "roe": 14.3,
+      "rev_g": -18.6,
+      "debt": 29.3,
+      "gm": 77.8
+    },
+    "peer_n": 5,
+    "score_method": "industry_relative"
   },
   "300124": {
     "name": "汇川技术",
@@ -43,13 +57,27 @@
     "space": 28.9,
     "space_low": 0.3,
     "space_high": 60.8,
-    "score": 5,
+    "score": 4,
     "verdict": "好",
     "fair_pe": 36.9,
     "growth_mid": 17.8,
     "target_method": "model_12m_range",
     "v_score": 2,
-    "pe_pctl": 14.2
+    "pe_pctl": 14.2,
+    "peer_detail": {
+      "rel_roe": 2,
+      "rel_rev": 0,
+      "rel_debt": 2,
+      "rel_gm": 0
+    },
+    "peer_median": {
+      "roe": 10.3,
+      "rev_g": 17.0,
+      "debt": 57.5,
+      "gm": 23.5
+    },
+    "peer_n": 4,
+    "score_method": "industry_relative"
   },
   "000823": {
     "name": "超声电子",
@@ -69,13 +97,27 @@
     "space": -24.6,
     "space_low": -42.4,
     "space_high": -4.6,
-    "score": -2,
+    "score": -3,
     "verdict": "差",
     "fair_pe": 28.1,
     "growth_mid": -1.2,
     "target_method": "model_12m_range",
     "v_score": -2,
-    "pe_pctl": 91.0
+    "pe_pctl": 88.8,
+    "peer_detail": {
+      "rel_roe": -2,
+      "rel_rev": -2,
+      "rel_debt": 2,
+      "rel_gm": -1
+    },
+    "peer_median": {
+      "roe": 11.4,
+      "rev_g": 28.0,
+      "debt": 51.2,
+      "gm": 24.0
+    },
+    "peer_n": 5,
+    "score_method": "industry_relative"
   },
   "600183": {
     "name": "生益科技",
@@ -89,19 +131,33 @@
     "eps_ttm": 2.16,
     "pe": 61.5,
     "pb": 17.44,
-    "target": 151.31,
-    "target_low": 120.04,
-    "target_high": 174.0,
-    "space": 13.9,
-    "space_low": -9.6,
-    "space_high": 31.0,
-    "score": 6,
+    "target": 151.96,
+    "target_low": 120.55,
+    "target_high": 174.75,
+    "space": 14.4,
+    "space_low": -9.2,
+    "space_high": 31.6,
+    "score": 5,
     "verdict": "好",
-    "fair_pe": 46.7,
+    "fair_pe": 46.9,
     "growth_mid": 50.0,
     "target_method": "model_12m_range",
     "v_score": 1,
-    "pe_pctl": 84.4
+    "pe_pctl": 84.4,
+    "peer_detail": {
+      "rel_roe": 2,
+      "rel_rev": 2,
+      "rel_debt": 0,
+      "rel_gm": 1
+    },
+    "peer_median": {
+      "roe": 11.4,
+      "rev_g": 28.0,
+      "debt": 51.2,
+      "gm": 24.0
+    },
+    "peer_n": 5,
+    "score_method": "industry_relative"
   },
   "600111": {
     "name": "北方稀土",
@@ -121,13 +177,45 @@
     "space": null,
     "space_low": null,
     "space_high": null,
-    "score": 3,
+    "score": 4,
     "verdict": "中",
     "fair_pe": 65.8,
     "growth_mid": 50.0,
     "target_method": null,
     "v_score": null,
-    "pe_pctl": 2.3
+    "pe_pctl": null,
+    "cyclical": {
+      "percentile": 15,
+      "hint_score": 1,
+      "label": "盈利处在自己近6年低位(周期可能偏底)",
+      "annuals": [
+        [
+          2020,
+          8.3
+        ],
+        [
+          2021,
+          37.28
+        ],
+        [
+          2022,
+          34.02
+        ],
+        [
+          2023,
+          11.4389
+        ],
+        [
+          2024,
+          4.57
+        ],
+        [
+          2025,
+          9.561
+        ]
+      ]
+    },
+    "score_method": "cyclical_position"
   },
   "002028": {
     "name": "思源电气",
@@ -141,19 +229,33 @@
     "eps_ttm": 4.25,
     "pe": 41.6,
     "pb": 8.4,
-    "target": 166.99,
-    "target_low": 130.42,
-    "target_high": 207.63,
-    "space": -5.5,
-    "space_low": -26.2,
-    "space_high": 17.5,
-    "score": 5,
+    "target": 167.51,
+    "target_low": 130.82,
+    "target_high": 208.28,
+    "space": -5.2,
+    "space_low": -26.0,
+    "space_high": 17.9,
+    "score": 6,
     "verdict": "好",
-    "fair_pe": 31.9,
+    "fair_pe": 32.0,
     "growth_mid": 23.2,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 70.9
+    "pe_pctl": 70.9,
+    "peer_detail": {
+      "rel_roe": 2,
+      "rel_rev": 2,
+      "rel_debt": 1,
+      "rel_gm": 1
+    },
+    "peer_median": {
+      "roe": 10.3,
+      "rev_g": 17.0,
+      "debt": 57.5,
+      "gm": 23.5
+    },
+    "peer_n": 4,
+    "score_method": "industry_relative"
   },
   "002371": {
     "name": "北方华创",
@@ -173,13 +275,27 @@
     "space": -50.2,
     "space_low": -61.8,
     "space_high": -37.2,
-    "score": 3,
+    "score": -1,
     "verdict": "中",
     "fair_pe": 44.6,
     "growth_mid": 3.4,
     "target_method": "model_12m_range",
     "v_score": -2,
-    "pe_pctl": 93.2
+    "pe_pctl": 93.2,
+    "peer_detail": {
+      "rel_roe": 0,
+      "rel_rev": -1,
+      "rel_debt": 0,
+      "rel_gm": 0
+    },
+    "peer_median": {
+      "roe": 15.5,
+      "rev_g": 35.6,
+      "debt": 45.1,
+      "gm": 43.0
+    },
+    "peer_n": 4,
+    "score_method": "industry_relative"
   },
   "sh512890": {
     "name": "红利低波",
@@ -268,21 +384,19 @@
     "eps_ttm": 24.65,
     "pe": 18.5,
     "pb": 3.6,
-    "target": 697.5,
-    "target_low": 656.25,
-    "target_high": 758.75,
-    "space": 52.6,
-    "space_low": 43.6,
-    "space_high": 66.0,
-    "score": 7,
+    "target": 571.23,
+    "target_low": 443.64,
+    "target_high": 713.62,
+    "space": 25.0,
+    "space_low": -2.9,
+    "space_high": 56.2,
+    "score": 6,
     "verdict": "好",
     "fair_pe": 20,
     "growth_mid": 15.9,
-    "target_method": "analyst_12m_range",
-    "v_score": 2,
-    "mcap": 41601.0,
-    "analyst": true,
-    "analyst_count": 18
+    "target_method": "model_12m_range",
+    "v_score": 1,
+    "mcap": 41601.0
   },
   "09992": {
     "name": "泡泡玛特",
@@ -340,9 +454,37 @@
     "analyst": true,
     "analyst_count": 16
   },
+  "01810": {
+    "name": "小米集团-W",
+    "report": "2025-12-31",
+    "roe": 18.3,
+    "rev_g": 25.0,
+    "np_g": 76.0,
+    "debt": 47.6,
+    "gm": 22.3,
+    "bps": 10.34,
+    "eps_ttm": 1.6,
+    "pe": 18.2,
+    "pb": 2.81,
+    "target": 34.9,
+    "target_low": 32.05,
+    "target_high": 37.75,
+    "space": 20.3,
+    "space_low": 10.4,
+    "space_high": 30.1,
+    "score": 6,
+    "verdict": "好",
+    "fair_pe": 30,
+    "growth_mid": 50.0,
+    "target_method": "analyst_12m_range",
+    "v_score": 2,
+    "mcap": 6190.0,
+    "analyst": true,
+    "analyst_count": 18
+  },
   "us10y": {
-    "now": 4.7,
-    "prev20": 4.699,
-    "date": "2026-08-20"
+    "now": 4.734,
+    "prev20": 4.683,
+    "date": "2026-08-21"
   }
 }
