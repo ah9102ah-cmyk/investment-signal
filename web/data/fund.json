@@ -63,7 +63,7 @@
     "growth_mid": -5.4,
     "target_method": "model_12m_range",
     "v_score": 1,
-    "pe_pctl": 21.1,
+    "pe_pctl": 21.0,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 0,
@@ -73,7 +73,7 @@
     "peer_median": {
       "roe": 10.3,
       "rev_g": 17.0,
-      "debt": 57.5,
+      "debt": 58.2,
       "gm": 23.5
     },
     "peer_n": 4,
@@ -103,7 +103,7 @@
     "growth_mid": -1.2,
     "target_method": "model_12m_range",
     "v_score": -2,
-    "pe_pctl": 90.2,
+    "pe_pctl": 90.1,
     "peer_detail": {
       "rel_roe": -2,
       "rel_rev": -2,
@@ -183,7 +183,7 @@
     "growth_mid": 50.0,
     "target_method": null,
     "v_score": null,
-    "pe_pctl": 2.2,
+    "pe_pctl": 2.1,
     "cyclical": {
       "percentile": 15,
       "hint_score": 1,
@@ -235,23 +235,23 @@
     "space": 17.7,
     "space_low": -8.1,
     "space_high": 46.4,
-    "score": 6,
+    "score": 7,
     "verdict": "好",
     "fair_pe": 32.2,
     "growth_mid": 23.2,
     "target_method": "model_12m_range",
     "v_score": 1,
-    "pe_pctl": 55.3,
+    "pe_pctl": 55.2,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 2,
-      "rel_debt": 1,
+      "rel_debt": 2,
       "rel_gm": 1
     },
     "peer_median": {
       "roe": 10.3,
       "rev_g": 17.0,
-      "debt": 57.5,
+      "debt": 58.2,
       "gm": 23.5
     },
     "peer_n": 4,
@@ -485,8 +485,8 @@
     "analyst_count": 18
   },
   "us10y": {
-    "now": 4.672,
-    "prev20": 4.667,
-    "date": "2026-08-27"
+    "now": 4.728,
+    "prev20": 4.71,
+    "date": "2026-08-28"
   }
 }
