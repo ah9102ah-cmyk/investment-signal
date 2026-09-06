@@ -23,7 +23,7 @@
     "growth_mid": -2.0,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 49.7,
+    "pe_pctl": 49.9,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 2,
@@ -183,7 +183,7 @@
     "growth_mid": 50.0,
     "target_method": null,
     "v_score": null,
-    "pe_pctl": 0.1,
+    "pe_pctl": 0.3,
     "cyclical": {
       "percentile": 15,
       "hint_score": 1,
