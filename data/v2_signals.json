@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-10-02T16:05:41",
+ "generated_at": "2026-10-09T16:36:07",
  "strategy_version": "category_v2_shadow_v4",
- "signal_date": "2026-09-30",
+ "signal_date": "2026-10-09",
  "candidate_map": {
   "沪深300": "no_candidate",
   "中证500": "no_candidate",
@@ -22,11 +22,11 @@
    "breadth_score": null,
    "earnings_score": null,
    "trend_score": -2,
-   "momentum_score": -2,
+   "momentum_score": -1,
    "quality_score": null,
    "structural_score": 0.0,
-   "technical_score": -2.0,
-   "composite_score": -1.11,
+   "technical_score": -1.8,
+   "composite_score": -1.0,
    "available_weight_ratio": 0.9,
    "action": "卖出",
    "action_reason": "无候选通过验收门槛，影子观察沿用正式策略(common_v1)",
@@ -37,33 +37,33 @@
    "data_sources": {
     "price": {
      "source": "腾讯/中证日线",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "valuation": {
      "source": "中证官网滚动PE",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "pb": {
      "source": "乐咕沪深300PB",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "erp": {
      "source": "中证PE+新浪中债10Y",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
-     "staleness_days": 0,
+     "data_date": "2026-10-08",
+     "fetched_at": "2026-10-09T16:36:07",
+     "staleness_days": 1,
      "status": "ok",
      "fallback_source": null
     }
@@ -71,9 +71,9 @@
    "class_rank": 1,
    "risk_cluster": "大盘权益",
    "risk_warning": null,
-   "signal_date": "2026-09-30",
-   "valuation_date": "2026-09-30",
-   "price_date": "2026-09-30",
+   "signal_date": "2026-10-09",
+   "valuation_date": "2026-10-09",
+   "price_date": "2026-10-09",
    "candidate": "no_candidate",
    "candidates_research": {
     "value": {
@@ -85,11 +85,11 @@
      "breadth_score": null,
      "earnings_score": null,
      "trend_score": -2,
-     "momentum_score": -2,
+     "momentum_score": -1,
      "quality_score": null,
      "structural_score": 0.0,
-     "technical_score": -2.0,
-     "composite_score": -1.0,
+     "technical_score": -1.78,
+     "composite_score": -0.89,
      "available_weight_ratio": 0.9,
      "action": "卖出",
      "action_reason": "中长期多数周期向下，短期动能也已转弱",
@@ -100,33 +100,33 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "pb": {
        "source": "乐咕沪深300PB",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "erp": {
        "source": "中证PE+新浪中债10Y",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 0,
+       "data_date": "2026-10-08",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 1,
        "status": "ok",
        "fallback_source": null
       }
@@ -134,9 +134,9 @@
      "class_rank": null,
      "risk_cluster": "大盘权益",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "value"
     },
     "balanced": {
@@ -148,11 +148,11 @@
      "breadth_score": null,
      "earnings_score": null,
      "trend_score": -2,
-     "momentum_score": -2,
+     "momentum_score": -1,
      "quality_score": null,
      "structural_score": 0.0,
-     "technical_score": -2.0,
-     "composite_score": -1.11,
+     "technical_score": -1.8,
+     "composite_score": -1.0,
      "available_weight_ratio": 0.9,
      "action": "卖出",
      "action_reason": "中长期多数周期向下，短期动能也已转弱",
@@ -163,33 +163,33 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "pb": {
        "source": "乐咕沪深300PB",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "erp": {
        "source": "中证PE+新浪中债10Y",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 0,
+       "data_date": "2026-10-08",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 1,
        "status": "ok",
        "fallback_source": null
       }
@@ -197,9 +197,9 @@
      "class_rank": null,
      "risk_cluster": "大盘权益",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "balanced"
     },
     "trend": {
@@ -211,11 +211,11 @@
      "breadth_score": null,
      "earnings_score": null,
      "trend_score": -2,
-     "momentum_score": -2,
+     "momentum_score": -1,
      "quality_score": null,
      "structural_score": 0.0,
-     "technical_score": -2.0,
-     "composite_score": -1.22,
+     "technical_score": -1.82,
+     "composite_score": -1.11,
      "available_weight_ratio": 0.9,
      "action": "卖出",
      "action_reason": "中长期多数周期向下，短期动能也已转弱",
@@ -226,33 +226,33 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "pb": {
        "source": "乐咕沪深300PB",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "erp": {
        "source": "中证PE+新浪中债10Y",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 0,
+       "data_date": "2026-10-08",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 1,
        "status": "ok",
        "fallback_source": null
       }
@@ -260,9 +260,9 @@
      "class_rank": null,
      "risk_cluster": "大盘权益",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "trend"
     }
    }
@@ -291,25 +291,25 @@
    "data_sources": {
     "price": {
      "source": "腾讯/中证日线",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "valuation": {
      "source": "中证官网滚动PE",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "breadth": {
      "source": "成分股宽度快照",
-     "data_date": "2026-09-25",
-     "fetched_at": "2026-10-02T16:05:41",
-     "staleness_days": 5,
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
+     "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     }
@@ -317,9 +317,9 @@
    "class_rank": 1,
    "risk_cluster": "中小盘权益",
    "risk_warning": null,
-   "signal_date": "2026-09-30",
-   "valuation_date": "2026-09-30",
-   "price_date": "2026-09-30",
+   "signal_date": "2026-10-09",
+   "valuation_date": "2026-10-09",
+   "price_date": "2026-10-09",
    "candidate": "no_candidate",
    "candidates_research": {
     "value": {
@@ -346,25 +346,25 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "breadth": {
        "source": "成分股宽度快照",
-       "data_date": "2026-09-25",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 5,
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       }
@@ -372,9 +372,9 @@
      "class_rank": null,
      "risk_cluster": "中小盘权益",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "value"
     },
     "balanced": {
@@ -401,25 +401,25 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "breadth": {
        "source": "成分股宽度快照",
-       "data_date": "2026-09-25",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 5,
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       }
@@ -427,9 +427,9 @@
      "class_rank": null,
      "risk_cluster": "中小盘权益",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "balanced"
     },
     "trend": {
@@ -456,25 +456,25 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "breadth": {
        "source": "成分股宽度快照",
-       "data_date": "2026-09-25",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 5,
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       }
@@ -482,9 +482,9 @@
      "class_rank": null,
      "risk_cluster": "中小盘权益",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "trend"
     }
    }
@@ -495,14 +495,14 @@
    "asset_name": "科创50",
    "valuation_score": -2,
    "macro_score": null,
-   "breadth_score": -1,
+   "breadth_score": -2,
    "earnings_score": null,
    "trend_score": 2,
    "momentum_score": -2,
    "quality_score": null,
-   "structural_score": -1.3,
+   "structural_score": -2.0,
    "technical_score": 1.1,
-   "composite_score": 0.31,
+   "composite_score": 0.08,
    "available_weight_ratio": 1.0,
    "action": "持有",
    "action_reason": "双轮尚未同时确认，继续观察",
@@ -513,25 +513,25 @@
    "data_sources": {
     "price": {
      "source": "腾讯/中证日线",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "valuation": {
      "source": "中证官网滚动PE",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "breadth": {
      "source": "成分股宽度快照",
-     "data_date": "2026-09-25",
-     "fetched_at": "2026-10-02T16:05:41",
-     "staleness_days": 5,
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
+     "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     }
@@ -539,9 +539,9 @@
    "class_rank": 1,
    "risk_cluster": "高成长科技",
    "risk_warning": null,
-   "signal_date": "2026-09-30",
-   "valuation_date": "2026-09-30",
-   "price_date": "2026-09-30",
+   "signal_date": "2026-10-09",
+   "valuation_date": "2026-10-09",
+   "price_date": "2026-10-09",
    "candidate": "trend"
   },
   "中证白酒": {
@@ -553,11 +553,11 @@
    "breadth_score": -2,
    "earnings_score": null,
    "trend_score": -2,
-   "momentum_score": 0,
+   "momentum_score": 1,
    "quality_score": null,
    "structural_score": -0.5,
-   "technical_score": -1.39,
-   "composite_score": -0.82,
+   "technical_score": -1.08,
+   "composite_score": -0.71,
    "available_weight_ratio": 1.0,
    "action": "卖出",
    "action_reason": "无候选通过验收门槛，影子观察沿用正式策略(common_v1)",
@@ -569,25 +569,25 @@
    "data_sources": {
     "price": {
      "source": "腾讯/中证日线",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "valuation": {
      "source": "中证官网滚动PE",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "breadth": {
      "source": "成分股宽度快照",
-     "data_date": "2026-09-25",
-     "fetched_at": "2026-10-02T16:05:41",
-     "staleness_days": 5,
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
+     "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     }
@@ -595,9 +595,9 @@
    "class_rank": 1,
    "risk_cluster": "消费行业",
    "risk_warning": null,
-   "signal_date": "2026-09-30",
-   "valuation_date": "2026-09-30",
-   "price_date": "2026-09-30",
+   "signal_date": "2026-10-09",
+   "valuation_date": "2026-10-09",
+   "price_date": "2026-10-09",
    "candidate": "no_candidate",
    "candidates_research": {
     "value": {
@@ -609,11 +609,11 @@
      "breadth_score": -2,
      "earnings_score": null,
      "trend_score": -2,
-     "momentum_score": 0,
+     "momentum_score": 1,
      "quality_score": null,
      "structural_score": -0.15,
-     "technical_score": -1.43,
-     "composite_score": -0.6,
+     "technical_score": -1.14,
+     "composite_score": -0.5,
      "available_weight_ratio": 1.0,
      "action": "持有",
      "action_reason": "双轮尚未同时确认，继续观察",
@@ -625,25 +625,25 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "breadth": {
        "source": "成分股宽度快照",
-       "data_date": "2026-09-25",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 5,
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       }
@@ -651,9 +651,9 @@
      "class_rank": null,
      "risk_cluster": "消费行业",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "value"
     },
     "balanced": {
@@ -665,11 +665,11 @@
      "breadth_score": -2,
      "earnings_score": null,
      "trend_score": -2,
-     "momentum_score": 0,
+     "momentum_score": 1,
      "quality_score": null,
      "structural_score": -0.5,
-     "technical_score": -1.39,
-     "composite_score": -0.82,
+     "technical_score": -1.08,
+     "composite_score": -0.71,
      "available_weight_ratio": 1.0,
      "action": "持有",
      "action_reason": "双轮尚未同时确认，继续观察",
@@ -681,25 +681,25 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "breadth": {
        "source": "成分股宽度快照",
-       "data_date": "2026-09-25",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 5,
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       }
@@ -707,9 +707,9 @@
      "class_rank": null,
      "risk_cluster": "消费行业",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "balanced"
     },
     "trend": {
@@ -721,14 +721,14 @@
      "breadth_score": -2,
      "earnings_score": null,
      "trend_score": -2,
-     "momentum_score": 0,
+     "momentum_score": 1,
      "quality_score": null,
      "structural_score": -0.64,
-     "technical_score": -1.56,
-     "composite_score": -1.05,
+     "technical_score": -1.33,
+     "composite_score": -0.95,
      "available_weight_ratio": 1.0,
-     "action": "卖出",
-     "action_reason": "综合弱项达到退出门槛",
+     "action": "持有",
+     "action_reason": "双轮尚未同时确认，继续观察",
      "data_quality": "降级",
      "degraded_fields": [
       "宽度仅当前截面",
@@ -737,25 +737,25 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "breadth": {
        "source": "成分股宽度快照",
-       "data_date": "2026-09-25",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 5,
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       }
@@ -763,9 +763,9 @@
      "class_rank": null,
      "risk_cluster": "消费行业",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "trend"
     }
    }
@@ -795,25 +795,25 @@
    "data_sources": {
     "price": {
      "source": "腾讯/中证日线",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "valuation": {
      "source": "中证官网滚动PE",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "breadth": {
      "source": "成分股宽度快照",
-     "data_date": "2026-09-25",
-     "fetched_at": "2026-10-02T16:05:41",
-     "staleness_days": 5,
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
+     "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     }
@@ -821,9 +821,9 @@
    "class_rank": 1,
    "risk_cluster": "医疗行业",
    "risk_warning": null,
-   "signal_date": "2026-09-30",
-   "valuation_date": "2026-09-30",
-   "price_date": "2026-09-30",
+   "signal_date": "2026-10-09",
+   "valuation_date": "2026-10-09",
+   "price_date": "2026-10-09",
    "candidate": "no_candidate",
    "candidates_research": {
     "value": {
@@ -851,25 +851,25 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "breadth": {
        "source": "成分股宽度快照",
-       "data_date": "2026-09-25",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 5,
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       }
@@ -877,9 +877,9 @@
      "class_rank": null,
      "risk_cluster": "医疗行业",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "value"
     },
     "balanced": {
@@ -907,25 +907,25 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "breadth": {
        "source": "成分股宽度快照",
-       "data_date": "2026-09-25",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 5,
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       }
@@ -933,9 +933,9 @@
      "class_rank": null,
      "risk_cluster": "医疗行业",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "balanced"
     },
     "trend": {
@@ -963,25 +963,25 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "breadth": {
        "source": "成分股宽度快照",
-       "data_date": "2026-09-25",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 5,
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       }
@@ -989,9 +989,9 @@
      "class_rank": null,
      "risk_cluster": "医疗行业",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "trend"
     }
    }
@@ -1020,16 +1020,16 @@
    "data_sources": {
     "price": {
      "source": "腾讯/中证日线",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "valuation": {
      "source": "中证官网滚动PE",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
@@ -1038,9 +1038,9 @@
    "class_rank": 1,
    "risk_cluster": "防守/红利",
    "risk_warning": null,
-   "signal_date": "2026-09-30",
-   "valuation_date": "2026-09-30",
-   "price_date": "2026-09-30",
+   "signal_date": "2026-10-09",
+   "valuation_date": "2026-10-09",
+   "price_date": "2026-10-09",
    "candidate": "no_candidate",
    "candidates_research": {
     "value": {
@@ -1067,16 +1067,16 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
@@ -1085,9 +1085,9 @@
      "class_rank": null,
      "risk_cluster": "防守/红利",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "value"
     },
     "balanced": {
@@ -1114,16 +1114,16 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
@@ -1132,9 +1132,9 @@
      "class_rank": null,
      "risk_cluster": "防守/红利",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "balanced"
     },
     "trend": {
@@ -1161,16 +1161,16 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "valuation": {
        "source": "中证官网滚动PE",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
@@ -1179,9 +1179,9 @@
      "class_rank": null,
      "risk_cluster": "防守/红利",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
-     "valuation_date": "2026-09-30",
-     "price_date": "2026-09-30",
+     "signal_date": "2026-10-09",
+     "valuation_date": "2026-10-09",
+     "price_date": "2026-10-09",
      "candidate": "trend"
     }
    }
@@ -1210,24 +1210,24 @@
    "data_sources": {
     "price": {
      "source": "腾讯/中证日线",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
+     "data_date": "2026-10-09",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": 0,
      "status": "ok",
      "fallback_source": null
     },
     "us10y": {
      "source": "新浪美债10Y",
-     "data_date": "2026-09-30",
-     "fetched_at": "2026-10-02T16:05:41",
-     "staleness_days": 0,
+     "data_date": "2026-10-08",
+     "fetched_at": "2026-10-09T16:36:07",
+     "staleness_days": 1,
      "status": "ok",
      "fallback_source": "bond_zh_us_rate(英为)"
     },
     "dollar": {
      "source": "新浪DINIW实时",
      "data_date": null,
-     "fetched_at": "2026-10-02T16:05:41",
+     "fetched_at": "2026-10-09T16:36:07",
      "staleness_days": null,
      "status": "unknown",
      "fallback_source": null
@@ -1236,9 +1236,9 @@
    "class_rank": 1,
    "risk_cluster": "实物资产",
    "risk_warning": null,
-   "signal_date": "2026-09-30",
+   "signal_date": "2026-10-09",
    "valuation_date": null,
-   "price_date": "2026-09-30",
+   "price_date": "2026-10-09",
    "candidate": "no_candidate",
    "candidates_research": {
     "value": {
@@ -1265,24 +1265,24 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "us10y": {
        "source": "新浪美债10Y",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 0,
+       "data_date": "2026-10-08",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 1,
        "status": "ok",
        "fallback_source": "bond_zh_us_rate(英为)"
       },
       "dollar": {
        "source": "新浪DINIW实时",
        "data_date": null,
-       "fetched_at": "2026-10-02T16:05:41",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": null,
        "status": "unknown",
        "fallback_source": null
@@ -1291,9 +1291,9 @@
      "class_rank": null,
      "risk_cluster": "实物资产",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
+     "signal_date": "2026-10-09",
      "valuation_date": null,
-     "price_date": "2026-09-30",
+     "price_date": "2026-10-09",
      "candidate": "value"
     },
     "balanced": {
@@ -1320,24 +1320,24 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "us10y": {
        "source": "新浪美债10Y",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 0,
+       "data_date": "2026-10-08",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 1,
        "status": "ok",
        "fallback_source": "bond_zh_us_rate(英为)"
       },
       "dollar": {
        "source": "新浪DINIW实时",
        "data_date": null,
-       "fetched_at": "2026-10-02T16:05:41",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": null,
        "status": "unknown",
        "fallback_source": null
@@ -1346,9 +1346,9 @@
      "class_rank": null,
      "risk_cluster": "实物资产",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
+     "signal_date": "2026-10-09",
      "valuation_date": null,
-     "price_date": "2026-09-30",
+     "price_date": "2026-10-09",
      "candidate": "balanced"
     },
     "trend": {
@@ -1375,24 +1375,24 @@
      "data_sources": {
       "price": {
        "source": "腾讯/中证日线",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
+       "data_date": "2026-10-09",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": 0,
        "status": "ok",
        "fallback_source": null
       },
       "us10y": {
        "source": "新浪美债10Y",
-       "data_date": "2026-09-30",
-       "fetched_at": "2026-10-02T16:05:41",
-       "staleness_days": 0,
+       "data_date": "2026-10-08",
+       "fetched_at": "2026-10-09T16:36:07",
+       "staleness_days": 1,
        "status": "ok",
        "fallback_source": "bond_zh_us_rate(英为)"
       },
       "dollar": {
        "source": "新浪DINIW实时",
        "data_date": null,
-       "fetched_at": "2026-10-02T16:05:41",
+       "fetched_at": "2026-10-09T16:36:07",
        "staleness_days": null,
        "status": "unknown",
        "fallback_source": null
@@ -1401,9 +1401,9 @@
      "class_rank": null,
      "risk_cluster": "实物资产",
      "risk_warning": null,
-     "signal_date": "2026-09-30",
+     "signal_date": "2026-10-09",
      "valuation_date": null,
-     "price_date": "2026-09-30",
+     "price_date": "2026-10-09",
      "candidate": "trend"
     }
    }
@@ -1438,7 +1438,7 @@
    "class_rank": 2,
    "risk_cluster": "高成长科技",
    "risk_warning": null,
-   "signal_date": "2026-09-30",
+   "signal_date": "2026-10-09",
    "valuation_date": null,
    "price_date": null,
    "candidate": "no_candidate"
