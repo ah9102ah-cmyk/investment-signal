@@ -9169,7 +9169,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.0006141688986642801,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.07441642868545695,
+    "common_v1_4w": 0.0
    },
    "中证500": {
     "strategy_version": "category_v2_shadow_v4",
@@ -9393,7 +9396,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": 0.028898996641400165,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.10287921440952796,
+    "common_v1_4w": 0.0
    },
    "科创50": {
     "strategy_version": "category_v2_shadow_v4",
@@ -9617,7 +9623,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": 0.06388608140904739,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.14432949870927425,
+    "common_v1_4w": 0.0
    },
    "中证白酒": {
     "strategy_version": "category_v2_shadow_v4",
@@ -9845,7 +9854,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.009837911138971589,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": 0.02334904755203593,
+    "common_v1_4w": 0.0
    },
    "中证医疗": {
     "strategy_version": "category_v2_shadow_v4",
@@ -10073,7 +10085,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": 0.035060589003049536,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.0046098983688286355,
+    "common_v1_4w": 0.0
    },
    "红利低波": {
     "strategy_version": "category_v2_shadow_v4",
@@ -10265,7 +10280,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.015793848711554537,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": 0.027431421446383775,
+    "common_v1_4w": 0.0
    },
    "黄金": {
     "strategy_version": "category_v2_shadow_v4",
@@ -10489,7 +10507,10 @@
     },
     "fwd_1w": 0.0073800738007381295,
     "bh_1w": 0.0073800738007381295,
-    "common_v1_1w": -0.013739796488873801
+    "common_v1_1w": -0.013739796488873801,
+    "fwd_4w": -0.00246103097394601,
+    "bh_4w": -0.04360952700436105,
+    "common_v1_4w": -0.013739796488873801
    }
   },
   "warnings": [
@@ -10809,7 +10830,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.03696817892394488,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.08959730575787794,
+    "common_v1_4w": 0.0
    },
    "中证500": {
     "strategy_version": "category_v2_shadow_v4",
@@ -11033,7 +11057,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.05093972647350309,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.13935055727145362,
+    "common_v1_4w": 0.0
    },
    "科创50": {
     "strategy_version": "category_v2_shadow_v4",
@@ -11257,7 +11284,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.058482539951471235,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.20399605477330063,
+    "common_v1_4w": 0.0
    },
    "中证白酒": {
     "strategy_version": "category_v2_shadow_v4",
@@ -11485,7 +11515,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.0229091836998373,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": 0.03924035504793366,
+    "common_v1_4w": 0.0
    },
    "中证医疗": {
     "strategy_version": "category_v2_shadow_v4",
@@ -11713,7 +11746,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": 0.004234122786572758,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": 0.0029567145358606606,
+    "common_v1_4w": 0.0
    },
    "红利低波": {
     "strategy_version": "category_v2_shadow_v4",
@@ -11905,7 +11941,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.0033783783783783994,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": 0.0244932432432432,
+    "common_v1_4w": 0.0
    },
    "黄金": {
     "strategy_version": "category_v2_shadow_v4",
@@ -12129,7 +12168,10 @@
     },
     "fwd_1w": -0.00976900876900888,
     "bh_1w": -0.04895104895104918,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": -0.00976900876900888,
+    "bh_4w": -0.09146409146409173,
+    "common_v1_4w": 0.0
    }
   },
   "warnings": [],
@@ -12447,7 +12489,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.027458021148240364,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.10219096491662838,
+    "common_v1_4w": 0.0
    },
    "中证500": {
     "strategy_version": "category_v2_shadow_v4",
@@ -12671,7 +12716,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.04893186972312691,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.1781043458415259,
+    "common_v1_4w": 0.0
    },
    "科创50": {
     "strategy_version": "category_v2_shadow_v4",
@@ -12895,7 +12943,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.10148778878701725,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.28425829443790196,
+    "common_v1_4w": 0.0
    },
    "中证白酒": {
     "strategy_version": "category_v2_shadow_v4",
@@ -13123,7 +13174,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": 0.02022025104163938,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": 0.09278779382091606,
+    "common_v1_4w": 0.0
    },
    "中证医疗": {
     "strategy_version": "category_v2_shadow_v4",
@@ -13351,7 +13405,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": 0.0016564703365531397,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.022305153034088754,
+    "common_v1_4w": 0.0
    },
    "红利低波": {
     "strategy_version": "category_v2_shadow_v4",
@@ -13543,7 +13600,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": 0.01940928270042175,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": 0.048945147679324785,
+    "common_v1_4w": 0.0
    },
    "黄金": {
     "strategy_version": "category_v2_shadow_v4",
@@ -13767,7 +13827,10 @@
     },
     "fwd_1w": 0.0,
     "bh_1w": -0.019458352298589054,
-    "common_v1_1w": 0.0
+    "common_v1_1w": 0.0,
+    "fwd_4w": 0.0,
+    "bh_4w": -0.07658170232134731,
+    "common_v1_4w": 0.0
    }
   },
   "warnings": [
@@ -17364,7 +17427,10 @@
       "price_date": "2026-10-16",
       "candidate": "trend"
      }
-    }
+    },
+    "fwd_1w": 0.0,
+    "bh_1w": -0.015652386581339495,
+    "common_v1_1w": 0.0
    },
    "中证500": {
     "strategy_version": "category_v2_shadow_v4",
@@ -17585,7 +17651,10 @@
       "price_date": "2026-10-16",
       "candidate": "trend"
      }
-    }
+    },
+    "fwd_1w": 0.0,
+    "bh_1w": 0.00615554981359101,
+    "common_v1_1w": 0.0
    },
    "科创50": {
     "strategy_version": "category_v2_shadow_v4",
@@ -17806,7 +17875,10 @@
       "price_date": "2026-10-16",
       "candidate": "trend"
      }
-    }
+    },
+    "fwd_1w": 0.0,
+    "bh_1w": -0.009671364957862694,
+    "common_v1_1w": 0.0
    },
    "中证白酒": {
     "strategy_version": "category_v2_shadow_v4",
@@ -18031,7 +18103,10 @@
       "price_date": "2026-10-16",
       "candidate": "trend"
      }
-    }
+    },
+    "fwd_1w": 0.0,
+    "bh_1w": -0.008912672824857526,
+    "common_v1_1w": 0.0
    },
    "中证医疗": {
     "strategy_version": "category_v2_shadow_v4",
@@ -18256,7 +18331,10 @@
       "price_date": "2026-10-16",
       "candidate": "trend"
      }
-    }
+    },
+    "fwd_1w": 0.0,
+    "bh_1w": 0.038077772395266773,
+    "common_v1_1w": 0.0
    },
    "红利低波": {
     "strategy_version": "category_v2_shadow_v4",
@@ -18445,7 +18523,10 @@
       "price_date": "2026-10-16",
       "candidate": "trend"
      }
-    }
+    },
+    "fwd_1w": 0.0,
+    "bh_1w": -0.014766201804758072,
+    "common_v1_1w": 0.0
    },
    "黄金": {
     "strategy_version": "category_v2_shadow_v4",
@@ -18666,7 +18747,10 @@
       "price_date": "2026-10-16",
       "candidate": "trend"
      }
-    }
+    },
+    "fwd_1w": 0.0,
+    "bh_1w": -0.04150105213935007,
+    "common_v1_1w": 0.0
    }
   },
   "warnings": [
@@ -18726,6 +18810,1625 @@
     "now": 5.089,
     "prev20": 4.934,
     "date": "2026-10-15"
+   }
+  }
+ },
+ "2026-10-30": {
+  "date": "2026-10-30",
+  "entries": {
+   "沪深300": {
+    "strategy_version": "category_v2_shadow_v4",
+    "candidate": "no_candidate",
+    "signal_date": "2026-10-30",
+    "price_date": "2026-10-30",
+    "price": 3985.5,
+    "formal": "卖出",
+    "shadow": "卖出",
+    "match": true,
+    "reason": "",
+    "flapping": false,
+    "valuation_score": 1,
+    "macro_score": null,
+    "breadth_score": null,
+    "earnings_score": null,
+    "trend_score": -2,
+    "momentum_score": -1,
+    "structural_score": 1.0,
+    "technical_score": -1.8,
+    "composite_score": -0.56,
+    "available_weight_ratio": 0.9,
+    "data_quality": "降级",
+    "degraded_fields": [
+     "宽度缺失"
+    ],
+    "data_sources": {
+     "price": {
+      "source": "腾讯/中证日线",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "valuation": {
+      "source": "中证官网滚动PE",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "pb": {
+      "source": "乐咕沪深300PB",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "erp": {
+      "source": "中证PE+新浪中债10Y",
+      "data_date": "2026-10-29",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 1,
+      "status": "ok",
+      "fallback_source": null
+     }
+    },
+    "class_rank": 1,
+    "risk_cluster": "大盘权益",
+    "candidates_research": {
+     "value": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "宽基核心",
+      "asset_name": "沪深300",
+      "valuation_score": 1,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": -1,
+      "quality_score": null,
+      "structural_score": 1.0,
+      "technical_score": -1.78,
+      "composite_score": -0.39,
+      "available_weight_ratio": 0.9,
+      "action": "卖出",
+      "action_reason": "中长期多数周期向下，短期动能也已转弱",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "pb": {
+        "source": "乐咕沪深300PB",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "erp": {
+        "source": "中证PE+新浪中债10Y",
+        "data_date": "2026-10-29",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 1,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "大盘权益",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "value"
+     },
+     "balanced": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "宽基核心",
+      "asset_name": "沪深300",
+      "valuation_score": 1,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": -1,
+      "quality_score": null,
+      "structural_score": 1.0,
+      "technical_score": -1.8,
+      "composite_score": -0.56,
+      "available_weight_ratio": 0.9,
+      "action": "卖出",
+      "action_reason": "中长期多数周期向下，短期动能也已转弱",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "pb": {
+        "source": "乐咕沪深300PB",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "erp": {
+        "source": "中证PE+新浪中债10Y",
+        "data_date": "2026-10-29",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 1,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "大盘权益",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "balanced"
+     },
+     "trend": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "宽基核心",
+      "asset_name": "沪深300",
+      "valuation_score": 1,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": -1,
+      "quality_score": null,
+      "structural_score": 1.0,
+      "technical_score": -1.82,
+      "composite_score": -0.72,
+      "available_weight_ratio": 0.9,
+      "action": "卖出",
+      "action_reason": "中长期多数周期向下，短期动能也已转弱",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "pb": {
+        "source": "乐咕沪深300PB",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "erp": {
+        "source": "中证PE+新浪中债10Y",
+        "data_date": "2026-10-29",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 1,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "大盘权益",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "trend"
+     }
+    }
+   },
+   "中证500": {
+    "strategy_version": "category_v2_shadow_v4",
+    "candidate": "no_candidate",
+    "signal_date": "2026-10-30",
+    "price_date": "2026-10-30",
+    "price": 6266.19,
+    "formal": "卖出",
+    "shadow": "卖出",
+    "match": true,
+    "reason": "",
+    "flapping": false,
+    "valuation_score": -1,
+    "macro_score": null,
+    "breadth_score": -2,
+    "earnings_score": null,
+    "trend_score": -2,
+    "momentum_score": -2,
+    "structural_score": -1.34,
+    "technical_score": -2.0,
+    "composite_score": -1.75,
+    "available_weight_ratio": 1.0,
+    "data_quality": "降级",
+    "degraded_fields": [
+     "宽度仅当前截面"
+    ],
+    "data_sources": {
+     "price": {
+      "source": "腾讯/中证日线",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "valuation": {
+      "source": "中证官网滚动PE",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "breadth": {
+      "source": "成分股宽度快照",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     }
+    },
+    "class_rank": 1,
+    "risk_cluster": "中小盘权益",
+    "candidates_research": {
+     "value": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "宽基核心",
+      "asset_name": "中证500",
+      "valuation_score": -1,
+      "macro_score": null,
+      "breadth_score": -2,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": -2,
+      "quality_score": null,
+      "structural_score": -1.3,
+      "technical_score": -2.0,
+      "composite_score": -1.7,
+      "available_weight_ratio": 1.0,
+      "action": "卖出",
+      "action_reason": "中长期多数周期向下，短期动能也已转弱",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度仅当前截面"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "中小盘权益",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "value"
+     },
+     "balanced": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "宽基核心",
+      "asset_name": "中证500",
+      "valuation_score": -1,
+      "macro_score": null,
+      "breadth_score": -2,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": -2,
+      "quality_score": null,
+      "structural_score": -1.34,
+      "technical_score": -2.0,
+      "composite_score": -1.75,
+      "available_weight_ratio": 1.0,
+      "action": "卖出",
+      "action_reason": "中长期多数周期向下，短期动能也已转弱",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度仅当前截面"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "中小盘权益",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "balanced"
+     },
+     "trend": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "宽基核心",
+      "asset_name": "中证500",
+      "valuation_score": -1,
+      "macro_score": null,
+      "breadth_score": -2,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": -2,
+      "quality_score": null,
+      "structural_score": -1.39,
+      "technical_score": -2.0,
+      "composite_score": -1.8,
+      "available_weight_ratio": 1.0,
+      "action": "卖出",
+      "action_reason": "中长期多数周期向下，短期动能也已转弱",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度仅当前截面"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "中小盘权益",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "trend"
+     }
+    }
+   },
+   "科创50": {
+    "strategy_version": "category_v2_shadow_v4",
+    "candidate": "trend",
+    "signal_date": "2026-10-30",
+    "price_date": "2026-10-30",
+    "price": 1160.84,
+    "formal": "卖出",
+    "shadow": "卖出",
+    "match": true,
+    "reason": "",
+    "flapping": false,
+    "valuation_score": -2,
+    "macro_score": null,
+    "breadth_score": null,
+    "earnings_score": null,
+    "trend_score": -2,
+    "momentum_score": -2,
+    "structural_score": -2.0,
+    "technical_score": -2.0,
+    "composite_score": -2.0,
+    "available_weight_ratio": 0.77,
+    "data_quality": "降级",
+    "degraded_fields": [
+     "宽度缺失"
+    ],
+    "data_sources": {
+     "price": {
+      "source": "腾讯/中证日线",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "valuation": {
+      "source": "中证官网滚动PE",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "breadth": {
+      "source": "成分股宽度快照",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     }
+    },
+    "class_rank": 1,
+    "risk_cluster": "高成长科技",
+    "candidates_research": {
+     "value": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "高成长科技",
+      "asset_name": "科创50",
+      "valuation_score": -2,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": -2,
+      "quality_score": null,
+      "structural_score": -2.0,
+      "technical_score": -2.0,
+      "composite_score": -2.0,
+      "available_weight_ratio": 0.75,
+      "action": "卖出",
+      "action_reason": "中长期多数周期向下，短期动能也已转弱",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "高成长科技",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "value"
+     },
+     "balanced": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "高成长科技",
+      "asset_name": "科创50",
+      "valuation_score": -2,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": -2,
+      "quality_score": null,
+      "structural_score": -2.0,
+      "technical_score": -2.0,
+      "composite_score": -2.0,
+      "available_weight_ratio": 0.72,
+      "action": "卖出",
+      "action_reason": "中长期多数周期向下，短期动能也已转弱",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "高成长科技",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "balanced"
+     },
+     "trend": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "高成长科技",
+      "asset_name": "科创50",
+      "valuation_score": -2,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": -2,
+      "quality_score": null,
+      "structural_score": -2.0,
+      "technical_score": -2.0,
+      "composite_score": -2.0,
+      "available_weight_ratio": 0.77,
+      "action": "卖出",
+      "action_reason": "中长期多数周期向下，短期动能也已转弱",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "高成长科技",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "trend"
+     }
+    }
+   },
+   "中证白酒": {
+    "strategy_version": "category_v2_shadow_v4",
+    "candidate": "no_candidate",
+    "signal_date": "2026-10-30",
+    "price_date": "2026-10-30",
+    "price": 6672.3,
+    "formal": "持有",
+    "shadow": "持有",
+    "match": true,
+    "reason": "",
+    "flapping": false,
+    "valuation_score": 0,
+    "macro_score": null,
+    "breadth_score": null,
+    "earnings_score": null,
+    "trend_score": -2,
+    "momentum_score": 1,
+    "structural_score": 0.0,
+    "technical_score": -1.08,
+    "composite_score": -0.57,
+    "available_weight_ratio": 0.68,
+    "data_quality": "降级",
+    "degraded_fields": [
+     "宽度缺失",
+     "盈利周期缺失"
+    ],
+    "data_sources": {
+     "price": {
+      "source": "腾讯/中证日线",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "valuation": {
+      "source": "中证官网滚动PE",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "breadth": {
+      "source": "成分股宽度快照",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     }
+    },
+    "class_rank": 1,
+    "risk_cluster": "消费行业",
+    "candidates_research": {
+     "value": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "行业主题",
+      "asset_name": "中证白酒",
+      "valuation_score": 0,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": 1,
+      "quality_score": null,
+      "structural_score": 0.0,
+      "technical_score": -1.14,
+      "composite_score": -0.53,
+      "available_weight_ratio": 0.75,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失",
+       "盈利周期缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "消费行业",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "value"
+     },
+     "balanced": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "行业主题",
+      "asset_name": "中证白酒",
+      "valuation_score": 0,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": 1,
+      "quality_score": null,
+      "structural_score": 0.0,
+      "technical_score": -1.08,
+      "composite_score": -0.57,
+      "available_weight_ratio": 0.68,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失",
+       "盈利周期缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "消费行业",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "balanced"
+     },
+     "trend": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "行业主题",
+      "asset_name": "中证白酒",
+      "valuation_score": 0,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": 1,
+      "quality_score": null,
+      "structural_score": 0.0,
+      "technical_score": -1.33,
+      "composite_score": -0.86,
+      "available_weight_ratio": 0.7,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失",
+       "盈利周期缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "消费行业",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "trend"
+     }
+    }
+   },
+   "中证医疗": {
+    "strategy_version": "category_v2_shadow_v4",
+    "candidate": "no_candidate",
+    "signal_date": "2026-10-30",
+    "price_date": "2026-10-30",
+    "price": 6581.04,
+    "formal": "卖出",
+    "shadow": "卖出",
+    "match": true,
+    "reason": "",
+    "flapping": false,
+    "valuation_score": 0,
+    "macro_score": null,
+    "breadth_score": null,
+    "earnings_score": null,
+    "trend_score": -2,
+    "momentum_score": 0,
+    "structural_score": 0.0,
+    "technical_score": -1.39,
+    "composite_score": -0.74,
+    "available_weight_ratio": 0.68,
+    "data_quality": "降级",
+    "degraded_fields": [
+     "宽度缺失",
+     "盈利周期缺失"
+    ],
+    "data_sources": {
+     "price": {
+      "source": "腾讯/中证日线",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "valuation": {
+      "source": "中证官网滚动PE",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "breadth": {
+      "source": "成分股宽度快照",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     }
+    },
+    "class_rank": 1,
+    "risk_cluster": "医疗行业",
+    "candidates_research": {
+     "value": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "行业主题",
+      "asset_name": "中证医疗",
+      "valuation_score": 0,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": 0,
+      "quality_score": null,
+      "structural_score": 0.0,
+      "technical_score": -1.43,
+      "composite_score": -0.67,
+      "available_weight_ratio": 0.75,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失",
+       "盈利周期缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "医疗行业",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "value"
+     },
+     "balanced": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "行业主题",
+      "asset_name": "中证医疗",
+      "valuation_score": 0,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": 0,
+      "quality_score": null,
+      "structural_score": 0.0,
+      "technical_score": -1.39,
+      "composite_score": -0.74,
+      "available_weight_ratio": 0.68,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失",
+       "盈利周期缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "医疗行业",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "balanced"
+     },
+     "trend": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "行业主题",
+      "asset_name": "中证医疗",
+      "valuation_score": 0,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": 0,
+      "quality_score": null,
+      "structural_score": 0.0,
+      "technical_score": -1.56,
+      "composite_score": -1.0,
+      "available_weight_ratio": 0.7,
+      "action": "卖出",
+      "action_reason": "综合弱项达到退出门槛",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "宽度缺失",
+       "盈利周期缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "breadth": {
+        "source": "成分股宽度快照",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "医疗行业",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "trend"
+     }
+    }
+   },
+   "红利低波": {
+    "strategy_version": "category_v2_shadow_v4",
+    "candidate": "no_candidate",
+    "signal_date": "2026-10-30",
+    "price_date": "2026-10-30",
+    "price": 1.243,
+    "formal": "持有",
+    "shadow": "持有",
+    "match": true,
+    "reason": "",
+    "flapping": false,
+    "valuation_score": -2,
+    "macro_score": null,
+    "breadth_score": null,
+    "earnings_score": null,
+    "trend_score": 2,
+    "momentum_score": 2,
+    "structural_score": -2.0,
+    "technical_score": 2.0,
+    "composite_score": 0.0,
+    "available_weight_ratio": 1.0,
+    "data_quality": "降级",
+    "degraded_fields": [
+     "dividend"
+    ],
+    "data_sources": {
+     "price": {
+      "source": "腾讯/中证日线",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "valuation": {
+      "source": "中证官网滚动PE",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     }
+    },
+    "class_rank": 1,
+    "risk_cluster": "防守/红利",
+    "candidates_research": {
+     "value": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "红利因子",
+      "asset_name": "红利低波",
+      "valuation_score": -2,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": 2,
+      "momentum_score": 2,
+      "quality_score": null,
+      "structural_score": -2.0,
+      "technical_score": 2.0,
+      "composite_score": -0.4,
+      "available_weight_ratio": 1.0,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "dividend"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "防守/红利",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "value"
+     },
+     "balanced": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "红利因子",
+      "asset_name": "红利低波",
+      "valuation_score": -2,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": 2,
+      "momentum_score": 2,
+      "quality_score": null,
+      "structural_score": -2.0,
+      "technical_score": 2.0,
+      "composite_score": 0.0,
+      "available_weight_ratio": 1.0,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "dividend"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "防守/红利",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "balanced"
+     },
+     "trend": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "红利因子",
+      "asset_name": "红利低波",
+      "valuation_score": -2,
+      "macro_score": null,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": 2,
+      "momentum_score": 2,
+      "quality_score": null,
+      "structural_score": -2.0,
+      "technical_score": 2.0,
+      "composite_score": 0.2,
+      "available_weight_ratio": 1.0,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "dividend"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "valuation": {
+        "source": "中证官网滚动PE",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "防守/红利",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": "2026-10-30",
+      "price_date": "2026-10-30",
+      "candidate": "trend"
+     }
+    }
+   },
+   "黄金": {
+    "strategy_version": "category_v2_shadow_v4",
+    "candidate": "no_candidate",
+    "signal_date": "2026-10-30",
+    "price_date": "2026-10-30",
+    "price": 8.115,
+    "formal": "卖出",
+    "shadow": "卖出",
+    "match": true,
+    "reason": "",
+    "flapping": false,
+    "valuation_score": null,
+    "macro_score": 1.0,
+    "breadth_score": null,
+    "earnings_score": null,
+    "trend_score": -2,
+    "momentum_score": 0,
+    "structural_score": 1.0,
+    "technical_score": -1.45,
+    "composite_score": -0.42,
+    "available_weight_ratio": 1.0,
+    "data_quality": "降级",
+    "degraded_fields": [
+     "美元指数缺失"
+    ],
+    "data_sources": {
+     "price": {
+      "source": "腾讯/中证日线",
+      "data_date": "2026-10-30",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 0,
+      "status": "ok",
+      "fallback_source": null
+     },
+     "us10y": {
+      "source": "新浪美债10Y",
+      "data_date": "2026-10-29",
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": 1,
+      "status": "ok",
+      "fallback_source": "bond_zh_us_rate(英为)"
+     },
+     "dollar": {
+      "source": "新浪DINIW实时",
+      "data_date": null,
+      "fetched_at": "2026-10-30T16:11:46",
+      "staleness_days": null,
+      "status": "unknown",
+      "fallback_source": null
+     }
+    },
+    "class_rank": 1,
+    "risk_cluster": "实物资产",
+    "candidates_research": {
+     "value": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "实物资产",
+      "asset_name": "黄金",
+      "valuation_score": null,
+      "macro_score": 1.0,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": 0,
+      "quality_score": null,
+      "structural_score": 1.0,
+      "technical_score": -1.4,
+      "composite_score": -0.2,
+      "available_weight_ratio": 1.0,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "美元指数缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "us10y": {
+        "source": "新浪美债10Y",
+        "data_date": "2026-10-29",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 1,
+        "status": "ok",
+        "fallback_source": "bond_zh_us_rate(英为)"
+       },
+       "dollar": {
+        "source": "新浪DINIW实时",
+        "data_date": null,
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": null,
+        "status": "unknown",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "实物资产",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": null,
+      "price_date": "2026-10-30",
+      "candidate": "value"
+     },
+     "balanced": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "实物资产",
+      "asset_name": "黄金",
+      "valuation_score": null,
+      "macro_score": 1.0,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": 0,
+      "quality_score": null,
+      "structural_score": 1.0,
+      "technical_score": -1.45,
+      "composite_score": -0.42,
+      "available_weight_ratio": 1.0,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "美元指数缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "us10y": {
+        "source": "新浪美债10Y",
+        "data_date": "2026-10-29",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 1,
+        "status": "ok",
+        "fallback_source": "bond_zh_us_rate(英为)"
+       },
+       "dollar": {
+        "source": "新浪DINIW实时",
+        "data_date": null,
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": null,
+        "status": "unknown",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "实物资产",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": null,
+      "price_date": "2026-10-30",
+      "candidate": "balanced"
+     },
+     "trend": {
+      "strategy_version": "category_v2_shadow_v4",
+      "strategy_type": "实物资产",
+      "asset_name": "黄金",
+      "valuation_score": null,
+      "macro_score": 1.0,
+      "breadth_score": null,
+      "earnings_score": null,
+      "trend_score": -2,
+      "momentum_score": 0,
+      "quality_score": null,
+      "structural_score": 1.0,
+      "technical_score": -1.54,
+      "composite_score": -0.65,
+      "available_weight_ratio": 1.0,
+      "action": "持有",
+      "action_reason": "双轮尚未同时确认，继续观察",
+      "data_quality": "降级",
+      "degraded_fields": [
+       "美元指数缺失"
+      ],
+      "data_sources": {
+       "price": {
+        "source": "腾讯/中证日线",
+        "data_date": "2026-10-30",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 0,
+        "status": "ok",
+        "fallback_source": null
+       },
+       "us10y": {
+        "source": "新浪美债10Y",
+        "data_date": "2026-10-29",
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": 1,
+        "status": "ok",
+        "fallback_source": "bond_zh_us_rate(英为)"
+       },
+       "dollar": {
+        "source": "新浪DINIW实时",
+        "data_date": null,
+        "fetched_at": "2026-10-30T16:11:46",
+        "staleness_days": null,
+        "status": "unknown",
+        "fallback_source": null
+       }
+      },
+      "class_rank": null,
+      "risk_cluster": "实物资产",
+      "risk_warning": null,
+      "signal_date": "2026-10-30",
+      "valuation_date": null,
+      "price_date": "2026-10-30",
+      "candidate": "trend"
+     }
+    }
+   }
+  },
+  "warnings": [
+   "多个权益指数同时走弱，权益整体偏弱，暂不适合加仓权益类"
+  ],
+  "health": {
+   "沪深300": {
+    "days": 3356,
+    "first": "2013-01-01",
+    "last": "2026-10-30",
+    "pe_valid": 3356,
+    "us10y_valid": null
+   },
+   "中证500": {
+    "days": 3357,
+    "first": "2013-01-01",
+    "last": "2026-10-30",
+    "pe_valid": 3357,
+    "us10y_valid": null
+   },
+   "科创50": {
+    "days": 1655,
+    "first": "2013-01-01",
+    "last": "2026-10-30",
+    "pe_valid": 1533,
+    "us10y_valid": null
+   },
+   "中证白酒": {
+    "days": 3357,
+    "first": "2013-01-01",
+    "last": "2026-10-30",
+    "pe_valid": 2764,
+    "us10y_valid": null
+   },
+   "中证医疗": {
+    "days": 3357,
+    "first": "2013-01-01",
+    "last": "2026-10-30",
+    "pe_valid": 2785,
+    "us10y_valid": null
+   },
+   "红利低波": {
+    "days": 1884,
+    "first": "2019-01-18",
+    "last": "2026-10-30",
+    "pe_valid": 1884,
+    "us10y_valid": null
+   },
+   "黄金": {
+    "days": 3222,
+    "first": "2013-07-29",
+    "last": "2026-10-30",
+    "pe_valid": null,
+    "us10y_valid": 926
+   },
+   "fund_us10y": {
+    "now": 4.976,
+    "prev20": 5.236,
+    "date": "2026-10-29"
    }
   }
  }
