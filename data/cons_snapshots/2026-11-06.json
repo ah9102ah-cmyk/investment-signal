@@ -1,0 +1,26 @@
+{
+ "date": "2026-11-06",
+ "indexes": {
+  "中证500": {
+   "cons": 500,
+   "valid": 160,
+   "above_ma250_ratio": 0.275,
+   "up20_ratio": 0.388,
+   "eq_ret20": -0.034,
+   "index_ret20": null,
+   "direction": null
+  },
+  "中证白酒": {
+   "error": "成分股行情不可用",
+   "cons": 17
+  },
+  "中证医疗": {
+   "error": "成分股行情不可用",
+   "cons": 50
+  },
+  "科创50": {
+   "error": "成分股行情不可用",
+   "cons": 50
+  }
+ }
+}
