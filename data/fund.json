@@ -23,7 +23,7 @@
     "growth_mid": -0.2,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 77.8,
+    "pe_pctl": 78.4,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 2,
@@ -63,7 +63,7 @@
     "growth_mid": -5.4,
     "target_method": "model_12m_range",
     "v_score": 1,
-    "pe_pctl": 7.7,
+    "pe_pctl": 6.2,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 0,
@@ -103,7 +103,7 @@
     "growth_mid": -1.2,
     "target_method": "model_12m_range",
     "v_score": 1,
-    "pe_pctl": 25.3,
+    "pe_pctl": 14.0,
     "peer_detail": {
       "rel_roe": -2,
       "rel_rev": -2,
@@ -143,7 +143,7 @@
     "growth_mid": 50.0,
     "target_method": null,
     "v_score": null,
-    "pe_pctl": 0.3,
+    "pe_pctl": 0.1,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 2,
@@ -179,11 +179,11 @@
     "space_high": null,
     "score": 4,
     "verdict": "中",
-    "fair_pe": 65.7,
+    "fair_pe": 65.6,
     "growth_mid": 50.0,
     "target_method": null,
     "v_score": null,
-    "pe_pctl": 1.8,
+    "pe_pctl": 1.4,
     "cyclical": {
       "percentile": 15,
       "hint_score": 1,
@@ -229,19 +229,19 @@
     "eps_ttm": 4.3,
     "pe": 26.5,
     "pb": 5.1,
-    "target": 155.8,
-    "target_low": 120.74,
-    "target_high": 195.0,
-    "space": 36.8,
-    "space_low": 6.0,
-    "space_high": 71.2,
+    "target": 155.32,
+    "target_low": 120.36,
+    "target_high": 194.39,
+    "space": 36.4,
+    "space_low": 5.7,
+    "space_high": 70.7,
     "score": 7,
     "verdict": "好",
-    "fair_pe": 32.0,
+    "fair_pe": 31.9,
     "growth_mid": 13.2,
     "target_method": "model_12m_range",
     "v_score": 2,
-    "pe_pctl": 28.9,
+    "pe_pctl": 13.7,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 2,
@@ -269,19 +269,19 @@
     "eps_ttm": 7.97,
     "pe": 70.3,
     "pb": 9.52,
-    "target": 412.79,
-    "target_low": 317.47,
-    "target_high": 519.9,
-    "space": -26.3,
-    "space_low": -43.3,
-    "space_high": -7.2,
+    "target": 413.63,
+    "target_low": 318.11,
+    "target_high": 520.95,
+    "space": -26.1,
+    "space_low": -43.2,
+    "space_high": -7.0,
     "score": -3,
     "verdict": "差",
-    "fair_pe": 49.3,
+    "fair_pe": 49.4,
     "growth_mid": 5.1,
     "target_method": "model_12m_range",
     "v_score": -2,
-    "pe_pctl": 77.3,
+    "pe_pctl": 77.1,
     "peer_detail": {
       "rel_roe": 0,
       "rel_rev": -2,
@@ -299,8 +299,8 @@
   },
   "sh512890": {
     "name": "红利低波",
-    "pe": 8.52,
-    "div_yield": 4.7,
+    "pe": 8.61,
+    "div_yield": 4.65,
     "v_score": -2,
     "v_method": "自身5年PE分位(股息率仅作背景)",
     "v_quality": "完整(PE；股息率仅作背景)",
@@ -308,12 +308,12 @@
       "pe": -2,
       "dividend": null
     },
-    "valuation_date": "2026-11-05"
+    "valuation_date": "2026-11-06"
   },
   "sh000300": {
     "name": "沪深300",
-    "pe": 13.94,
-    "div_yield": 3.0,
+    "pe": 13.82,
+    "div_yield": 3.03,
     "v_score": 0,
     "v_method": "自身5年PE/PB/股债利差分位",
     "v_quality": "完整",
@@ -322,23 +322,23 @@
       "pb": 2,
       "erp": 0
     },
-    "valuation_date": "2026-11-05"
+    "valuation_date": "2026-11-06"
   },
   "sh000905": {
     "name": "中证500",
-    "pe": 26.18,
-    "div_yield": 1.57,
+    "pe": 25.69,
+    "div_yield": 1.6,
     "v_score": -2,
     "v_method": "自身5年PE分位",
     "v_quality": "完整",
     "v_components": {
       "pe": -2
     },
-    "valuation_date": "2026-11-05"
+    "valuation_date": "2026-11-06"
   },
   "sh000688": {
     "name": "科创50",
-    "pe": 84.35,
+    "pe": 82.22,
     "div_yield": 0.29,
     "v_score": -2,
     "v_method": "自身5年PE分位",
@@ -346,31 +346,31 @@
     "v_components": {
       "pe": -2
     },
-    "valuation_date": "2026-11-05"
+    "valuation_date": "2026-11-06"
   },
   "sz399997": {
     "name": "中证白酒",
-    "pe": 20.87,
-    "div_yield": 4.12,
+    "pe": 20.84,
+    "div_yield": 4.13,
     "v_score": 0,
     "v_method": "自身5年PE分位",
     "v_quality": "完整",
     "v_components": {
       "pe": 0
     },
-    "valuation_date": "2026-11-05"
+    "valuation_date": "2026-11-06"
   },
   "sz399989": {
     "name": "中证医疗",
-    "pe": 30.73,
-    "div_yield": 1.32,
+    "pe": 30.05,
+    "div_yield": 1.35,
     "v_score": -2,
     "v_method": "自身5年PE分位",
     "v_quality": "完整",
     "v_components": {
       "pe": -2
     },
-    "valuation_date": "2026-11-05"
+    "valuation_date": "2026-11-06"
   },
   "00700": {
     "name": "腾讯控股",
@@ -382,23 +382,23 @@
     "gm": 56.2,
     "bps": 126.93,
     "eps_ttm": 24.65,
-    "pe": 16.9,
-    "pb": 3.29,
-    "target": 668.0,
-    "target_low": 646.25,
-    "target_high": 725.0,
-    "space": 60.1,
-    "space_low": 54.9,
-    "space_high": 73.8,
+    "pe": 17.0,
+    "pb": 3.31,
+    "target": 670.0,
+    "target_low": 657.0,
+    "target_high": 712.5,
+    "space": 59.6,
+    "space_low": 56.5,
+    "space_high": 69.7,
     "score": 7,
     "verdict": "好",
     "fair_pe": 20,
     "growth_mid": 15.9,
     "target_method": "analyst_12m_range",
     "v_score": 2,
-    "mcap": 37935.0,
+    "mcap": 38171.0,
     "analyst": true,
-    "analyst_count": 16
+    "analyst_count": 15
   },
   "09992": {
     "name": "泡泡玛特",
@@ -439,20 +439,20 @@
     "bps": 24.46,
     "eps_ttm": -13.53,
     "pe": null,
-    "pb": 3.27,
+    "pb": 3.29,
     "target": 115.0,
     "target_low": 107.75,
     "target_high": 120.75,
-    "space": 43.8,
-    "space_low": 34.8,
-    "space_high": 51.0,
+    "space": 43.0,
+    "space_low": 34.0,
+    "space_high": 50.2,
     "score": 1,
     "verdict": "差",
     "fair_pe": null,
     "growth_mid": 50.0,
     "target_method": "analyst_12m_range",
     "v_score": 2,
-    "mcap": 4474.0,
+    "mcap": 4499.0,
     "analyst": true,
     "analyst_count": 16
   },
@@ -466,27 +466,27 @@
     "gm": 22.3,
     "bps": 10.32,
     "eps_ttm": 1.6,
-    "pe": 18.9,
-    "pb": 2.93,
+    "pe": 19.0,
+    "pb": 2.94,
     "target": 33.6,
     "target_low": 32.7,
     "target_high": 35.0,
-    "space": 11.0,
-    "space_low": 8.0,
-    "space_high": 15.6,
+    "space": 10.6,
+    "space_low": 7.6,
+    "space_high": 15.2,
     "score": 6,
     "verdict": "好",
     "fair_pe": 30,
     "growth_mid": 50.0,
     "target_method": "analyst_12m_range",
     "v_score": 2,
-    "mcap": 6470.0,
+    "mcap": 6491.0,
     "analyst": true,
     "analyst_count": 14
   },
   "us10y": {
-    "now": 4.839,
-    "prev20": 5.231,
-    "date": "2026-11-05"
+    "now": 4.861,
+    "prev20": 5.244,
+    "date": "2026-11-06"
   }
 }
