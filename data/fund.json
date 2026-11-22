@@ -23,7 +23,7 @@
     "growth_mid": -0.2,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 87.3,
+    "pe_pctl": 87.4,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 2,
@@ -63,7 +63,7 @@
     "growth_mid": -5.4,
     "target_method": "model_12m_range",
     "v_score": 1,
-    "pe_pctl": 0.4,
+    "pe_pctl": 0.5,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 0,
@@ -143,7 +143,7 @@
     "growth_mid": 50.0,
     "target_method": null,
     "v_score": null,
-    "pe_pctl": 0.1,
+    "pe_pctl": 0.3,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 2,
@@ -179,7 +179,7 @@
     "space_high": null,
     "score": 4,
     "verdict": "中",
-    "fair_pe": 65.2,
+    "fair_pe": 65.4,
     "growth_mid": 50.0,
     "target_method": null,
     "v_score": null,
@@ -296,6 +296,19 @@
     },
     "peer_n": 4,
     "score_method": "industry_relative"
+  },
+  "sh512890": {
+    "name": "红利低波",
+    "pe": 9.16,
+    "div_yield": 4.37,
+    "v_score": -2,
+    "v_method": "自身5年PE分位(股息率仅作背景)",
+    "v_quality": "完整(PE；股息率仅作背景)",
+    "v_components": {
+      "pe": -2,
+      "dividend": null
+    },
+    "valuation_date": "2026-11-20"
   },
   "sh000300": {
     "name": "沪深300",
