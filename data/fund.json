@@ -23,7 +23,7 @@
     "growth_mid": -0.2,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 83.0,
+    "pe_pctl": 83.2,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 2,
@@ -63,7 +63,7 @@
     "growth_mid": -5.4,
     "target_method": "model_12m_range",
     "v_score": 1,
-    "pe_pctl": 0.1,
+    "pe_pctl": 6.8,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 0,
@@ -103,7 +103,7 @@
     "growth_mid": -1.2,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 69.8,
+    "pe_pctl": 69.7,
     "peer_detail": {
       "rel_roe": -2,
       "rel_rev": -2,
@@ -111,7 +111,7 @@
       "rel_gm": -1
     },
     "peer_median": {
-      "roe": 11.4,
+      "roe": 20.8,
       "rev_g": 37.4,
       "debt": 50.5,
       "gm": 26.1
@@ -137,21 +137,21 @@
     "space": null,
     "space_low": null,
     "space_high": null,
-    "score": 6,
+    "score": 4,
     "verdict": "好",
     "fair_pe": 50.6,
     "growth_mid": 50.0,
     "target_method": null,
     "v_score": null,
-    "pe_pctl": 1.6,
+    "pe_pctl": 1.8,
     "peer_detail": {
-      "rel_roe": 2,
+      "rel_roe": 0,
       "rel_rev": 2,
       "rel_debt": 1,
       "rel_gm": 1
     },
     "peer_median": {
-      "roe": 11.4,
+      "roe": 20.8,
       "rev_g": 37.4,
       "debt": 50.5,
       "gm": 26.1
@@ -183,7 +183,7 @@
     "growth_mid": 50.0,
     "target_method": null,
     "v_score": null,
-    "pe_pctl": 1.2,
+    "pe_pctl": 1.4,
     "cyclical": {
       "percentile": 15,
       "hint_score": 1,
@@ -241,7 +241,7 @@
     "growth_mid": 13.2,
     "target_method": "model_12m_range",
     "v_score": 2,
-    "pe_pctl": 0.8,
+    "pe_pctl": 5.1,
     "peer_detail": {
       "rel_roe": 2,
       "rel_rev": 2,
@@ -269,19 +269,19 @@
     "eps_ttm": 7.97,
     "pe": 66.2,
     "pb": 8.97,
-    "target": 431.21,
-    "target_low": 331.64,
-    "target_high": 543.1,
-    "space": -18.2,
-    "space_low": -37.1,
-    "space_high": 3.0,
+    "target": 432.05,
+    "target_low": 332.28,
+    "target_high": 544.15,
+    "space": -18.1,
+    "space_low": -37.0,
+    "space_high": 3.2,
     "score": -3,
     "verdict": "差",
-    "fair_pe": 51.5,
+    "fair_pe": 51.6,
     "growth_mid": 5.1,
     "target_method": "model_12m_range",
     "v_score": 0,
-    "pe_pctl": 69.6,
+    "pe_pctl": 72.2,
     "peer_detail": {
       "rel_roe": 0,
       "rel_rev": -2,
@@ -299,8 +299,8 @@
   },
   "sh512890": {
     "name": "红利低波",
-    "pe": 9.14,
-    "div_yield": 4.39,
+    "pe": 8.98,
+    "div_yield": 4.46,
     "v_score": -2,
     "v_method": "自身5年PE分位(股息率仅作背景)",
     "v_quality": "完整(PE；股息率仅作背景)",
@@ -308,69 +308,69 @@
       "pe": -2,
       "dividend": null
     },
-    "valuation_date": "2026-11-26"
+    "valuation_date": "2026-11-27"
   },
   "sh000300": {
     "name": "沪深300",
-    "pe": 13.61,
-    "div_yield": 3.08,
+    "pe": 13.96,
+    "div_yield": 3.0,
     "v_score": 0,
     "v_method": "自身5年PE/PB/股债利差分位",
     "v_quality": "完整",
     "v_components": {
       "pe": -2,
-      "pb": 2,
+      "pb": 1,
       "erp": 0
     },
-    "valuation_date": "2026-11-26"
+    "valuation_date": "2026-11-27"
   },
   "sh000905": {
     "name": "中证500",
-    "pe": 23.03,
-    "div_yield": 1.79,
+    "pe": 24.62,
+    "div_yield": 1.67,
     "v_score": -2,
     "v_method": "自身5年PE分位",
     "v_quality": "完整",
     "v_components": {
       "pe": -2
     },
-    "valuation_date": "2026-11-26"
+    "valuation_date": "2026-11-27"
   },
   "sh000688": {
     "name": "科创50",
-    "pe": 79.68,
-    "div_yield": 0.31,
+    "pe": 92.05,
+    "div_yield": 0.27,
     "v_score": -2,
     "v_method": "自身5年PE分位",
     "v_quality": "完整",
     "v_components": {
       "pe": -2
     },
-    "valuation_date": "2026-11-26"
+    "valuation_date": "2026-11-27"
   },
   "sz399997": {
     "name": "中证白酒",
-    "pe": 20.67,
-    "div_yield": 4.17,
+    "pe": 20.78,
+    "div_yield": 4.14,
     "v_score": 0,
     "v_method": "自身5年PE分位",
     "v_quality": "完整",
     "v_components": {
       "pe": 0
     },
-    "valuation_date": "2026-11-26"
+    "valuation_date": "2026-11-27"
   },
   "sz399989": {
     "name": "中证医疗",
-    "pe": 27.97,
-    "div_yield": 1.46,
+    "pe": 29.2,
+    "div_yield": 1.4,
     "v_score": -1,
     "v_method": "自身5年PE分位",
     "v_quality": "完整",
     "v_components": {
       "pe": -1
     },
-    "valuation_date": "2026-11-26"
+    "valuation_date": "2026-11-27"
   },
   "00700": {
     "name": "腾讯控股",
@@ -485,8 +485,8 @@
     "analyst_count": 14
   },
   "us10y": {
-    "now": 4.862,
-    "prev20": 4.976,
-    "date": "2026-11-26"
+    "now": 4.932,
+    "prev20": 4.91,
+    "date": "2026-11-27"
   }
 }
